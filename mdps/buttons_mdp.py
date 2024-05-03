@@ -1,5 +1,6 @@
 import random
 from enum import Enum
+import copy
 import numpy as np
 
 class Actions(Enum):
@@ -11,7 +12,7 @@ class Actions(Enum):
 
 class HardButtonsEnv():
 
-    def __init__(self, env_settings):
+    def __init__(self, env_config):
         """
         Initialize environment.
 
@@ -25,20 +26,17 @@ class HardButtonsEnv():
         env_settings : dict
             Dictionary of environment settings
         """
-        
+        env_settings = copy.deepcopy(env_config)
         env_settings['Nr'] = 10
         env_settings['Nc'] = 10
-        env_settings['initial_states'] = [0, 5, 8]
-        env_settings['walls'] = [(0, 3), (1, 3), (2, 3), (3,3), (4,3), (5,3), (6,3), (7,3),
-                                    (7,4), (7,5), (7,6), (7,7), (7,8), (7,9),
-                                    (0,7), (1,7), (2,7), (3,7), (4,7) ]
-        env_settings['goal_location'] = (8,9)
-        env_settings['yellow_button'] = (0,2)
+        env_settings['initial_states'] = [0, 5, 9]
+        env_settings['walls'] = [(0, 2), (1, 2), (3, 2),
+                                    (1,4), (2,4), (3,4), (4,4), (5,4), (6,4), (7, 4),
+                                    (4, 2), (4, 3),
+                                    (1, 6), (2, 6), (3,6), (4, 6), (4, 7), (5, 7), (6, 7)]
+        env_settings['yellow_button'] = (6,2)
         env_settings['green_button'] = (5,6)
-        env_settings['red_button'] = (6,9)
-        env_settings['yellow_tiles'] = [(2,4), (2,5), (2,6), (3,4), (3,5), (3,6)]
-        env_settings['green_tiles'] = [(2,8), (2,9), (3,8), (3,9)]
-        env_settings['red_tiles'] = [(8,5), (8,6), (8,7), (8,8), (9,5), (9,6), (9,7), (9,8)]
+        env_settings['red_button'] = (5,9)
 
         env_settings['p'] = 0.98
         self.env_settings = env_settings

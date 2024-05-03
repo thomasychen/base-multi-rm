@@ -37,6 +37,7 @@ class SparseRewardMachine:
         return u1
 
     def get_reward(self,u1,u2,s1=None,a=None,s2=None):
+        # print(self.delta_r, u1, u2)
         if u1 in self.delta_r and u2 in self.delta_r[u1]:
             return self.delta_r[u1][u2]
         return 0 # This case occurs when the agent falls from the reward machine
@@ -54,6 +55,7 @@ class SparseRewardMachine:
         return self.U
 
     def is_terminal_state(self, u1):
+        # print(self.T)
         return u1 in self.T
 
     def get_events(self):

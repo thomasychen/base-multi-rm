@@ -47,6 +47,8 @@ class MultiAgentEnvironment(ParallelEnv):
     def reset(self, seed=None, options=None):
         self.agents = self.possible_agents[:]
         self.time_step = 0
+        with open('config/buttons.yaml', 'r') as file:
+            self.env_config = yaml.safe_load(file)
         mdp_state_array =  copy.deepcopy(self.env_config["initial_mdp_states"])
         rm_state_array = copy.deepcopy(self.env_config["initial_rm_states"])
         self.mdp_states = {self.agents[i]:mdp_state_array[i] for i in range(len(self.agents))}
@@ -75,9 +77,9 @@ class MultiAgentEnvironment(ParallelEnv):
             curr_agent = self.agents[i]
             s = self.mdp_states[curr_agent]
             ca = actions[curr_agent]
-            a = self.discretize_action(ca)
+            # a = self.discretize_action(ca)
             
-            s_next = self.labeled_mdp.environment_step(s, a)
+            s_next = self.labeled_mdp.environment_step(s, ca)
             # print(s_next)
             self.mdp_states[curr_agent] = s_next
             # if len(actions.keys())==1:
@@ -130,7 +132,7 @@ class MultiAgentEnvironment(ParallelEnv):
                 if not terminations[agent]:
                     self.agents.append(agent)
             # if not self.agents:
-                # print("FINISHED REWARDS", rewards)
+            #     print("FINISHED REWARDS", rewards)
         # print(self.rm_states)
             
         # print("\n\n\n", observations, rewards, terminations, truncations)
@@ -147,8 +149,8 @@ class MultiAgentEnvironment(ParallelEnv):
     
     def action_space(self, agent):
         # return self.action_spaces[agent]
-        # return Discrete(5)
-        return Box(low=np.array([-1]), high=np.array([1]), dtype=np.float32)
+        return Discrete(5)
+        # return Box(low=np.array([-1]), high=np.array([1]), dtype=np.float32)
     def discretize_action(self, continuous_action):
     # Assume continuous_action is a numpy array with values between -1 and 1
     # Scale and round to nearest discrete action

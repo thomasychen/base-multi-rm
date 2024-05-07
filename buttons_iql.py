@@ -5,15 +5,26 @@ import yaml
 from stable_baselines3.common.noise import OrnsteinUhlenbeckActionNoise
 from mdp_label_wrappers.buttons_mdp_labeled import HardButtonsLabeled
 from stable_baselines3 import DQN, PPO, SAC, DDPG
-from stable_baselines3.ddpg import MlpPolicy
+# from stable_baselines3.ddpg import MlpPolicy
 from sb3_contrib import QRDQN
-# from stable_baselines3.ppo import MlpPolicy
+from stable_baselines3.ppo import MlpPolicy
 # from stable_baselines3.sac import MlpPolicy
 import supersuit as ss
 import glob
 import os
 import time
 import numpy as np
+from wandb.integration.sb3 import WandbCallback
+import wandb
+from stable_baselines3.common.logger import configure
+from stable_baselines3.common.callbacks import BaseCallback
+from stable_baselines3.common.vec_env.vec_monitor import VecMonitor
+
+tmp_path = "/tmp/sb3_log/"
+# set up logger
+new_logger = configure(tmp_path, ["stdout", "csv", "tensorboard"])
+
+
 def eval(env_fn, num_games: int = 100, render_mode: str | None = None, **env_kwargs):
     # Evaluate a trained agent vs a random agent
     # env = env_fn.env(render_mode=render_mode, **env_kwargs)
@@ -31,16 +42,13 @@ def eval(env_fn, num_games: int = 100, render_mode: str | None = None, **env_kwa
         print("Policy not found.")
         exit(0)
 
-    model = DDPG.load(latest_policy)
+    model = DQN.load(latest_policy)
 
     reward = {agent: 0 for agent in env.possible_agents}
     steps = {agent:[] for agent in env.possible_agents}
 
-    # Note: We train using the Parallel API but evaluate using the AEC API
-    # SB3 models are designed for single-agent settings, we get around this by using he same model for every agent
     for i in range(num_games):
         observations, _ = env.reset(seed=i)
-        # print(observations)
         print("\n\n\n")
         while env.agents:
         # this is where you would insert your policy
@@ -73,6 +81,13 @@ def eval(env_fn, num_games: int = 100, render_mode: str | None = None, **env_kwa
 
 
 if __name__ == "__main__":
+    experiment = "test_pettingzoo_sb3"
+    config = {
+    "policy_type": "MlpPolicy",
+    "total_timesteps": 1000000,
+    "env_name": "Buttons",
+    }
+    run = wandb.init(project = experiment, entity="reinforce-learn", config=config, sync_tensorboard=True )
     with open('config/buttons.yaml', 'r') as file:
         buttons_config = yaml.safe_load(file)
         
@@ -87,27 +102,28 @@ if __name__ == "__main__":
 
     env = ss.pettingzoo_env_to_vec_env_v1(env)
     env = ss.concat_vec_envs_v1(env, 1, num_cpus=1, base_class="stable_baselines3")
-    n_actions = env.action_space.shape[-1]
+    env = VecMonitor(env)
 
-    action_noise = OrnsteinUhlenbeckActionNoise(mean=np.zeros(n_actions), sigma=float(0.5) * np.ones(n_actions))
-
-    # Note: Waterworld's observation space is discrete (242,) so we use an MLP policy rather than CNN
-    model = DDPG(
-        MlpPolicy,
+    model = DQN(
+        "MlpPolicy",
         env,
         verbose=3,
-        action_noise=action_noise,
-        # exploration_initial_eps= 1,
-        # exploration_final_eps=0, 
-        # exploration_fraction=0.96,
-        # batch_size=256,
-        # learning_rate=0.001,
+        # action_noise=action_noise,
+        exploration_initial_eps= 1,
+        exploration_final_eps=0.05, 
+        exploration_fraction=0.25,
+        batch_size=5000,
+        learning_rate=0.0001,
         # target_update_interval=100,
-        # gamma = 0.87,
-        # buffer_size=5000,
+        gamma = 0.9,
+        buffer_size=10000,
+        target_update_interval=1000,
+        tensorboard_log=f"runs/{run.id}"
     )
 
-    model.learn(total_timesteps=100000)
+    model.learn(total_timesteps=2000000, callback=WandbCallback(
+        verbose=2,
+    ))
 
 
     model.save(f"{env.unwrapped.metadata.get('name')}_{time.strftime('%Y%m%d-%H%M%S')}")

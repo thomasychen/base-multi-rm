@@ -1,10 +1,9 @@
 from pettingzoo.test import parallel_api_test
-
 from pettingzoo_product_env.custom_environment.env.custom_environment import MultiAgentEnvironment
 import yaml
 from stable_baselines3.common.noise import OrnsteinUhlenbeckActionNoise
 from mdp_label_wrappers.buttons_mdp_labeled import HardButtonsLabeled
-from stable_baselines3 import DQN, PPO, SAC, DDPG
+from stable_baselines3 import DQN, PPO, SAC, DDPG, HER, HerReplayBuffer
 # from stable_baselines3.ddpg import MlpPolicy
 from sb3_contrib import QRDQN
 from stable_baselines3.ppo import MlpPolicy
@@ -19,6 +18,10 @@ import wandb
 from stable_baselines3.common.logger import configure
 from stable_baselines3.common.callbacks import BaseCallback
 from stable_baselines3.common.vec_env.vec_monitor import VecMonitor
+from manager.manager import Manager
+
+## WANDB KILL SWITCH
+# ps aux|grep wandb|grep -v grep | awk '{print $2}'|xargs kill -9
 
 tmp_path = "/tmp/sb3_log/"
 # set up logger
@@ -90,19 +93,29 @@ if __name__ == "__main__":
     run = wandb.init(project = experiment, entity="reinforce-learn", config=config, sync_tensorboard=True )
     with open('config/buttons.yaml', 'r') as file:
         buttons_config = yaml.safe_load(file)
-        
-    mdp_labeled = HardButtonsLabeled(buttons_config)
-    env = MultiAgentEnvironment()
 
-    env.reset()
+        
+    # mdp_labeled = HardButtonsLabeled(buttons_config)
+
+    num_agents = 3
+    manager = Manager(num_agents=num_agents, assignment_method="multiply")
+    env = MultiAgentEnvironment(manager=manager)
+
+    # env.set_manager(manager)
+    # env.reset()
+
 
     print(f"Starting training on {str(env.metadata['name'])}.")
+
+
 
     env = ss.black_death_v3(env)
 
     env = ss.pettingzoo_env_to_vec_env_v1(env)
     env = ss.concat_vec_envs_v1(env, 1, num_cpus=1, base_class="stable_baselines3")
     env = VecMonitor(env)
+
+    goal_selection_strategy = "future"
 
     model = DQN(
         "MlpPolicy",
@@ -116,10 +129,57 @@ if __name__ == "__main__":
         learning_rate=0.0001,
         # target_update_interval=100,
         gamma = 0.9,
-        buffer_size=10000,
+        buffer_size=20000,
         target_update_interval=1000,
         tensorboard_log=f"runs/{run.id}"
     )
+
+    # model = DQN(
+    #     "MlpPolicy",
+    #     env,
+    #     verbose=3,
+    #     # action_noise=action_noise,
+    #     exploration_initial_eps= 1,
+    #     exploration_final_eps=0.05, 
+    #     exploration_fraction=0.25,
+    #     batch_size=5000,
+    #     learning_rate=0.0001,
+    #     replay_buffer_class=HerReplayBuffer,
+    #     replay_buffer_kwargs=dict(
+    #     n_sampled_goal=4,
+    #     goal_selection_strategy=goal_selection_strategy,
+    #     ),
+    #     # target_update_interval=100,
+    #     gamma = 0.9,
+    #     buffer_size=10000,
+    #     target_update_interval=1000,
+    #     tensorboard_log=f"runs/{run.id}"
+    # )
+
+
+    
+
+    # model = PPO2(
+    #     MlpPolicy,
+    #     env,
+    #     verbose=3,
+    #     # action_noise=action_noise,
+    #     # exploration_initial_eps= 1,
+    #     # exploration_final_eps=0.05, 
+    #     # exploration_fraction=0.25,
+    #     # batch_size=5000,
+    #     # learning_rate=0.0001,
+    #     # # target_update_interval=100,
+    #     # gamma = 0.9,
+    #     # buffer_size=10000,
+    #     # target_update_interval=1000,
+    #     tensorboard_log=f"runs/{run.id}"
+    # )
+
+
+    manager.set_model(model)
+    env.reset()
+
 
     model.learn(total_timesteps=2000000, callback=WandbCallback(
         verbose=2,
@@ -136,5 +196,5 @@ if __name__ == "__main__":
 
     env_kwargs = {}
 
-    # Evaluate 10 games (average reward should be positive but can vary significantly)
-    eval(MultiAgentEnvironment, num_games=100, render_mode=None, **env_kwargs)
+    # # Evaluate 10 games (average reward should be positive but can vary significantly)
+    # eval(MultiAgentEnvironment, num_games=100, render_mode=None, **env_kwargs)

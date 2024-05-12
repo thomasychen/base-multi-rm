@@ -24,7 +24,7 @@ class Manager:
 
         # UCB exploration parameter
         self.ucb_c = 1.5
-        self.window = 10
+        self.window = 0
         self.window_cnt = 0
 
     def set_model(self, model):
@@ -32,9 +32,9 @@ class Manager:
 
 
     def get_rm_assignments(self, init_mdp_states, init_rm_states):
-        self.window_cnt += 1
-        if self.window_cnt % self.window != 0:
-            return self.curr_assignment
+        # self.window_cnt += 1
+        # if self.window_cnt % self.window != 0:
+        #     return self.curr_assignment
         self.curr_permutation_qs = self.calculate_permutation_qs(init_mdp_states, init_rm_states, True)
 
         if self.assignment_method == "ground_truth":

@@ -123,14 +123,14 @@ if __name__ == "__main__":
         verbose=3,
         # action_noise=action_noise,
         exploration_initial_eps= 1,
-        exploration_final_eps=0.05, 
+        exploration_final_eps=0.15, 
         exploration_fraction=0.25,
         batch_size=5000,
         learning_rate=0.0001,
         # target_update_interval=100,
-        gamma = 0.9,
-        buffer_size=20000,
-        target_update_interval=1000,
+        gamma = 0.88,
+        buffer_size=5000,
+        target_update_interval=5000,
         tensorboard_log=f"runs/{run.id}"
     )
 

@@ -6,6 +6,7 @@ from gymnasium.spaces import Discrete, Box, MultiDiscrete
 import numpy as np
 import functools
 import copy
+import itertools
 
 class MultiAgentEnvironment(ParallelEnv):
     metadata = {
@@ -117,51 +118,6 @@ class MultiAgentEnvironment(ParallelEnv):
             # #         self.rm_states[j] = u_next
 
 
-            # s_new = self.mdp_states[curr_agent]
-            # # print(f"agent {i} at state {current_u}")
-            # # s, a = agent_list[i].get_next_action(epsilon, learning_params)
-            # # r, l, s_new = training_environments[i].environment_step(s,a)
-
-            # # u2 = training_environments[i].u
-            # # a = training_environments[i].get_last_action() # due to MDP slip
-            # # # agent_list[i].update_agent(s_new, a, r, l, learning_params)
-            # # if tester.get_current_step() > agent_list[i].buffer.max_: 
-            # #     agent_list[i].update_agent(s_new, a, r, l, learning_params, tester.get_current_step())
-            # # agent_list[i].buffer.add(s, current_u, a, r, s_new, u2)
-
-            # for u in self.reward_machine.U:
-            #     if not (u == current_u) and not (u in self.reward_machine.T) and not (u == self.reward_machine.u0):
-            #     # if not (u == current_u) and not (u in agent_list[i].rm.T):
-            #         new_l = self.labeled_mdp.get_mdp_label(s_new)
-            #         new_r = 0
-            #         u_temp = u
-            #         u2 = u
-            #         for e in new_l:
-            #             # Get the new reward machine state and the reward of this step
-            #             u2 = self.reward_machine.get_next_state(u_temp, e)
-            #             new_r = new_r + self.reward_machine.get_reward(u_temp, u2)
-            #             # Update the reward machine state
-            #             u_temp = u2
-            #         # agent_list[i].update_q_function(s, s_new, u, u2, a, r, learning_params)
-            #         # if tester.get_current_step() > agent_list[i].buffer.max_: 
-            #         #     agent_list[i].update_q_function(s, s_new, u, u2, a, r, learning_params, tester.get_current_step())
-            #         ## keep MDP state the same
-            #         prev_state = np.array([s, u])
-            #         next_state = np.array([self.mdp_states[curr_agent], u2])
-
-            #         big_prev_state = [np.array([self.mdp_states[agent], self.rm_states[agent]]) for agent in range(self.agents)]
-            #         big_prev_state[curr_agent] = prev_state
-
-
-            #         big_next_state = [np.array([self.mdp_states[agent], self.rm_states[agent]]) for agent in range(self.agents)]
-            #         big_next_state[curr_agent] = next_state
-                    
-
-            #         is_done = self.reward_machine.is_terminal_state(u2)
-            #         import pdb; pdb.set_trace()
-            #         MultiAgentEnvironment.manager.model.replay_buffer.add(prev_state, next_state, a, new_r, is_done, infos)
-            #         # agent_list[i].buffer.add(s, u, a, new_r, s_new, u2)
-
     
             observations[curr_agent] =  np.array([self.mdp_states[curr_agent], self.rm_states[curr_agent]])
             terminations[curr_agent] = self.reward_machine.is_terminal_state(self.rm_states[curr_agent])
@@ -170,57 +126,54 @@ class MultiAgentEnvironment(ParallelEnv):
             rewards[curr_agent] = r
         # print("TERMINATIONS", terminations)
 
-
-        ### COUNTERFACTUAL EXPERIENCE LOOP ###
-        for i in range(self.num_agents):
-            if self.possible_agents[i] not in actions:
+        all_permutations = list(itertools.permutations(self.reward_machine.U, 3))
+        for perm in all_permutations:
+            bools = [(perm[j] == old_rm_states[self.possible_agents[j]] or perm[j] in self.reward_machine.T or perm[j] == self.reward_machine.u0) for j in range(len(self.possible_agents))]
+            if any(bools):
                 continue
-            curr_agent = self.possible_agents[i]
-            current_u = old_rm_states[curr_agent]
-            for u in self.reward_machine.U:
-                if not (u == current_u) and not (u in self.reward_machine.T) and not (u == self.reward_machine.u0):
-                # if not (u == current_u) and not (u in agent_list[i].rm.T):
-                    new_l = self.labeled_mdp.get_mdp_label(self.mdp_states[curr_agent])
-                    new_r = 0
-                    u_temp = u
-                    u2 = u
-                    for e in new_l:
-                        # Get the new reward machine state and the reward of this step
-                        u2 = self.reward_machine.get_next_state(u_temp, e)
-                        new_r = new_r + self.reward_machine.get_reward(u_temp, u2)
-                        # Update the reward machine state
-                        u_temp = u2
-                    # agent_list[i].update_q_function(s, s_new, u, u2, a, r, learning_params)
-                    # if tester.get_current_step() > agent_list[i].buffer.max_: 
-                    #     agent_list[i].update_q_function(s, s_new, u, u2, a, r, learning_params, tester.get_current_step())
-                    ## keep MDP state the same
-                    prev_state = np.array([old_mdp_states[curr_agent], u])
-                    next_state = np.array([self.mdp_states[curr_agent], u2])
+            else:
+                # print(actions)
+                big_prev_states = []
+                big_new_states = []
+                big_actions = []
+                big_rewards = []
+                big_dones = []
+                infos = [{}, {}, {}]
+                # print(self.num_agents)
+                for k in range(len(self.possible_agents)):
+                    ag = self.possible_agents[k]
+                    s_old = old_mdp_states[ag]
+                    if self.possible_agents[k] not in actions:
+                        u_old = old_rm_states[ag]
+                        u_new = old_rm_states[ag]
+                        s_new = old_mdp_states[ag]
+                        new_r = 1
+                        a = 4
+                        done = True
+                    else: 
+                        u_old = perm[k]
+                        s_new = self.mdp_states[ag]
+                        new_l = self.labeled_mdp.get_mdp_label(s_new)
+                        new_r = 0
+                        a = actions[ag]
+                        u_temp = u_old
+                        u_new = u_old
+                        for e in new_l:
+                            # Get the new reward machine state and the reward of this step
+                            u_new = self.reward_machine.get_next_state(u_temp, u_new)
+                            new_r = new_r + self.reward_machine.get_reward(u_temp, u_new)
+                            # Update the reward machine state
+                            u_temp = u_new
 
-                    big_prev_state = [np.array([old_mdp_states[agent], old_rm_states[agent]]) for agent in self.possible_agents]
-                    big_prev_state[i] = prev_state
+                        done = self.reward_machine.is_terminal_state(u_new)
 
+                    big_prev_states.append(np.array([s_old, u_old]))
+                    big_new_states.append(np.array([s_new, u_new]))
+                    big_actions.append(np.array([a]))
+                    big_rewards.append(new_r)
+                    big_dones.append(done)
 
-                    big_next_state = [np.array([self.mdp_states[agent], self.rm_states[agent]]) for agent in self.possible_agents]
-                    big_next_state[i] = next_state
-                    
-
-                    big_actions = np.array([actions[agent] if agent in self.agents else 4 for agent in self.possible_agents])
-                    
-                    big_rewards = np.array([rewards[agent] if agent in self.agents else 0 for agent in self.possible_agents])
-                    big_rewards[i] = new_r
-
-                    is_done = self.reward_machine.is_terminal_state(u2)
-
-                    big_done = np.array([terminations[agent] if agent in self.agents else True for agent in self.possible_agents])
-                    big_done[i] = is_done
-
-                    # import pdb; pdb.set_trace()
-                    MultiAgentEnvironment.manager.model.replay_buffer.add(big_prev_state, big_next_state, big_actions, big_rewards, big_done, [{}, {}, {}])
-                    # agent_list[i].buffer.add(s, u, a, new_r, s_new, u2)
-
-        #### COUNTERFACTUAL EXPERIENCE LOOP ###
-
+                MultiAgentEnvironment.manager.model.replay_buffer.add(big_prev_states, big_new_states, np.array(big_actions),np.array(big_rewards), np.array(big_dones), infos)
 
         self.state = observations
 

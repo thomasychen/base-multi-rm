@@ -82,7 +82,7 @@ class Manager:
         else:
             raise Exception("STUPID ASS MF")
 
-        print(self.curr_permutation_qs)
+        # print(self.curr_permutation_qs)
         return self.curr_assignment
 
 
@@ -103,7 +103,8 @@ class Manager:
                 with torch.no_grad():
                     q_values = self.model.q_net(curr_state)
 
-                q, max_action = torch.max(q_values, dim=1)
+                # q, max_action = torch.max(q_values, dim=1)
+                q = torch.mean(q_values, dim=1)
                 # q = 1
 
                 if multiply:

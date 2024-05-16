@@ -19,9 +19,57 @@ from stable_baselines3.common.logger import configure
 from stable_baselines3.common.callbacks import BaseCallback
 from stable_baselines3.common.vec_env.vec_monitor import VecMonitor
 from manager.manager import Manager
+from stable_baselines3.common.callbacks import EvalCallback, CallbackList
+from mdp_label_wrappers.buttons_mdp_labeled import HardButtonsLabeled
+from sparse_reward_machine import SparseRewardMachine
+from stable_baselines3.common.monitor import Monitor
 
 ## WANDB KILL SWITCH
 # ps aux|grep wandb|grep -v grep | awk '{print $2}'|xargs kill -9
+
+
+class WandBEvalCallback(EvalCallback):
+    def __init__(self, eval_env, callback_on_new_best=None, n_eval_episodes=5, eval_freq=10000,
+                 log_path=None, best_model_save_path=None, deterministic=True, render=False):
+        # super().__init__(
+        #     eval_env, callback_on_new_best, n_eval_episodes, eval_freq,
+        #     log_path, best_model_save_path, deterministic, render
+        # )
+        super(WandBEvalCallback, self).__init__(
+            eval_env=eval_env, callback_on_new_best=callback_on_new_best,
+            n_eval_episodes=n_eval_episodes, eval_freq=eval_freq,
+            log_path=log_path, best_model_save_path=best_model_save_path,
+            deterministic=deterministic, render=render,
+            callback_after_eval=None  # Make sure this is properly set or handled
+        )
+
+        
+
+    # def _on_step(self):
+    #     super()._on_step()
+    #     # Log evaluation results to WandB
+    #     if self.n_calls % self.eval_freq == 0:
+    #         eval_results = self.eval_env.get_attr('episode_rewards')[-1]  # Assuming this retrieves the latest evaluation episode rewards
+    #         wandb.log({'eval/mean_reward': sum(eval_results) / len(eval_results), 'steps': self.num_timesteps})
+    #     return True
+    def _on_step(self):
+        super()._on_step()
+        if self.eval_freq > 0 and self.n_calls % self.eval_freq == 0:
+            # Assuming eval_env is a VecMonitor and it stores all reward info correctly
+            # It's essential to confirm that 'episode_rewards' attribute exists and is updated as expected
+            all_eval_results = self.eval_env.get_attr('episode_rewards')
+
+            # Flatten the list of rewards and calculate the mean across all evaluations
+            flat_rewards = [item for sublist in all_eval_results for item in sublist]
+            mean_reward = sum(flat_rewards) / len(flat_rewards) if flat_rewards else 0
+
+            # Log the evaluation results to WandB
+            wandb.log({
+                'eval/mean_reward': mean_reward,
+                'steps': self.num_timesteps
+            }, commit=True)
+
+        return True
 
 tmp_path = "/tmp/sb3_log/"
 # set up logger
@@ -99,97 +147,67 @@ if __name__ == "__main__":
 
     num_agents = 3
     manager = Manager(num_agents=num_agents, assignment_method="multiply")
-    env = MultiAgentEnvironment(manager=manager)
 
-    # env.set_manager(manager)
-    # env.reset()
-
-
-    print(f"Starting training on {str(env.metadata['name'])}.")
-
-
-
+    train_rm = SparseRewardMachine("reward_machines/buttons/aux_buttons.txt")
+    env = MultiAgentEnvironment(manager=manager, labeled_mdp_class=HardButtonsLabeled, reward_machine=train_rm, config_file_name = "config/buttons.yaml")
     env = ss.black_death_v3(env)
-
     env = ss.pettingzoo_env_to_vec_env_v1(env)
     env = ss.concat_vec_envs_v1(env, 1, num_cpus=1, base_class="stable_baselines3")
     env = VecMonitor(env)
 
-    goal_selection_strategy = "future"
+
+    eval_log_dir = "./eval_logs/"
+    os.makedirs(eval_log_dir, exist_ok=True)
+
+    eval_env = MultiAgentEnvironment(manager=manager, labeled_mdp_class=HardButtonsLabeled, reward_machine=train_rm, config_file_name = "config/buttons.yaml", test=True)
+    eval_env = ss.black_death_v3(eval_env)
+    eval_env = ss.pettingzoo_env_to_vec_env_v1(eval_env)
+    eval_env = ss.concat_vec_envs_v1(eval_env, 1, num_cpus=1, base_class="stable_baselines3")
+    eval_env = VecMonitor(eval_env)
+
+
+    eval_callback = EvalCallback(eval_env, best_model_save_path=eval_log_dir,
+                              log_path=eval_log_dir, eval_freq=1000*3,
+                              n_eval_episodes=5, deterministic=True,
+                              render=False)
+    # monitor_eval_env = Monitor(eval_env)
+    # eval_callback = WandBEvalCallback(eval_env, eval_freq=5000, n_eval_episodes=10)
 
     model = DQN(
         "MlpPolicy",
         env,
-        verbose=3,
+        verbose=1,
         # action_noise=action_noise,
         exploration_initial_eps= 1,
-        exploration_final_eps=0.15, 
+        exploration_final_eps=0.05, 
         exploration_fraction=0.25,
         batch_size=5000,
         learning_rate=0.0001,
         # target_update_interval=100,
-        gamma = 0.88,
-        buffer_size=5000,
+        gamma = 0.9,
+        buffer_size=20000,
         target_update_interval=5000,
-        tensorboard_log=f"runs/{run.id}"
+        tensorboard_log=f"runs/{run.id}",
+        # max_grad_norm=float('inf')
+        # max_grad_norm=100,
+        max_grad_norm=1
     )
-
-    # model = DQN(
-    #     "MlpPolicy",
-    #     env,
-    #     verbose=3,
-    #     # action_noise=action_noise,
-    #     exploration_initial_eps= 1,
-    #     exploration_final_eps=0.05, 
-    #     exploration_fraction=0.25,
-    #     batch_size=5000,
-    #     learning_rate=0.0001,
-    #     replay_buffer_class=HerReplayBuffer,
-    #     replay_buffer_kwargs=dict(
-    #     n_sampled_goal=4,
-    #     goal_selection_strategy=goal_selection_strategy,
-    #     ),
-    #     # target_update_interval=100,
-    #     gamma = 0.9,
-    #     buffer_size=10000,
-    #     target_update_interval=1000,
-    #     tensorboard_log=f"runs/{run.id}"
-    # )
-
-
-    
-
-    # model = PPO2(
-    #     MlpPolicy,
-    #     env,
-    #     verbose=3,
-    #     # action_noise=action_noise,
-    #     # exploration_initial_eps= 1,
-    #     # exploration_final_eps=0.05, 
-    #     # exploration_fraction=0.25,
-    #     # batch_size=5000,
-    #     # learning_rate=0.0001,
-    #     # # target_update_interval=100,
-    #     # gamma = 0.9,
-    #     # buffer_size=10000,
-    #     # target_update_interval=1000,
-    #     tensorboard_log=f"runs/{run.id}"
-    # )
 
 
     manager.set_model(model)
     env.reset()
 
+    callback_list = CallbackList([eval_callback, WandbCallback(verbose=2,)])
+    # callback_list = CallbackList([WandbCallback(verbose=2,)])
+    model.learn(total_timesteps=2000000, callback=callback_list, log_interval=1000, progress_bar=True)
+    # model.learn(total_timesteps=2000000, callback=callback_list)
 
-    model.learn(total_timesteps=2000000, callback=WandbCallback(
-        verbose=2,
-    ))
+    # callback=WandbCallback(verbose=2,),
 
 
     model.save(f"{env.unwrapped.metadata.get('name')}_{time.strftime('%Y%m%d-%H%M%S')}")
 
     print("Model has been saved.")
-
     print(f"Finished training on {str(env.unwrapped.metadata['name'])}.")
 
     env.close()

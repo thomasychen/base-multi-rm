@@ -203,36 +203,24 @@ class MultiAgentEnvironment(ParallelEnv):
         truncations = {agent: env_truncation for agent in self.agents}
 
         infos = {agent: {"timesteps": self.time_step} for agent in self.agents}
-
-        self.agents = []
-        if self.test:
-            if not all(terminations.values()):
-                self.agents = self.possible_agents
+        
+        if env_truncation:
+            self.agents = []
+            # print("TRUNCATED REWARDS", rewards)
+            if self.test:
                 for at in terminations:
                     terminations[at] = False
         else:
-            if not env_truncation:
+            self.agents = []
+            if not self.test:
                 for agent in terminations:
                     if not terminations[agent]:
                         self.agents.append(agent)
-
-        
-        # if env_truncation:
-        #     self.agents = []
-        #     # print("TRUNCATED REWARDS", rewards)
-        #     if self.test:
-        #         print("\n\n\nTRUNCATE", terminations)
-        # else:
-        #     self.agents = []
-        #     if not self.test:
-        #         for agent in terminations:
-        #             if not terminations[agent]:
-        #                 self.agents.append(agent)
-        #     else:
-        #         if not all(terminations.values()):
-        #             self.agents = self.possible_agents
-        #             for at in terminations:
-        #                 terminations[at] = False
+            else:
+                if not all(terminations.values()):
+                    self.agents = self.possible_agents
+                    for at in terminations:
+                        terminations[at] = False
     
             # if not self.agents:
             #     print("FINISHED REWARDS", rewards)
@@ -245,7 +233,6 @@ class MultiAgentEnvironment(ParallelEnv):
             else:
                 for ar in rewards:
                     rewards[ar] = 0
-            print(terminations, rewards, self.rm_states)
             
         # print("\n\n\n", observations, rewards, terminations, truncations)
         return observations, rewards, terminations, truncations, infos

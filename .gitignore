@@ -160,3 +160,5 @@ cython_debug/
 runs/
 wandb/
 venv/
+custom_environment_v0*
+eval_logs/

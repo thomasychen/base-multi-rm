@@ -186,7 +186,7 @@ if __name__ == "__main__":
         # target_update_interval=100,
         gamma = 0.9,
         buffer_size=20000,
-        target_update_interval=5000,
+        target_update_interval=1000,
         tensorboard_log=f"runs/{run.id}",
         # max_grad_norm=float('inf')
         # max_grad_norm=100,
@@ -199,7 +199,7 @@ if __name__ == "__main__":
 
     callback_list = CallbackList([eval_callback, WandbCallback(verbose=2,)])
     # callback_list = CallbackList([WandbCallback(verbose=2,)])
-    model.learn(total_timesteps=2000000, callback=callback_list, log_interval=1000, progress_bar=True)
+    model.learn(total_timesteps=2000000, callback=callback_list, log_interval=100, progress_bar=True)
     # model.learn(total_timesteps=2000000, callback=callback_list)
 
     # callback=WandbCallback(verbose=2,),
@@ -213,6 +213,17 @@ if __name__ == "__main__":
     env.close()
 
     env_kwargs = {}
+
+    data = np.load('./eval_logs/evaluations.npz')
+    test_steps = data['ep_lengths'].mean(axis=1, keepdims=True)
+    test_reward = data['results'].mean(axis=1,keepdims = True)
+    
+    # Log the array to wandb with the index as x-axis
+    for i, length in enumerate(test_steps):
+        wandb.log({"Test Mean Episode Length": test_steps[i][0], "Test Mean Episode Reward": test_reward[i][0]})
+
+    # Finish your run
+    wandb.finish()
 
     # # Evaluate 10 games (average reward should be positive but can vary significantly)
     # eval(MultiAgentEnvironment, num_games=100, render_mode=None, **env_kwargs)

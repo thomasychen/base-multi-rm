@@ -1,5 +1,5 @@
 from pettingzoo import ParallelEnv
-from sparse_reward_machine import SparseRewardMachine
+from reward_machines.sparse_reward_machine import SparseRewardMachine
 import yaml
 from mdp_label_wrappers.buttons_mdp_labeled import HardButtonsLabeled
 from gymnasium.spaces import Discrete, Box, MultiDiscrete
@@ -7,47 +7,35 @@ import numpy as np
 import functools
 import copy
 import itertools
+import random
 
 class MultiAgentEnvironment(ParallelEnv):
     metadata = {
         "name": "custom_environment_v0",
     }
 
-    def __init__(self, manager, labeled_mdp_class, reward_machine:SparseRewardMachine, config_file_name, test = False, render_mode=None):
+    def __init__(self, manager, labeled_mdp_class, reward_machine:SparseRewardMachine, config_file_name, max_agents, test = False, render_mode=None):
         MultiAgentEnvironment.manager = manager
 
         self.render_mode = render_mode
 
-        # self.num_agents = 3
         with open(config_file_name, 'r') as file:
             self.env_config = yaml.safe_load(file)
 
         self.labeled_mdp = labeled_mdp_class(self.env_config)
         self.reward_machine = reward_machine
         self.test = test
-        
+        self.max_agents = max_agents
 
 
-        #  = env_config
-
-        self.possible_agents = ["agent_" + str(r) for r in range(3)]
-
+        self.possible_agents = ["agent_" + str(r) for r in range(self.max_agents)]
 
         # optional: a mapping between agent name and ID
         self.agent_name_mapping = dict(
             zip(self.possible_agents, list(range(len(self.possible_agents))))
         )
-        # self._action_spaces = {agent: Discrete(5) for agent in self.possible_agents}
-        # self._observation_spaces = {
-        #     agent: Box(low=0, high=99, shape=(2,)) for agent in self.possible_agents
-        # }
-
-        # # Define observation and action spaces.
-        # self.action_space = gym.spaces.Dict({f"agent_{i}":action_space for i in range(self.num_agents)})# 5 possible actions.
-        # self.observation_space = gym.spaces.Dict({f"agent_{i}":observation_space for i in range(self.num_agents)})  # Observations include MDP and RM states.
 
     def reset(self, seed=None, options=None):
-
         self.agents = self.possible_agents[:]
         self.time_step = 0
         with open('config/buttons.yaml', 'r') as file:
@@ -55,12 +43,10 @@ class MultiAgentEnvironment(ParallelEnv):
 
     
         mdp_state_array = copy.deepcopy(self.env_config["initial_mdp_states"])
-        
         rm_state_array = copy.deepcopy(self.env_config["initial_rm_states"])
-        if self.test:
-            rm_assignments = MultiAgentEnvironment.manager.curr_assignment
-        else:
-            rm_assignments = MultiAgentEnvironment.manager.get_rm_assignments(mdp_state_array, rm_state_array)
+
+        rm_assignments = MultiAgentEnvironment.manager.get_rm_assignments(mdp_state_array, rm_state_array, test=self.test)
+
 
         # print("rm assignment", rm_assignments)
 
@@ -74,6 +60,7 @@ class MultiAgentEnvironment(ParallelEnv):
         self.state = observations
 
         return observations, infos
+
 
 
     def step(self, actions):
@@ -139,7 +126,7 @@ class MultiAgentEnvironment(ParallelEnv):
         # print("TERMINATIONS", terminations)
         # if len(actions) == self.num_agents:
         if not self.test:
-            all_permutations = list(itertools.permutations(self.reward_machine.U, 3))
+            all_permutations = list(itertools.permutations(self.reward_machine.U, self.max_agents))
             for perm in all_permutations:
                 bools = [(perm[j] == old_rm_states[self.possible_agents[j]] or perm[j] in self.reward_machine.T or perm[j] == self.reward_machine.u0) for j in range(len(self.possible_agents))]
                 if any(bools):
@@ -216,6 +203,8 @@ class MultiAgentEnvironment(ParallelEnv):
                 for agent in terminations:
                     if not terminations[agent]:
                         self.agents.append(agent)
+                if not self.agents:
+                    self.manager.update_rewards(1)
             else:
                 if not all(terminations.values()):
                     self.agents = self.possible_agents

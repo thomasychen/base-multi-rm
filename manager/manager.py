@@ -4,10 +4,13 @@ import torch
 import random
 import itertools
 from stable_baselines3.common.utils import obs_as_tensor
+import wandb
 
 class Manager:
-    def __init__(self, num_agents, assignment_method = "ground_truth", model=None):
-
+    def __init__(self, num_agents, assignment_method = "ground_truth", model=None, seed=None):
+        if seed:
+            random.seed(seed)
+        
         self.curr_assignment = list(np.random.permutation([i for i in range(num_agents)]))
         self.assignment_method = assignment_method
         self.num_agents = num_agents
@@ -31,15 +34,24 @@ class Manager:
         self.model = model
 
 
-    def get_rm_assignments(self, init_mdp_states, init_rm_states):
+    def get_rm_assignments(self, init_mdp_states, init_rm_states, test=False):
         # self.window_cnt += 1
         # if self.window_cnt % self.window != 0:
         #     return self.curr_assignment
         self.curr_permutation_qs = self.calculate_permutation_qs(init_mdp_states, init_rm_states, True)
+        if not test: 
+            for perm in self.curr_permutation_qs:
+                wandb.log({f"Score for {perm}": self.curr_permutation_qs[perm]})
 
-        if self.assignment_method == "ground_truth":
+        if test and self.assignment_method != "naive":
+            return self.curr_assignment
+        elif test and self.assignment_method == "naive":
+            self.curr_permutation_qs = self.calculate_permutation_qs(init_mdp_states, init_rm_states, True)
+            self.curr_assignment = list(max(self.curr_permutation_qs, key=self.curr_permutation_qs.get))
+            return self.curr_assignment
+        elif self.assignment_method == "ground_truth":
             self.curr_assignment = [0,1,2]
-        elif self.assignment_method == "random": 
+        elif self.assignment_method == "random" or self.assignment_method == "naive": 
             self.curr_assignment = list(random.choice(list(self.curr_permutation_qs.keys())))
         elif self.assignment_method == "add":
             self.curr_permutation_qs = self.calculate_permutation_qs(init_mdp_states, init_rm_states, True)
@@ -117,9 +129,9 @@ class Manager:
     
     
     ### FOR UCB ###
-    def update_rewards(self, permutation, reward):
+    def update_rewards(self, reward):
         # Update the total reward for a permutation after an assignment is completed
-        self.permutation_total_rewards[tuple(permutation)] += reward
+        self.permutation_total_rewards[tuple(self.curr_assignment)] += reward
     
     def calculate_ucb_value(self, permutation):
         # Calculate the UCB value for a given permutation
@@ -129,7 +141,9 @@ class Manager:
         average_reward = self.permutation_total_rewards[permutation] / self.permutation_counts[permutation]
         confidence = np.sqrt((2 * np.log(self.total_selections)) / self.permutation_counts[permutation])
         return average_reward + self.ucb_c * confidence
-                    
+    
+    def get_curr_assignment(self):
+        return self.curr_assignment
                 
 
     

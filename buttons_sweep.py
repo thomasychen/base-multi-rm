@@ -1,7 +1,7 @@
 import wandb
 from wandb.integration.sb3 import WandbCallback
 from stable_baselines3 import DQN, PPO, SAC, DDPG, HER, HerReplayBuffer
-from pettingzoo_product_env.custom_environment.env.custom_environment import MultiAgentEnvironment
+from pettingzoo_product_env.pettingzoo_product_env import MultiAgentEnvironment
 import supersuit as ss
 from stable_baselines3.common.vec_env.vec_monitor import VecMonitor
 import yaml

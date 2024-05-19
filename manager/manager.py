@@ -7,7 +7,7 @@ from stable_baselines3.common.utils import obs_as_tensor
 import wandb
 
 class Manager:
-    def __init__(self, num_agents, assignment_method = "ground_truth", model=None, seed=None):
+    def __init__(self, num_agents, assignment_method = "ground_truth", model=None, wandb=False, seed=None):
         if seed:
             random.seed(seed)
         
@@ -17,6 +17,7 @@ class Manager:
         self.curr_permutation_qs = {}
         self.epsilon = 1
         self.epsilon_decay = 0.999
+        self.wandb = wandb
 
         ### UCB Specific ####
 
@@ -39,9 +40,10 @@ class Manager:
         # if self.window_cnt % self.window != 0:
         #     return self.curr_assignment
         self.curr_permutation_qs = self.calculate_permutation_qs(init_mdp_states, init_rm_states, True)
-        if not test: 
-            for perm in self.curr_permutation_qs:
-                wandb.log({f"Score for {perm}": self.curr_permutation_qs[perm]})
+        if self.wandb:
+            if not test: 
+                for perm in self.curr_permutation_qs:
+                    wandb.log({f"Score for {perm}": self.curr_permutation_qs[perm]})
 
         if test and self.assignment_method != "naive":
             return self.curr_assignment

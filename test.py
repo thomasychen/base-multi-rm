@@ -1,9 +1,4 @@
 import numpy as np
+from utils.plot_utils import generate_plots
 
-data = np.load('./eval_logs/evaluations.npz')
-
-# Print each array in the file
-for key in data:
-    print(f"Array in '{key}':")
-    print(data[key])
-    print()  # Adds a blank line for better separation
+generate_plots("logs/20240518-231210", 50)

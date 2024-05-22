@@ -1,7 +1,6 @@
 from pettingzoo import ParallelEnv
 from reward_machines.sparse_reward_machine import SparseRewardMachine
 import yaml
-from mdp_label_wrappers.buttons_mdp_labeled import HardButtonsLabeled
 from gymnasium.spaces import Discrete, Box, MultiDiscrete
 import numpy as np
 import functools
@@ -172,8 +171,10 @@ class MultiAgentEnvironment(ParallelEnv):
                         big_actions.append(np.array([a]))
                         big_rewards.append(new_r)
                         big_dones.append(done)
-                    
-                    if sum([(big_rewards[i_a] == 1 and self.possible_agents[i_a] in actions and rewards[self.possible_agents[i_a]] != 1) or (big_rewards[i_a] == 0 and self.possible_agents[i_a] in actions and rewards[self.possible_agents[i_a]] == 1) for i_a in range(len(big_rewards))])> 0:
+
+                    # if sum([(big_rewards[i_a] == 1 and self.possible_agents[i_a] in actions and rewards[self.possible_agents[i_a]] != 1) for i_a in range(len(big_rewards))])> 0:
+                    if sum([(big_rewards[i_a] == 1 and self.possible_agents[i_a] in actions) for i_a in range(len(big_rewards))])> 0:
+                    # if sum([(big_rewards[i_a] == 1 and self.possible_agents[i_a] in actions and rewards[self.possible_agents[i_a]] != 1) or (big_rewards[i_a] == 0 and self.possible_agents[i_a] in actions and rewards[self.possible_agents[i_a]] == 1) for i_a in range(len(big_rewards))])> 0:
                         # print("\n\n\nHi\n\n\n")
                         MultiAgentEnvironment.manager.model.replay_buffer.add(big_prev_states, big_new_states, np.array(big_actions),np.array(big_rewards), np.array(big_dones), infos)
 

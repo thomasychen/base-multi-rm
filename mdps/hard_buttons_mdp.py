@@ -10,7 +10,7 @@ class Actions(Enum):
     left  = 3 # move left
     none  = 4 # none 
 
-class ButtonsEnv():
+class HardButtonsEnv():
 
     def __init__(self, env_config):
         """

@@ -1,4 +1,4 @@
-from mdps.buttons_mdp import HardButtonsEnv
+from mdps.hard_buttons_mdp import HardButtonsEnv
 
 class HardButtonsLabeled(HardButtonsEnv):
     def get_mdp_label(self, s_next):

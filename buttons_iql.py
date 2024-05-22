@@ -37,11 +37,20 @@ from utils.plot_utils import generate_plots
 # os.makedirs(log_dir, exist_ok=True)
 # new_logger = configure(log_dir, ["stdout", "csv", "tensorboard"])
 
+def str2bool(v):
+    if isinstance(v, bool):
+        return v
+    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+        return True
+    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')
 
 parser = argparse.ArgumentParser(description="Run reinforcement learning experiments with PettingZoo and Stable Baselines3.")
 parser.add_argument('--assignment_methods', type=str, default="ground_truth naive random add multiply UCB", help='The assignment method for the manager. Default is "ground_truth".')
 parser.add_argument('--num_iterations', type=int, default=5, help='Number of iterations for the experiment. Default is 5.')
-parser.add_argument('--wandb', type=bool, default=False, help='Turn Wandb logging on or off. Default is off')
+parser.add_argument('--wandb', type=str2bool, default=False, help='Turn Wandb logging on or off. Default is off')
 parser.add_argument('--timesteps', type=int, default=2000000, help='Number of timesteps to train model. Default is 2000000')
 args = parser.parse_args()
 
@@ -140,7 +149,7 @@ if __name__ == "__main__":
                 gamma = 0.9,
                 buffer_size=20000,
                 target_update_interval=1000,
-                # tensorboard_log=f"runs/{run.id}",
+                tensorboard_log=f"runs/{run.id}",
                 max_grad_norm=1,
             )
             # model.set_logger(new_logger)
@@ -148,12 +157,17 @@ if __name__ == "__main__":
             manager.set_model(model)
             env.reset()
 
+            # callback_list = None
+            # callback_list = CallbackList([eval_callback, WandbCallback(verbose=2,)])
+
 
             if args.wandb:
                 callback_list = CallbackList([eval_callback, WandbCallback(verbose=2,)])
+                print("RETARD\n\n")
 
             else:
                 callback_list = CallbackList([eval_callback])
+                print("DUMBASSSS")
 
             model.learn(total_timesteps=args.timesteps, callback=callback_list, log_interval=100, progress_bar=True)
 
@@ -176,6 +190,7 @@ if __name__ == "__main__":
             # Finish your run
             if args.wandb:
                 wandb.finish()
+            # wandb.finish()
             
             # Read the log file for this iteration
             # log_path = os.path.join(log_dir, "progress.csv")

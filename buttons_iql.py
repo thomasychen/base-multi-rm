@@ -28,7 +28,7 @@ import os
 from collections import defaultdict
 import pandas as pd
 from utils.plot_utils import generate_plots
-
+import re
 ## WANDB KILL SWITCH
 # ps aux|grep wandb|grep -v grep | awk '{print $2}'|xargs kill -9
 
@@ -47,11 +47,29 @@ def str2bool(v):
     else:
         raise argparse.ArgumentTypeError('Boolean value expected.')
 
+# Function to extract states connected to 0
+def extract_states_from_text(text):
+    pattern = re.compile(r'\(0, (\d+),')
+    matches = pattern.findall(text)
+    return list(map(int, matches))
+
+# Function to read file and extract states
+def extract_states_from_file(file_path):
+    try:
+        with open(file_path, 'r') as file:
+            content = file.read()
+        return extract_states_from_text(content)
+    except Exception as e:
+        print(f"Error reading file: {e}")
+        return []
+
 parser = argparse.ArgumentParser(description="Run reinforcement learning experiments with PettingZoo and Stable Baselines3.")
 parser.add_argument('--assignment_methods', type=str, default="ground_truth naive random add multiply UCB", help='The assignment method for the manager. Default is "ground_truth".')
 parser.add_argument('--num_iterations', type=int, default=5, help='Number of iterations for the experiment. Default is 5.')
 parser.add_argument('--wandb', type=str2bool, default=False, help='Turn Wandb logging on or off. Default is off')
 parser.add_argument('--timesteps', type=int, default=2000000, help='Number of timesteps to train model. Default is 2000000')
+parser.add_argument('--cer', type=str2bool, default=True, help='Turn CER on or off' )
+parser.add_argument('--decomposition_file', type=str, default="reward_machines/buttons/aux_buttons.txt",  help="The reward machine file for this decomposition")
 args = parser.parse_args()
 
 
@@ -98,14 +116,17 @@ if __name__ == "__main__":
 
             num_agents = 3
             manager = Manager(num_agents=num_agents, assignment_method=method, wandb=args.wandb, seed = i)
-            train_rm = SparseRewardMachine("reward_machines/buttons/aux_buttons.txt")
+            train_rm = SparseRewardMachine(args.decomposition_file)
+
+            buttons_config["initial_rm_states"] = extract_states_from_file(args.decomposition_file)
 
             train_kwargs = {
                 'manager': manager,
                 'labeled_mdp_class': HardButtonsLabeled,
                 'reward_machine': train_rm,
-                'config_file_name': "config/buttons.yaml",
-                'max_agents': 3
+                'config': buttons_config,
+                'max_agents': 3,
+                'cer': args.cer,
             }
 
             env = MultiAgentEnvironment(**train_kwargs)

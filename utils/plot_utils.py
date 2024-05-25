@@ -3,8 +3,9 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from collections import defaultdict
+from scipy import stats
 
-def generate_plots(log_dir_base, window_size=10):
+def generate_plots(log_dir_base, window_size=10, confidence_level=0.9):
     all_timesteps = None
     all_mean_rewards = defaultdict(dict)
     all_mean_ep_lengths = defaultdict(dict)
@@ -38,12 +39,14 @@ def generate_plots(log_dir_base, window_size=10):
     for method in assignment_methods:
         df_mean_rewards = pd.DataFrame(all_mean_rewards[method]).transpose()
         mean_rewards = df_mean_rewards.mean(axis=0).rolling(window=window_size).mean()
-        std_rewards = df_mean_rewards.std(axis=0).rolling(window=window_size).mean()
+        sem_rewards = df_mean_rewards.sem(axis=0).rolling(window=window_size).mean()
+        t_value = stats.t.ppf((1 + confidence_level) / 2, df_mean_rewards.count(axis=0) - 1)
+        ci_rewards = sem_rewards * t_value
         plt.plot(all_timesteps, mean_rewards, label=f"{method}")
-        plt.fill_between(all_timesteps, mean_rewards - std_rewards, mean_rewards + std_rewards, alpha=0.2)
+        plt.fill_between(all_timesteps, mean_rewards - ci_rewards, mean_rewards + ci_rewards, alpha=0.2)
     plt.xlabel("Total Timesteps")
     plt.ylabel("Mean Reward")
-    plt.title("Mean Reward over Total Timesteps (Smoothed)")
+    plt.title(f"Mean Reward over Total Timesteps (Smoothed with {int(confidence_level*100)}% CI)")
     plt.legend()
     plt.grid()
 
@@ -51,12 +54,14 @@ def generate_plots(log_dir_base, window_size=10):
     for method in assignment_methods:
         df_mean_ep_lengths = pd.DataFrame(all_mean_ep_lengths[method]).transpose()
         mean_ep_lengths = df_mean_ep_lengths.mean(axis=0).rolling(window=window_size).mean()
-        std_ep_lengths = df_mean_ep_lengths.std(axis=0).rolling(window=window_size).mean()
+        sem_ep_lengths = df_mean_ep_lengths.sem(axis=0).rolling(window=window_size).mean()
+        t_value = stats.t.ppf((1 + confidence_level) / 2, df_mean_ep_lengths.count(axis=0) - 1)
+        ci_ep_lengths = sem_ep_lengths * t_value
         plt.plot(all_timesteps, mean_ep_lengths, label=f"{method}")
-        plt.fill_between(all_timesteps, mean_ep_lengths - std_ep_lengths, mean_ep_lengths + std_ep_lengths, alpha=0.2)
+        plt.fill_between(all_timesteps, mean_ep_lengths - ci_ep_lengths, mean_ep_lengths + ci_ep_lengths, alpha=0.2)
     plt.xlabel("Total Timesteps")
     plt.ylabel("Mean Episode Length")
-    plt.title("Mean Episode Length over Total Timesteps (Smoothed)")
+    plt.title(f"Mean Episode Length over Total Timesteps (Smoothed with {int(confidence_level*100)}% CI)")
     plt.legend()
     plt.grid()
 

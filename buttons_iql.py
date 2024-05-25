@@ -170,7 +170,7 @@ if __name__ == "__main__":
                 gamma = 0.9,
                 buffer_size=20000,
                 target_update_interval=1000,
-                tensorboard_log=f"runs/{run.id}",
+                tensorboard_log=f"runs/{run.id}" if args.wandb else None,
                 max_grad_norm=1,
             )
             # model.set_logger(new_logger)

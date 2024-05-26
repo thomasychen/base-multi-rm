@@ -8,6 +8,7 @@ import copy
 import itertools
 import random
 
+
 class MultiAgentEnvironment(ParallelEnv):
     metadata = {
         "name": "custom_environment_v0",
@@ -15,6 +16,8 @@ class MultiAgentEnvironment(ParallelEnv):
 
     def __init__(self, manager, labeled_mdp_class, reward_machine:SparseRewardMachine, config, max_agents, cer= True, test = False, render_mode=None):
         MultiAgentEnvironment.manager = manager
+
+        # self.manager = manager
 
         self.render_mode = render_mode
 
@@ -25,6 +28,7 @@ class MultiAgentEnvironment(ParallelEnv):
         self.reward_machine = reward_machine
         self.test = test
         self.max_agents = max_agents
+        self.local_manager = None
 
 
         self.possible_agents = ["agent_" + str(r) for r in range(self.max_agents)]
@@ -41,7 +45,11 @@ class MultiAgentEnvironment(ParallelEnv):
         mdp_state_array = copy.deepcopy(self.env_config["initial_mdp_states"])
         rm_state_array = copy.deepcopy(self.env_config["initial_rm_states"])
 
-        rm_assignments = MultiAgentEnvironment.manager.get_rm_assignments(mdp_state_array, rm_state_array, test=self.test)
+        if not self.local_manager:
+            self.local_manager = MultiAgentEnvironment.manager
+
+        rm_assignments = self.local_manager.get_rm_assignments(mdp_state_array, rm_state_array, test=self.test)
+        # rm_assignments = self.manager.get_rm_assignments(mdp_state_array, rm_state_array, test=self.test)
 
 
         # print("rm assignment", rm_assignments)
@@ -183,7 +191,7 @@ class MultiAgentEnvironment(ParallelEnv):
                     if sum([(big_rewards[i_a] == 1 and self.possible_agents[i_a] in actions) for i_a in range(len(big_rewards))])> 0:
                     # if sum([(big_rewards[i_a] == 1 and self.possible_agents[i_a] in actions and rewards[self.possible_agents[i_a]] != 1) or (big_rewards[i_a] == 0 and self.possible_agents[i_a] in actions and rewards[self.possible_agents[i_a]] == 1) for i_a in range(len(big_rewards))])> 0:
                         # print("\n\n\nHi\n\n\n")
-                        MultiAgentEnvironment.manager.model.replay_buffer.add(big_prev_states, big_new_states, np.array(big_actions),np.array(big_rewards), np.array(big_dones), infos)
+                        self.local_manager.model.replay_buffer.add(big_prev_states, big_new_states, np.array(big_actions),np.array(big_rewards), np.array(big_dones), infos)
 
         # for curr_agent in self.agents:
         #     observations[curr_agent] =  np.array([self.mdp_states[curr_agent], self.rm_states[curr_agent]])

@@ -178,6 +178,8 @@ if __name__ == "__main__":
             manager.set_model(model)
             env.reset()
 
+            
+
             # callback_list = None
             # callback_list = CallbackList([eval_callback, WandbCallback(verbose=2,)])
 

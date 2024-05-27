@@ -81,19 +81,21 @@ class MultiAgentEnvironment(ParallelEnv):
         old_mdp_states = copy.deepcopy(self.mdp_states)
 
         all_labels = []
-        for i in range(self.num_agents):
-            curr_agent = self.agents[i]
+        for i in range(len(self.possible_agents)):
+            if self.possible_agents[i] not in actions:
+                continue
+            curr_agent = self.possible_agents[i]
             s = self.mdp_states[curr_agent]
             a = actions[curr_agent]
             s_next = self.labeled_mdp.environment_step(s, a)
             labels = self.labeled_mdp.get_mdp_label(s_next)
-            all_labels.extend(labels)
+            for label in labels: 
+                if label in self.reward_machine.delta_u[self.rm_states[curr_agent]]:
+                    all_labels.append(label)
 
 
         # print("ACTIONS", actions)
         for i in range(self.num_agents):
-            if self.agents[i] not in actions:
-                continue
             curr_agent = self.agents[i]
             s = self.mdp_states[curr_agent]
             a = actions[curr_agent]

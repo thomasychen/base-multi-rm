@@ -48,14 +48,14 @@ class MultiAgentEnvironment(ParallelEnv):
         if not self.local_manager:
             self.local_manager = MultiAgentEnvironment.manager
 
-        rm_assignments = self.local_manager.get_rm_assignments(mdp_state_array, rm_state_array, test=self.test)
+        rm_assignments, decomp_idx = self.local_manager.get_rm_assignments(mdp_state_array, rm_state_array, test=self.test)
         # rm_assignments = self.manager.get_rm_assignments(mdp_state_array, rm_state_array, test=self.test)
 
 
         # print("rm assignment", rm_assignments)
 
         self.mdp_states = {self.agents[i]:mdp_state_array[i] for i in range(len(self.agents))}
-        self.rm_states = {self.agents[i]:rm_state_array[rm_assignments[i]] for i in range(len(self.agents))}
+        self.rm_states = {self.agents[i]:rm_state_array[decomp_idx][rm_assignments[i]] for i in range(len(self.agents))}
 
         observations = {agent: np.array([self.mdp_states[agent], self.rm_states[agent]]) for agent in self.agents}
         # print(observations)

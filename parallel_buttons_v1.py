@@ -16,10 +16,10 @@ from reward_machines.sparse_reward_machine import SparseRewardMachine
 from mdp_label_wrappers.buttons_mdp_labeled import HardButtonsLabeled
 from pettingzoo_product_env.pettingzoo_product_env import MultiAgentEnvironment
 from manager.manager import Manager
-from threading import Lock
+# from threading import Lock
 from wandb.integration.sb3 import WandbCallback
-
-global_lock = Lock()
+from multiprocessing import Lock, Manager as ProcessManager
+from concurrent.futures import ProcessPoolExecutor
 
 def str2bool(v):
     if isinstance(v, bool):
@@ -45,7 +45,7 @@ def extract_states_from_file(file_path):
         print(f"Error reading file: {e}")
         return []
 
-def run_experiment(method, iteration, args, log_dir_base):
+def run_experiment(method, iteration, args, log_dir_base, global_lock):
     global_lock.acquire()
     set_random_seed(iteration)
 
@@ -117,7 +117,7 @@ def run_experiment(method, iteration, args, log_dir_base):
         verbose=1,
         exploration_initial_eps=1,
         exploration_final_eps=0.05,
-        exploration_fraction=0.25,
+        exploration_fraction=0.35,
         batch_size=5000,
         learning_rate=0.0001,
         gamma=0.9,
@@ -152,7 +152,7 @@ def main():
     parser.add_argument('--wandb', type=str2bool, default=False, help='Turn Wandb logging on or off. Default is off')
     parser.add_argument('--timesteps', type=int, default=2000000, help='Number of timesteps to train model. Default is 2000000')
     parser.add_argument('--cer', type=str2bool, default=True, help='Turn CER on or off')
-    parser.add_argument('--decomposition_file', type=str, default="reward_machines/buttons/aux_buttons.txt", help="The reward machine file for this decomposition")
+    parser.add_argument('--decomposition_file', type=str, default="reward_machines/buttons/buttons_decompositions.txt", help="The reward machine file for this decomposition")
     args = parser.parse_args()
 
     assignment_methods = args.assignment_methods.split()
@@ -163,14 +163,16 @@ def main():
     log_dir_base = os.path.join(real_base, f"{timestamp}")
     os.makedirs(log_dir_base, exist_ok=True)
 
-    with ThreadPoolExecutor() as executor:
-        futures = []
-        for method in assignment_methods:
-            for i in range(1, args.num_iterations + 1):
-                futures.append(executor.submit(run_experiment, method, i, args, log_dir_base))
+    with ProcessManager() as manager:
+        global_lock = manager.Lock()
+        with ProcessPoolExecutor(max_workers = 8) as executor:
+            futures = []
+            for method in assignment_methods:
+                for i in range(1, args.num_iterations + 1):
+                    futures.append(executor.submit(run_experiment, method, i, args, log_dir_base, global_lock))
 
-        for future in futures:
-            future.result()
+            for future in futures:
+                future.result()
 
 if __name__ == "__main__":
     main()

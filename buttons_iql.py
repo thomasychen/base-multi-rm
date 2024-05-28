@@ -29,6 +29,8 @@ from collections import defaultdict
 import pandas as pd
 from utils.plot_utils import generate_plots
 import re
+import torch as th
+
 ## WANDB KILL SWITCH
 # ps aux|grep wandb|grep -v grep | awk '{print $2}'|xargs kill -9
 
@@ -69,7 +71,7 @@ parser.add_argument('--num_iterations', type=int, default=5, help='Number of ite
 parser.add_argument('--wandb', type=str2bool, default=False, help='Turn Wandb logging on or off. Default is off')
 parser.add_argument('--timesteps', type=int, default=2000000, help='Number of timesteps to train model. Default is 2000000')
 parser.add_argument('--cer', type=str2bool, default=True, help='Turn CER on or off' )
-parser.add_argument('--decomposition_file', type=str, default="reward_machines/buttons/aux_buttons.txt",  help="The reward machine file for this decomposition")
+parser.add_argument('--decomposition_file', type=str, default="reward_machines/buttons/buttons_decompositions.txt",  help="The reward machine file for this decomposition")
 args = parser.parse_args()
 
 
@@ -115,10 +117,10 @@ if __name__ == "__main__":
                 buttons_config = yaml.safe_load(file)
 
             num_agents = 3
-            manager = Manager(num_agents=num_agents, assignment_method=method, wandb=args.wandb, seed = i)
+            manager = Manager(num_agents=num_agents, num_decomps = len(buttons_config["initial_rm_states"]),assignment_method=method, wandb=args.wandb, seed = i)
             train_rm = SparseRewardMachine(args.decomposition_file)
 
-            buttons_config["initial_rm_states"] = extract_states_from_file(args.decomposition_file)
+            # buttons_config["initial_rm_states"] = extract_states_from_file(args.decomposition_file)
 
             train_kwargs = {
                 'manager': manager,
@@ -158,6 +160,9 @@ if __name__ == "__main__":
                                     n_eval_episodes=10, deterministic=True,
                                     render=False)
 
+
+            policy_kwargs = dict(activation_fn=th.nn.ReLU, net_arch=[128, 128])
+            
             model = DQN(
                 "MlpPolicy",
                 env,
@@ -172,7 +177,24 @@ if __name__ == "__main__":
                 target_update_interval=1000,
                 tensorboard_log=f"runs/{run.id}" if args.wandb else None,
                 max_grad_norm=1,
+                policy_kwargs=policy_kwargs
             )
+            # model = DQN(
+            #     "MlpPolicy",
+            #     env,
+            #     verbose=1,
+            #     exploration_initial_eps= 1,
+            #     exploration_final_eps=0.05, 
+            #     exploration_fraction=0.25,
+            #     batch_size=512,
+            #     learning_rate=0.0001,
+            #     gamma = 0.88,
+            #     buffer_size=7000,
+            #     target_update_interval=100,
+            #     tensorboard_log=f"runs/{run.id}" if args.wandb else None,
+            #     max_grad_norm=1,
+            #     policy_kwargs=policy_kwargs
+            # )
             # model.set_logger(new_logger)
 
             manager.set_model(model)

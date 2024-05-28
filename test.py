@@ -1,7 +1,7 @@
-from utils.plot_utils import generate_plots, generate_plots_legacy
+from utils.plot_utils import generate_plots
 import numpy as np
 
-generate_plots_legacy('logs/20240525-210407', 1)
+generate_plots('logs/20240527-021238', 30)
 
 # import numpy as np
 

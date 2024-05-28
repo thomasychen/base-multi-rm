@@ -1,0 +1,19 @@
+0 # auxiliary node
+(1, 4, 'by', 1) # Yellow button is pressed
+(4, 4, 'True', 0) # state 4 is an absorbing state
+(2, 5, 'bg', 1) # Green button is pressed
+(5, 5, 'True', 0) # state 5 is an absorbing state
+(3, 6, 'br', 1) # Red button is pressed
+(6, 6, 'True', 0) # state 6 is an absorbing state
+(0, 1, "to_rm1", 0)  # Connect to RM 1
+(0, 2, "to_rm2", 0)  # Connect to RM 2
+(0, 3, "to_rm3", 0)  # Connect to RM 3
+(0, 7, "to_rm4", 0)  # Connect to RM 4
+(0, 8, "to_rm5", 0)  # Connect to RM 5
+(0, 9, "to_rm6", 0)  # Connect to RM 6
+(7, 10, 'br', 0)  # Red button is pressed 1st
+(10, 11, 'bg', 1)  # Green button is pressed 2nd
+(11, 11, 'True', 0)  # State 11 absorbing
+(8, 12, 'by', 1)  # yellow button pressed
+(12, 12, 'True', 0)  # Red button is pressed 2nd
+(9, 9, 'True', 1) # Do nothing task is absorbing

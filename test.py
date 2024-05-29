@@ -1,9 +1,11 @@
 from utils.plot_utils import generate_plots
 import numpy as np
 
-generate_plots('logs/20240527-021238', 30)
+generate_plots('logs/20240528-224742', 30)
 
 # import numpy as np
+
+'logs/20240527-021238'
 
 # # Load the npz file
 # data = np.load('/Users/nikhil/Desktop/research_rl/base-multi-rm/logs/20240525-210407/add/iteration_1/evaluations.npz')

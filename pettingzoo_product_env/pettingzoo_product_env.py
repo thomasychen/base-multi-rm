@@ -43,7 +43,7 @@ class MultiAgentEnvironment(ParallelEnv):
         self.time_step = 0
 
         mdp_state_array = copy.deepcopy(self.env_config["initial_mdp_states"])
-        rm_state_array = copy.deepcopy(self.env_config["initial_rm_states"])
+        rm_state_array = copy.deepcopy(self.env_config["initial_rm_states"]) if np.array(self.env_config["initial_rm_states"]).ndim == 2 else [copy.deepcopy(self.env_config["initial_rm_states"])]
 
         if not self.local_manager:
             self.local_manager = MultiAgentEnvironment.manager
@@ -68,6 +68,7 @@ class MultiAgentEnvironment(ParallelEnv):
 
 
     def step(self, actions):
+        # import pdb; pdb.set_trace();
         # If a user passes in actions with no agents, then just return empty observations, etc.
         # print("ACTIONS", actions)
         # print(self.rm_states)
@@ -154,7 +155,7 @@ class MultiAgentEnvironment(ParallelEnv):
                     big_actions = []
                     big_rewards = []
                     big_dones = []
-                    infos = [{}, {}, {}]
+                    infos = [{} for _ in range(len(self.possible_agents))]
                     # print(self.num_agents)
                     for k in range(len(self.possible_agents)):
                         ag = self.possible_agents[k]
@@ -190,9 +191,10 @@ class MultiAgentEnvironment(ParallelEnv):
                         big_dones.append(done)
 
                     # if sum([(big_rewards[i_a] == 1 and self.possible_agents[i_a] in actions and rewards[self.possible_agents[i_a]] != 1) for i_a in range(len(big_rewards))])> 0:
-                    if sum([(big_rewards[i_a] == 1 and self.possible_agents[i_a] in actions) for i_a in range(len(big_rewards))])> 0:
-                    # if sum([(big_rewards[i_a] == 1 and self.possible_agents[i_a] in actions and rewards[self.possible_agents[i_a]] != 1) or (big_rewards[i_a] == 0 and self.possible_agents[i_a] in actions and rewards[self.possible_agents[i_a]] == 1) for i_a in range(len(big_rewards))])> 0:
+                    # if sum([(big_rewards[i_a] == 1 and self.possible_agents[i_a] in actions) for i_a in range(len(big_rewards))])> 0:
+                    if sum([(big_rewards[i_a] == 1 and self.possible_agents[i_a] in actions and rewards[self.possible_agents[i_a]] != 1) or (big_rewards[i_a] == 0 and self.possible_agents[i_a] in actions and rewards[self.possible_agents[i_a]] == 1) for i_a in range(len(big_rewards))])> 0:
                         # print("\n\n\nHi\n\n\n")
+                        # import pdb; pdb.set_trace()
                         self.local_manager.model.replay_buffer.add(big_prev_states, big_new_states, np.array(big_actions),np.array(big_rewards), np.array(big_dones), infos)
 
         # for curr_agent in self.agents:

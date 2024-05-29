@@ -71,7 +71,8 @@ parser.add_argument('--num_iterations', type=int, default=5, help='Number of ite
 parser.add_argument('--wandb', type=str2bool, default=False, help='Turn Wandb logging on or off. Default is off')
 parser.add_argument('--timesteps', type=int, default=2000000, help='Number of timesteps to train model. Default is 2000000')
 parser.add_argument('--cer', type=str2bool, default=True, help='Turn CER on or off' )
-parser.add_argument('--decomposition_file', type=str, default="reward_machines/buttons/buttons_decompositions.txt",  help="The reward machine file for this decomposition")
+parser.add_argument('--decomposition_file', type=str, default="aux_buttons.txt",  help="The reward machine file for this decomposition")
+parser.add_argument('--experiment_name', type=str, default="buttons", help="Name of config file for environmen")
 args = parser.parse_args()
 
 
@@ -113,12 +114,13 @@ if __name__ == "__main__":
                     name=run_name
                 )
 
-            with open('config/buttons.yaml', 'r') as file:
+            with open(f'config/{args.experiment_name}.yaml', 'r') as file:
                 buttons_config = yaml.safe_load(file)
 
-            num_agents = 3
-            manager = Manager(num_agents=num_agents, num_decomps = len(buttons_config["initial_rm_states"]),assignment_method=method, wandb=args.wandb, seed = i)
-            train_rm = SparseRewardMachine(args.decomposition_file)
+            print(buttons_config)
+            # num_agents = 3
+            manager = Manager(num_agents=buttons_config['num_agents'], num_decomps = len(buttons_config["initial_rm_states"]),assignment_method=method, wandb=args.wandb, seed = i)
+            train_rm = SparseRewardMachine(f"reward_machines/{args.experiment_name}/{args.decomposition_file}")
 
             # buttons_config["initial_rm_states"] = extract_states_from_file(args.decomposition_file)
 
@@ -127,7 +129,7 @@ if __name__ == "__main__":
                 'labeled_mdp_class': HardButtonsLabeled,
                 'reward_machine': train_rm,
                 'config': buttons_config,
-                'max_agents': 3,
+                'max_agents': buttons_config['num_agents'],
                 'cer': args.cer,
             }
 
@@ -156,29 +158,38 @@ if __name__ == "__main__":
 
 
             eval_callback = EvalCallback(eval_env, best_model_save_path=None,
-                                    log_path=log_dir, eval_freq=100,
+                                    log_path=log_dir, eval_freq=200,
                                     n_eval_episodes=10, deterministic=True,
                                     render=False)
 
 
-            policy_kwargs = dict(activation_fn=th.nn.ReLU, net_arch=[128, 128])
-            
-            model = DQN(
-                "MlpPolicy",
+            # policy_kwargs = dict(activation_fn=th.nn.ReLU, net_arch=[128, 128])
+
+            model = PPO(
+                MlpPolicy,
                 env,
                 verbose=1,
-                exploration_initial_eps= 1,
-                exploration_final_eps=0.05, 
-                exploration_fraction=0.25,
-                batch_size=5000,
-                learning_rate=0.0001,
-                gamma = 0.9,
-                buffer_size=20000,
-                target_update_interval=1000,
-                tensorboard_log=f"runs/{run.id}" if args.wandb else None,
-                max_grad_norm=1,
-                policy_kwargs=policy_kwargs
+                batch_size=256,
+                learning_rate=0.001,
+                gamma = 0.92,
+                tensorboard_log=f"runs/{run.id}"
             )
+            
+            # model = DQN(
+            #     "MlpPolicy",
+            #     env,
+            #     verbose=1,
+            #     exploration_initial_eps= 1,
+            #     exploration_final_eps=0.05, 
+            #     exploration_fraction=0.2,
+            #     batch_size=5000,
+            #     learning_rate=0.0005,
+            #     gamma = buttons_config['gamma'],
+            #     buffer_size=20000,
+            #     target_update_interval=1000,
+            #     tensorboard_log=f"runs/{run.id}" if args.wandb else None,
+            #     max_grad_norm=1,
+            # )
             # model = DQN(
             #     "MlpPolicy",
             #     env,
@@ -214,7 +225,7 @@ if __name__ == "__main__":
                 callback_list = CallbackList([eval_callback])
                 print("DUMBASSSS")
 
-            model.learn(total_timesteps=args.timesteps, callback=callback_list, log_interval=100, progress_bar=True)
+            model.learn(total_timesteps=args.timesteps, callback=callback_list, log_interval=10, progress_bar=False)
 
 
             # # model.save(f"{env.unwrapped.metadata.get('name')}_{time.strftime('%Y%m%d-%H%M%S')}")

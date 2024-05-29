@@ -58,7 +58,7 @@ class Manager:
             self.set_best_assignment()
             return self.curr_assignment, self.curr_decomp
         elif self.assignment_method == "ground_truth":
-            self.curr_assignment = [0,1,2]
+            self.curr_assignment = list(range(self.num_agents))
             self.curr_decomp = 0
         elif self.assignment_method == "random" or self.assignment_method == "naive": 
             self.set_random_assignment()
@@ -74,6 +74,7 @@ class Manager:
             self.epsilon *= self.epsilon_decay
         elif self.assignment_method == "multiply":
             for i in range(len(init_rm_states)):
+                # print(i)
                 self.curr_permutation_qs[i] = self.calculate_permutation_qs(init_mdp_states, init_rm_states[i], True)
 
             if random.random() < self.epsilon:
@@ -116,7 +117,7 @@ class Manager:
             raise Exception("STUPID ASS MF")
 
         # print(self.curr_permutation_qs)
-        print(self.curr_assignment, "decomp_idx", init_rm_states[self.curr_decomp])
+        # print(self.curr_assignment, "decomp_idx", init_rm_states[self.curr_decomp])
         return self.curr_assignment, self.curr_decomp
 
 
@@ -138,11 +139,11 @@ class Manager:
                     q_values = self.model.q_net(curr_state)
 
                 # q, max_action = torch.max(q_values, dim=1)
-                q_min = q_values.min(dim=1, keepdim=True)[0]
-                q_max = q_values.max(dim=1, keepdim=True)[0]
-                q_normalized = (q_values - q_min) / (q_max - q_min)
-                q = torch.mean(q_normalized, dim=1)
-                # q = torch.mean(q_values, dim=1)
+                # q_min = q_values.min(dim=1, keepdim=True)[0]
+                # q_max = q_values.max(dim=1, keepdim=True)[0]
+                # q_normalized = (q_values - q_min) / (q_max - q_min)
+                # q = torch.mean(q_normalized, dim=1)
+                q = torch.mean(q_values, dim=1)
                 # q = 1
 
                 if multiply:

@@ -1,5 +1,6 @@
+num_agents: 3
 max_episode_length: 50
 initial_mdp_states: [0, 5, 9]
 initial_rm_states:
   - [1, 2, 3]
-  - [7, 8, 9]
+gamma: 0.9

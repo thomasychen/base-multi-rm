@@ -72,7 +72,7 @@ def run_experiment(method, iteration, args, log_dir_base, global_lock):
         buttons_config = yaml.safe_load(file)
 
     num_agents = 3
-    manager = Manager(num_agents=num_agents, assignment_method=method, wandb=args.wandb, seed=iteration)
+    manager = Manager(num_agents=num_agents, num_decomps = len(buttons_config["initial_rm_states"]), assignment_method=method, wandb=args.wandb, seed=iteration)
     train_rm = SparseRewardMachine(args.decomposition_file)
 
     buttons_config["initial_rm_states"] = extract_states_from_file(args.decomposition_file)
@@ -152,7 +152,7 @@ def main():
     parser.add_argument('--wandb', type=str2bool, default=False, help='Turn Wandb logging on or off. Default is off')
     parser.add_argument('--timesteps', type=int, default=2000000, help='Number of timesteps to train model. Default is 2000000')
     parser.add_argument('--cer', type=str2bool, default=True, help='Turn CER on or off')
-    parser.add_argument('--decomposition_file', type=str, default="reward_machines/buttons/buttons_decompositions.txt", help="The reward machine file for this decomposition")
+    parser.add_argument('--decomposition_file', type=str, default="reward_machines/buttons/aux_buttons.txt", help="The reward machine file for this decomposition")
     args = parser.parse_args()
 
     assignment_methods = args.assignment_methods.split()
@@ -165,7 +165,7 @@ def main():
 
     with ProcessManager() as manager:
         global_lock = manager.Lock()
-        with ProcessPoolExecutor(max_workers = 8) as executor:
+        with ProcessPoolExecutor(max_workers = 10) as executor:
             futures = []
             for method in assignment_methods:
                 for i in range(1, args.num_iterations + 1):

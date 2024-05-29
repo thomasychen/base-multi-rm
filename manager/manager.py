@@ -136,14 +136,15 @@ class Manager:
 
                 curr_state = obs_as_tensor(curr_state, device="cpu")
                 with torch.no_grad():
-                    q_values = self.model.q_net(curr_state)
+                    # q_values = self.model.q_net(curr_state)
+                    q = self.model.policy.predict_values(curr_state)
 
                 # q, max_action = torch.max(q_values, dim=1)
                 # q_min = q_values.min(dim=1, keepdim=True)[0]
                 # q_max = q_values.max(dim=1, keepdim=True)[0]
                 # q_normalized = (q_values - q_min) / (q_max - q_min)
                 # q = torch.mean(q_normalized, dim=1)
-                q = torch.mean(q_values, dim=1)
+                # q = torch.mean(q_values, dim=1)
                 # q = 1
 
                 if multiply:

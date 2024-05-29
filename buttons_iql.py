@@ -225,7 +225,7 @@ if __name__ == "__main__":
                 callback_list = CallbackList([eval_callback])
                 print("DUMBASSSS")
 
-            model.learn(total_timesteps=args.timesteps, callback=callback_list, log_interval=10, progress_bar=False)
+            model.learn(total_timesteps=args.timesteps, callback=callback_list, log_interval=10, progress_bar=True)
 
 
             # # model.save(f"{env.unwrapped.metadata.get('name')}_{time.strftime('%Y%m%d-%H%M%S')}")

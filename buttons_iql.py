@@ -158,7 +158,7 @@ if __name__ == "__main__":
 
 
             eval_callback = EvalCallback(eval_env, best_model_save_path=None,
-                                    log_path=log_dir, eval_freq=1000,
+                                    log_path=log_dir, eval_freq=200,
                                     n_eval_episodes=10, deterministic=True,
                                     render=False)
 
@@ -171,7 +171,7 @@ if __name__ == "__main__":
                 verbose=1,
                 batch_size=256,
                 learning_rate=buttons_config['learning_rate'],
-                gamma = 0.99,
+                gamma = buttons_config['gamma'],
                 tensorboard_log=f"runs/{run.id}"
             )
             

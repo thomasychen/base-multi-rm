@@ -5,3 +5,4 @@ initial_rm_states:
   - [1, 2]
 gamma: 0.93
 learning_rate: 0.0004
+labeled_mdp_class: "HardButtonsLabeled"

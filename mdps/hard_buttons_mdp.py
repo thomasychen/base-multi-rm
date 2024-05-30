@@ -38,8 +38,9 @@ class HardButtonsEnv():
         env_settings['green_button'] = (5,6)
         env_settings['red_button'] = (5,9)
 
-        env_settings['p'] = 0.98
+        env_settings['p'] = 1
         self.env_settings = env_settings
+        self.p = env_settings["p"]
         # self.agent_id = agent_id
         self._load_map()
         # self.reward_machine = ManagedSparseRewardMachine(rm_file)
@@ -64,8 +65,6 @@ class HardButtonsEnv():
         self.objects[self.env_settings['green_button']] = 'gb'
         self.objects[self.env_settings['red_button']] = 'rb'
 
-        self.p = self.env_settings['p']
-
         self.num_states = self.Nr * self.Nc
 
         self.actions = [Actions.up.value, Actions.right.value, Actions.left.value, Actions.down.value, Actions.none.value]
@@ -89,6 +88,9 @@ class HardButtonsEnv():
             self.forbidden_transitions.add((row, col-1, Actions.right))
             self.forbidden_transitions.add((row+1, col, Actions.up))
             self.forbidden_transitions.add((row-1, col, Actions.down))
+
+    def reset(self):
+        ...
 
     def environment_step(self, s, a):
         """

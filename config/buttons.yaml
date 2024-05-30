@@ -3,5 +3,7 @@ max_episode_length: 50
 initial_mdp_states: [0, 5, 9]
 initial_rm_states:
   - [1, 2, 3]
-gamma: 0.99
+  - [7, 8, 9]
+gamma: 0.9
 learning_rate: 0.0001
+labeled_mdp_class: "HardButtonsLabeled"

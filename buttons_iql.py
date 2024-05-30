@@ -17,6 +17,7 @@ from stable_baselines3.common.vec_env.vec_monitor import VecMonitor
 from manager.manager import Manager
 from stable_baselines3.common.callbacks import EvalCallback, CallbackList
 from mdp_label_wrappers.buttons_mdp_labeled import HardButtonsLabeled
+from mdp_label_wrappers.easy_buttons_mdp_labeled import EasyButtonsLabeled
 from reward_machines.sparse_reward_machine import SparseRewardMachine
 from stable_baselines3.common.monitor import Monitor
 from pettingzoo.test import parallel_seed_test
@@ -126,7 +127,7 @@ if __name__ == "__main__":
 
             train_kwargs = {
                 'manager': manager,
-                'labeled_mdp_class': HardButtonsLabeled,
+                'labeled_mdp_class': HardButtonsLabeled if buttons_config['labeled_mdp_class'] == "HardButtonsLabeled" else EasyButtonsLabeled,
                 'reward_machine': train_rm,
                 'config': buttons_config,
                 'max_agents': buttons_config['num_agents'],
@@ -172,8 +173,24 @@ if __name__ == "__main__":
                 batch_size=256,
                 learning_rate=buttons_config['learning_rate'],
                 gamma = buttons_config['gamma'],
-                tensorboard_log=f"runs/{run.id}"
+                tensorboard_log=f"runs/{run.id}" if args.wandb else None
             )
+
+            # model = DQN(
+            #     "MlpPolicy",
+            #     env,
+            #     verbose=1,
+            #     exploration_initial_eps= 1,
+            #     exploration_final_eps=0.05, 
+            #     exploration_fraction=0.1,
+            #     batch_size=512,
+            #     learning_rate=0.001,
+            #     gamma = buttons_config['gamma'],
+            #     buffer_size=5000,
+            #     target_update_interval=100,
+            #     tensorboard_log=f"runs/{run.id}" if args.wandb else None,
+            #     max_grad_norm=1,
+            # )
             
             # model = DQN(
             #     "MlpPolicy",
@@ -181,9 +198,9 @@ if __name__ == "__main__":
             #     verbose=1,
             #     exploration_initial_eps= 1,
             #     exploration_final_eps=0.05, 
-            #     exploration_fraction=0.2,
+            #     exploration_fraction=0.25,
             #     batch_size=5000,
-            #     learning_rate=0.0005,
+            #     learning_rate=0.0001,
             #     gamma = buttons_config['gamma'],
             #     buffer_size=20000,
             #     target_update_interval=1000,
@@ -225,7 +242,7 @@ if __name__ == "__main__":
                 callback_list = CallbackList([eval_callback])
                 print("DUMBASSSS")
 
-            model.learn(total_timesteps=args.timesteps, callback=callback_list, log_interval=10, progress_bar=True)
+            model.learn(total_timesteps=args.timesteps, callback=callback_list, log_interval=10, progress_bar=False)
 
 
             # # model.save(f"{env.unwrapped.metadata.get('name')}_{time.strftime('%Y%m%d-%H%M%S')}")

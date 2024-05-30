@@ -16,7 +16,7 @@ class Manager:
         self.assignment_method = assignment_method
         self.num_agents = num_agents
         self.num_decomps = num_decomps
-        self.curr_permutation_qs = {}
+        self.curr_permutation_qs = [{} for i in range(self.num_decomps)]
         self.epsilon = 1
         self.epsilon_decay = 0.999
         self.wandb = wandb
@@ -144,8 +144,8 @@ class Manager:
                 # q_max = q_values.max(dim=1, keepdim=True)[0]
                 # q_normalized = (q_values - q_min) / (q_max - q_min)
                 # q = torch.mean(q_normalized, dim=1)
+
                 # q = torch.mean(q_values, dim=1)
-                # q = 1
 
                 if multiply:
                     accumulator *= q
@@ -169,9 +169,9 @@ class Manager:
         self.curr_assignment = list(max(self.curr_permutation_qs[best_decomp], key=self.curr_permutation_qs[best_decomp].get))
 
     def set_random_assignment(self):
-        decomp = random.choice(list(range(len(self.curr_permutation_qs))))
+        decomp = random.choice(list(range(self.num_decomps)))
         self.curr_decomp = decomp
-        self.curr_assignment = list(random.choice(list(self.curr_permutation_qs[decomp].keys())))
+        self.curr_assignment = list(random.choice(list(itertools.permutations(list(range(self.num_agents))))))
     
     
     ### FOR UCB ###

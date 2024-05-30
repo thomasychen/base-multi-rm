@@ -1,8 +1,11 @@
 import random
+import numpy as np
 from enum import Enum
 import copy
-import numpy as np
 
+"""
+Enum with the actions that the agent can execute
+"""
 class Actions(Enum):
     up    = 0 # move up
     right = 1 # move right
@@ -10,7 +13,7 @@ class Actions(Enum):
     left  = 3 # move left
     none  = 4 # none 
 
-class ButtonsEnv():
+class EasyButtonsEnv:
 
     def __init__(self, env_config):
         """
@@ -26,27 +29,38 @@ class ButtonsEnv():
         env_settings : dict
             Dictionary of environment settings
         """
+
         env_settings = copy.deepcopy(env_config)
         env_settings['Nr'] = 10
         env_settings['Nc'] = 10
-        env_settings['initial_states'] = [0, 5, 9]
-        env_settings['walls'] = [(0, 2), (1, 2), (3, 2),
-                                    (1,4), (2,4), (3,4), (4,4), (5,4), (6,4), (7, 4),
-                                    (4, 2), (4, 3),
-                                    (1, 6), (2, 6), (3,6), (4, 6), (4, 7), (5, 7), (6, 7)]
-        env_settings['yellow_button'] = (6,2)
+        env_settings['initial_states'] = [0, 5, 8]
+        env_settings['walls'] = [(0, 3), (1, 3), (2, 3), (3,3), (4,3), (5,3), (6,3), (7,3),
+                                    (7,4), (7,5), (7,6), (7,7), (7,8), (7,9),
+                                    (0,7), (1,7), (2,7), (3,7), (4,7) ]
+        env_settings['goal_location'] = (8,9)
+        env_settings['yellow_button'] = (0,2)
         env_settings['green_button'] = (5,6)
-        env_settings['red_button'] = (5,9)
-
-        env_settings['p'] = 0.98
+        env_settings['red_button'] = (6,9)
+        env_settings['yellow_tiles'] = [(2,4), (2,5), (2,6), (3,4), (3,5), (3,6)]
+        env_settings['green_tiles'] = [(2,8), (2,9), (3,8), (3,9)]
+        env_settings['red_tiles'] = [(8,5), (8,6), (8,7), (8,8), (9,5), (9,6), (9,7), (9,8)]
+        env_settings['p'] = 1
         self.env_settings = env_settings
-        # self.agent_id = agent_id
+        self.p = env_settings["p"]
+        
+        self.reset()
+
+
         self._load_map()
-        # self.reward_machine = ManagedSparseRewardMachine(rm_file)
-        # self.u = initial_rm_states[self.agent_id-1]
 
         # self.u = self.reward_machine.get_initial_state()
         # self.last_action = -1 # Initialize last action to garbage value
+
+    def reset(self):
+        EasyButtonsEnv.red_pressed = False
+        EasyButtonsEnv.yellow_pressed = False
+        EasyButtonsEnv.green_pressed = False
+        EasyButtonsEnv.who_at_red = 0
 
     def _load_map(self):
         """
@@ -55,16 +69,14 @@ class ButtonsEnv():
         self.Nr = self.env_settings['Nr']
         self.Nc = self.env_settings['Nc']
 
-        # initial_states = self.env_settings['initial_states']
-
-        # self.s_i = initial_states[self.agent_id]
         self.objects = {}
-        # self.objects[self.env_settings['goal_location']] = "g" # goal location
+        self.objects[self.env_settings['goal_location']] = "g" # goal location
         self.objects[self.env_settings['yellow_button']] = 'yb'
         self.objects[self.env_settings['green_button']] = 'gb'
         self.objects[self.env_settings['red_button']] = 'rb'
-
-        self.p = self.env_settings['p']
+        self.yellow_tiles = self.env_settings['yellow_tiles']
+        self.green_tiles = self.env_settings['green_tiles']
+        self.red_tiles = self.env_settings['red_tiles']
 
         self.num_states = self.Nr * self.Nc
 
@@ -101,25 +113,18 @@ class ButtonsEnv():
         a : int
             Index representing the action being taken.
 
+        Outputs
+        -------
+        r : float
+            Reward achieved by taking action a from state s.
+        l : list
+            List of events occuring at this step.
         s_next : int
             Index of next state.
         """
-        s_next, last_action = self.get_next_state(s,a)
-        # self.last_action = last_action
-
-        # l = self.get_mdp_label(s, s_next, self.u)
-        # r = 0
-
-        # for e in l:
-        #     # Get the new reward machine state and the reward of this step
-        #     u2 = self.reward_machine.get_next_state(self.u, e)
-        #     r = r + self.reward_machine.get_reward(self.u, u2)
-        #     # Update the reward machine state
-        #     self.u = u2
-
+        s_next, _ = self.get_next_state(s,a)
         return s_next
-        # return r, l, s_next
-
+    
     # def get_mdp_label(self, s, s_next, u):
     #     """
     #     Return the label of the next environment state and current RM state.
@@ -130,15 +135,40 @@ class ButtonsEnv():
 
     #     thresh = 0.3 #0.3
 
-    #     if u == 1:
-    #         if (row, col) == self.env_settings['yellow_button']:
-    #             l.append('by')
-    #     if u == 3:
-    #         if (row, col) == self.env_settings['green_button']:
+    #     if self.agent_id == 1:
+    #         if u == 0:
+    #             if (row, col) == self.env_settings['yellow_button']:
+    #                 l.append('by')
+    #         if u == 1:
+    #             if np.random.random() <= thresh:
+    #                 l.append('br')
+    #         if u == 2:
+    #             if (row, col) == self.env_settings['goal_location']:
+    #                 l.append('g')
+    #     elif self.agent_id == 2:
+    #         if u == 0:
+    #             if np.random.random() <= thresh:
+    #                 l.append('by')
+    #         if u == 1 and (row,col) == self.env_settings['green_button']:
     #             l.append('bg')
-    #     if u == 5:
-    #         if (row, col) == self.env_settings['red_button']:
-    #             l.append('br')
+    #         if u == 2 and (row,col) == self.env_settings['red_button']:
+    #             l.append('a2br')
+    #         if u == 3: 
+    #             if not((row,col) == self.env_settings['red_button']):
+    #                 l.append('a2lr')
+    #             elif np.random.random() <= thresh:
+    #                 l.append('br')
+    #     elif self.agent_id == 3:
+    #         if u == 0:
+    #             if np.random.random() <= thresh:
+    #                 l.append('bg')
+    #         if u == 1 and (row,col) == self.env_settings['red_button']:
+    #             l.append('a3br')
+    #         if u == 2: 
+    #             if not((row,col) == self.env_settings['red_button']):
+    #                 l.append('a3lr')
+    #             elif np.random.random() <= thresh:
+    #                 l.append('br')
 
     #     return l
 
@@ -207,6 +237,23 @@ class ButtonsEnv():
 
         s_next = self.get_state_from_description(row, col)
 
+        # If the appropriate button hasn't yet been pressed, don't allow the agent into the colored region
+
+        if (row, col) in self.red_tiles and not self.red_pressed:
+            s_next = s
+        if (row, col) in self.yellow_tiles and not self.yellow_pressed:
+            s_next = s
+        if (row, col) in self.green_tiles and not self.green_pressed:
+            s_next = s
+        
+
+        # if (row, col) == self.env_settings["green_button"]:
+        #     self.green_pressed = True
+        # if  (row, col) == self.env_settings["red_button"]:
+        #     self.red_pressed = True
+        # if (row, col) == self.env_settings["yellow_button"]:
+        #     self.yellow_pressed = True
+            
         last_action = a_
         return s_next, last_action
 
@@ -262,38 +309,11 @@ class ButtonsEnv():
     #     """
     #     return self.last_action
 
-    # def get_initial_state(self, agent_idx):
+    # def get_initial_state(self):
     #     """
     #     Outputs
     #     -------
     #     s_i : int
     #         Index of agent's initial state.
     #     """
-    #     return self.env_settings["initial_states"]
-        
-
-    def show(self, s):
-        """
-        Create a visual representation of the current state of the gridworld.
-
-        Parameters
-        ----------
-        s : int
-            Index of the current state
-        """
-        display = np.zeros((self.Nr, self.Nc))
-        
-        # Display the locations of the walls
-        for loc in self.env_settings['walls']:
-            display[loc] = -1
-
-        display[self.env_settings['red_button']] = 9
-        display[self.env_settings['green_button']] = 9
-        display[self.env_settings['yellow_button']] = 9
-        # display[self.env_settings['goal_location']] = 9
-
-        # Display the location of the agent in the world
-        row, col = self.get_state_description(s)
-        # display[row,col] = self.agent_id
-
-        print(display)
+    #     return self.s_i

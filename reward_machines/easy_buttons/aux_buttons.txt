@@ -1,0 +1,19 @@
+0 # auxiliary node
+(1, 2,  'by',  0) #Yellow button is pressed
+(2, 3,  'br',  0) #Red button is pressed
+(3, 4,  'g',  1) #Goal state is reached
+(4, 4,  'True',  0) #state 3 is an absorbing state
+(5, 6,  'by',  0) #Yellow button is pressed
+(6, 7,  'bg',  0) #Green button is pressed
+(7, 8,  'a2br',  0) #Agent 2 moves onto red button
+(8, 7,  'a2lr',  0) #Agent 2 leaves red button prematurely
+(8, 9,  'br',  1) #Red button is successfully activated
+(9, 9,  'True',  0) #State 4 is an absorbing state
+(10, 11,  'bg',  0) #Green button is pressed
+(11, 12,  'a3br',  0) #Agent 3 moves to red button
+(12, 11,  'a3lr',  0) #Agent 3 leaves red button prematurely
+(12, 13,  'br',  1) #Red button is successfully activated
+(13, 13,  'True',  0) #State 3 is an absorbing state
+(0, 1, "to_rm1", 0) # Connect to RM 1
+(0, 5, "to_rm2", 0) # Connect to RM 2
+(0, 10, "to_rm3", 0) # Connect to RM 3

@@ -1,7 +1,7 @@
 from utils.plot_utils import generate_plots
 import numpy as np
 
-generate_plots('logs/20240528-233421', 30)
+generate_plots('logs/20240529-095348', 30)
 
 # import numpy as np
 

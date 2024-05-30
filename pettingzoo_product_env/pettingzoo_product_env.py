@@ -41,6 +41,7 @@ class MultiAgentEnvironment(ParallelEnv):
     def reset(self, seed=None, options=None):
         self.agents = self.possible_agents[:]
         self.time_step = 0
+        self.labeled_mdp.reset()
 
         mdp_state_array = copy.deepcopy(self.env_config["initial_mdp_states"])
         rm_state_array = copy.deepcopy(self.env_config["initial_rm_states"]) if np.array(self.env_config["initial_rm_states"]).ndim == 2 else [copy.deepcopy(self.env_config["initial_rm_states"])]
@@ -89,10 +90,13 @@ class MultiAgentEnvironment(ParallelEnv):
             s = self.mdp_states[curr_agent]
             a = actions[curr_agent]
             s_next = self.labeled_mdp.environment_step(s, a)
-            labels = self.labeled_mdp.get_mdp_label(s_next)
+            labels = self.labeled_mdp.get_mdp_label(s_next, i+1, self.test, self.rm_states[curr_agent])
             for label in labels: 
                 if label in self.reward_machine.delta_u[self.rm_states[curr_agent]]:
                     all_labels.append(label)
+
+        # if self.test and all([i != 4 for i in actions.values()]) and any([i==2 for i in actions.values()]):
+        #     import pdb;pdb.set_trace()
 
 
         # print("ACTIONS", actions)
@@ -170,7 +174,7 @@ class MultiAgentEnvironment(ParallelEnv):
                         else: 
                             u_old = perm[k]
                             s_new = self.mdp_states[ag]
-                            new_l = self.labeled_mdp.get_mdp_label(s_new)
+                            new_l = self.labeled_mdp.get_mdp_label(s_new, k+1, self.test, u_old)
                             new_r = 0
                             a = actions[ag]
                             u_temp = u_old
@@ -191,8 +195,8 @@ class MultiAgentEnvironment(ParallelEnv):
                         big_dones.append(done)
 
                     # if sum([(big_rewards[i_a] == 1 and self.possible_agents[i_a] in actions and rewards[self.possible_agents[i_a]] != 1) for i_a in range(len(big_rewards))])> 0:
-                    # if sum([(big_rewards[i_a] == 1 and self.possible_agents[i_a] in actions) for i_a in range(len(big_rewards))])> 0:
-                    if sum([(big_rewards[i_a] == 1 and self.possible_agents[i_a] in actions and rewards[self.possible_agents[i_a]] != 1) or (big_rewards[i_a] == 0 and self.possible_agents[i_a] in actions and rewards[self.possible_agents[i_a]] == 1) for i_a in range(len(big_rewards))])> 0:
+                    if sum([(big_rewards[i_a] == 1 and self.possible_agents[i_a] in actions) for i_a in range(len(big_rewards))])> 0:
+                    # if sum([(big_rewards[i_a] == 1 and self.possible_agents[i_a] in actions and rewards[self.possible_agents[i_a]] != 1) or (big_rewards[i_a] == 0 and self.possible_agents[i_a] in actions and rewards[self.possible_agents[i_a]] == 1) for i_a in range(len(big_rewards))])> 0:
                         # print("\n\n\nHi\n\n\n")
                         # import pdb; pdb.set_trace()
                         self.local_manager.model.replay_buffer.add(big_prev_states, big_new_states, np.array(big_actions),np.array(big_rewards), np.array(big_dones), infos)
@@ -220,8 +224,8 @@ class MultiAgentEnvironment(ParallelEnv):
                     terminations[at] = False
         else:
             self.agents = []
-            # if any(terminations.values()):
-            #     print("\n\n\n\n\n\n", all(terminations.values()), "\n\n\n\n\n\n")
+            if any(terminations.values()) and self.test:
+                print("\n\n\n\n\n\n", all(terminations.values()), "\n\n\n\n\n\n")
             if not self.test:
                 for agent in terminations:
                     if not terminations[agent]:

@@ -2,7 +2,7 @@ num_agents: 3
 max_episode_length: 50
 initial_mdp_states: [0, 5, 8]
 initial_rm_states:
-  - [1, 5, 10]
-gamma: 0.99
+  - [1, 5, 12]
+gamma: 0.95
 learning_rate: 0.0001
 labeled_mdp_class: "EasyButtonsLabeled"

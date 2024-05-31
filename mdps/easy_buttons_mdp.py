@@ -44,11 +44,9 @@ class EasyButtonsEnv:
         env_settings['yellow_tiles'] = [(2,4), (2,5), (2,6), (3,4), (3,5), (3,6)]
         env_settings['green_tiles'] = [(2,8), (2,9), (3,8), (3,9)]
         env_settings['red_tiles'] = [(8,5), (8,6), (8,7), (8,8), (9,5), (9,6), (9,7), (9,8)]
-        env_settings['p'] = 1
+        env_settings['p'] = 0.95
         self.env_settings = env_settings
         self.p = env_settings["p"]
-        
-        self.reset()
 
 
         self._load_map()
@@ -56,11 +54,16 @@ class EasyButtonsEnv:
         # self.u = self.reward_machine.get_initial_state()
         # self.last_action = -1 # Initialize last action to garbage value
 
-    def reset(self):
+    def reset(self, rm_assignments, decomp_idx):
         EasyButtonsEnv.red_pressed = False
         EasyButtonsEnv.yellow_pressed = False
         EasyButtonsEnv.green_pressed = False
         EasyButtonsEnv.who_at_red = 0
+
+        rm_state_array = copy.deepcopy(self.env_settings["initial_rm_states"]) if np.array(self.env_settings["initial_rm_states"]).ndim == 2 else [copy.deepcopy(self.env_settings["initial_rm_states"])]
+
+        EasyButtonsEnv.u = {i+1:rm_state_array[decomp_idx][rm_assignments[i]] for i in range(len(self.env_settings["initial_states"]))}
+        # print(self.u)
 
     def _load_map(self):
         """
@@ -102,7 +105,7 @@ class EasyButtonsEnv:
             self.forbidden_transitions.add((row+1, col, Actions.up))
             self.forbidden_transitions.add((row-1, col, Actions.down))
 
-    def environment_step(self, s, a):
+    def environment_step(self, s, a, agent_id):
         """
         Execute action a from state s.
 
@@ -122,7 +125,8 @@ class EasyButtonsEnv:
         s_next : int
             Index of next state.
         """
-        s_next, _ = self.get_next_state(s,a)
+        s_next, _ = self.get_next_state(s,a, agent_id)
+
         return s_next
     
     # def get_mdp_label(self, s, s_next, u):
@@ -172,7 +176,7 @@ class EasyButtonsEnv:
 
     #     return l
 
-    def get_next_state(self, s, a):
+    def get_next_state(self, s, a, agent_id):
         """
         Get the next state in the environment given action a is taken from state s.
         Update the last action that was truly taken due to MDP slip.
@@ -238,22 +242,22 @@ class EasyButtonsEnv:
         s_next = self.get_state_from_description(row, col)
 
         # If the appropriate button hasn't yet been pressed, don't allow the agent into the colored region
+        if agent_id == 1:
+            if self.u[agent_id] == 1:
+                if (row, col) in self.red_tiles:
+                    s_next = s
+            if self.u[agent_id] == 2:
+                if (row, col) in self.red_tiles:
+                    s_next = s
+        if agent_id == 2:
+            if self.u[agent_id] == 5:
+                if (row, col) in self.yellow_tiles:
+                    s_next = s
+        if agent_id == 3:
+            if self.u[agent_id] == 12:
+                if (row, col) in self.green_tiles:
+                    s_next = s
 
-        if (row, col) in self.red_tiles and not self.red_pressed:
-            s_next = s
-        if (row, col) in self.yellow_tiles and not self.yellow_pressed:
-            s_next = s
-        if (row, col) in self.green_tiles and not self.green_pressed:
-            s_next = s
-        
-
-        # if (row, col) == self.env_settings["green_button"]:
-        #     self.green_pressed = True
-        # if  (row, col) == self.env_settings["red_button"]:
-        #     self.red_pressed = True
-        # if (row, col) == self.env_settings["yellow_button"]:
-        #     self.yellow_pressed = True
-            
         last_action = a_
         return s_next, last_action
 

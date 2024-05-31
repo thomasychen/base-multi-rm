@@ -164,7 +164,7 @@ if __name__ == "__main__":
                                     render=False)
 
 
-            # policy_kwargs = dict(activation_fn=th.nn.ReLU, net_arch=[128, 128])
+            policy_kwargs = dict(activation_fn=th.nn.ReLU, net_arch=[128, 128])
 
             model = PPO(
                 MlpPolicy,
@@ -224,7 +224,8 @@ if __name__ == "__main__":
             #     policy_kwargs=policy_kwargs
             # )
             # model.set_logger(new_logger)
-
+            
+            # print("BUTTONSIQL", manager)
             manager.set_model(model)
             env.reset()
 

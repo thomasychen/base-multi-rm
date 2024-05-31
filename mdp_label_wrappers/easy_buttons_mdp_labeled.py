@@ -3,8 +3,24 @@ import numpy as np
 
 class EasyButtonsLabeled(EasyButtonsEnv):
 
+    # def environment_step(self, s, a, agent_id):
+    #     s_next, last_action = self.get_next_state(s,a, agent_id)
+    #     # self.last_action = last_action
 
-    def get_mdp_label(self, s_next, agent_id=-1, test=False, u=-1):
+    #     # l = self.get_mdp_label(s_next, agent_id, self.u[agent_id])
+    #     # r = 0
+
+    #     # for e in l:
+    #     #     # Get the new reward machine state and the reward of this step
+    #     #     u2 = self.reward_machine.get_next_state(self.u[agent_id], e)
+    #     #     r = r + self.reward_machine.get_reward(self.u[agent_id], u2)
+    #     #     # Update the reward machine state
+    #     #     self.u[agent_id] = u2
+
+    #     return s_next
+
+
+    def get_mdp_label(self, s_next, agent_id=-1, u=-1, test = False):
         """
         Return the label of the next environment state and current RM state.
         """
@@ -18,11 +34,9 @@ class EasyButtonsLabeled(EasyButtonsEnv):
             if u == 1:
                 if (row, col) == self.env_settings['yellow_button']:
                     l.append('by')
-                    EasyButtonsEnv.yellow_pressed = True
             if u == 2:
                 if np.random.random() <= thresh and not test:
                     l.append('br')
-                    EasyButtonsEnv.red_pressed = True
             if u == 3:
                 if (row, col) == self.env_settings['goal_location']:
                     l.append('g')
@@ -30,44 +44,32 @@ class EasyButtonsLabeled(EasyButtonsEnv):
             if u == 5:
                 if np.random.random() <= thresh and not test:
                     l.append('by')
-                    EasyButtonsEnv.yellow_pressed = True
             if u == 6 and (row,col) == self.env_settings['green_button']:
                 l.append('bg')
-                EasyButtonsEnv.green_pressed = True
-            if u == 7 and (row,col) == self.env_settings['red_button']:
+            if (u == 7 or u == 8) and (row,col) == self.env_settings['red_button']:
                 l.append('a2br')
-                EasyButtonsEnv.who_at_red = 2
-            if u == 8: 
-                if ((row,col) == self.env_settings['red_button']) and EasyButtonsEnv.who_at_red and EasyButtonsEnv.who_at_red != agent_id:
-                    l.append('br')
-                    EasyButtonsEnv.red_pressed = True
-                elif not((row,col) == self.env_settings['red_button']) and EasyButtonsEnv.who_at_red == agent_id:
-                    EasyButtonsEnv.who_at_red = 0
+            if u == 9: 
+                if not((row,col) == self.env_settings['red_button']):
                     l.append('a2lr')
                 elif np.random.random() <= thresh and not test:
-                    l.append('br')
-                    EasyButtonsEnv.red_pressed = True
-        elif agent_id == 3:         
-            if u == 10:
+                    l.append('a3br')
+        elif agent_id == 3:
+            if u == 12:
                 if np.random.random() <= thresh and not test:
                     l.append('bg')
-                    EasyButtonsEnv.green_pressed = True
-
-            if u == 11 and (row,col) == self.env_settings['red_button']:
+            if (u == 13 or u == 15) and (row,col) == self.env_settings['red_button']:
                 l.append('a3br')
-                EasyButtonsEnv.who_at_red = 3
-
-            if u == 12: 
-                if ((row,col) == self.env_settings['red_button']) and EasyButtonsEnv.who_at_red and EasyButtonsEnv.who_at_red != agent_id:
-                    l.append('br')
-                    EasyButtonsEnv.red_pressed = True
-                elif not((row,col) == self.env_settings['red_button']) and EasyButtonsEnv.who_at_red == agent_id:
+            if u == 14: 
+                if not((row,col) == self.env_settings['red_button']):
                     l.append('a3lr')
-                    EasyButtonsEnv.red_pressed = 0
-
                 elif np.random.random() <= thresh and not test:
-                    l.append('br')
-                    EasyButtonsEnv.red_pressed = True
+                    l.append('a2br')
+
+        if u == 16 or u == 10:
+            l.append('br')
+        
+        return l
+
 
         # thresh = 0.3 #0.3
 

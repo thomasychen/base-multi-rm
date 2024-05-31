@@ -24,9 +24,9 @@ class Manager:
         ### UCB Specific ####
 
         self.permutation_counts = [{perm: 0 for perm in itertools.permutations(range(num_agents))} for i in range(self.num_decomps)]
-        print(self.permutation_counts)
+        # print(self.permutation_counts)
         self.permutation_total_rewards = [{perm: 0.0 for perm in itertools.permutations(range(num_agents))} for i in range(self.num_decomps)]
-        print(self.permutation_total_rewards)
+        # print(self.permutation_total_rewards)
         # print("HELLO", self.permutation_counts)
         self.total_selections = 0
 
@@ -93,7 +93,7 @@ class Manager:
             if self.total_selections < len(self.permutation_counts)*len(self.permutation_counts[0]):
                 # Ensure each permutation is selected at least once in the beginning
                 decomp_idx = self.total_selections // len(self.permutation_counts[0])
-                print(decomp_idx)
+                # print(decomp_idx)
                 assign_idx = self.total_selections % len(self.permutation_counts[0])
                 self.curr_assignment = list(self.permutation_counts[decomp_idx].keys())[assign_idx]
                 
@@ -137,6 +137,7 @@ class Manager:
                 curr_state = obs_as_tensor(curr_state, device="cpu")
                 with torch.no_grad():
                     # q_values = self.model.q_net(curr_state)
+                    # print(self, "IN MANAGER")
                     q = self.model.policy.predict_values(curr_state)
 
                 # q, max_action = torch.max(q_values, dim=1)

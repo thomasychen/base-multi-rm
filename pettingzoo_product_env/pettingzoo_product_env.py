@@ -41,7 +41,6 @@ class MultiAgentEnvironment(ParallelEnv):
     def reset(self, seed=None, options=None):
         self.agents = self.possible_agents[:]
         self.time_step = 0
-        self.labeled_mdp.reset()
 
         mdp_state_array = copy.deepcopy(self.env_config["initial_mdp_states"])
         rm_state_array = copy.deepcopy(self.env_config["initial_rm_states"]) if np.array(self.env_config["initial_rm_states"]).ndim == 2 else [copy.deepcopy(self.env_config["initial_rm_states"])]
@@ -50,6 +49,7 @@ class MultiAgentEnvironment(ParallelEnv):
             self.local_manager = MultiAgentEnvironment.manager
 
         rm_assignments, decomp_idx = self.local_manager.get_rm_assignments(mdp_state_array, rm_state_array, test=self.test)
+        self.labeled_mdp.reset(rm_assignments, decomp_idx)
         # rm_assignments = self.manager.get_rm_assignments(mdp_state_array, rm_state_array, test=self.test)
 
 
@@ -57,6 +57,7 @@ class MultiAgentEnvironment(ParallelEnv):
 
         self.mdp_states = {self.agents[i]:mdp_state_array[i] for i in range(len(self.agents))}
         self.rm_states = {self.agents[i]:rm_state_array[decomp_idx][rm_assignments[i]] for i in range(len(self.agents))}
+        # print(self.rm_states)
 
         observations = {agent: np.array([self.mdp_states[agent], self.rm_states[agent]]) for agent in self.agents}
         # print(observations)
@@ -81,6 +82,8 @@ class MultiAgentEnvironment(ParallelEnv):
 
         old_rm_states = copy.deepcopy(self.rm_states)
         old_mdp_states = copy.deepcopy(self.mdp_states)
+        # if 10 in old_rm_states.values():
+        #     import pdb;pdb.set_trace();
 
         all_labels = []
         for i in range(len(self.possible_agents)):
@@ -89,19 +92,60 @@ class MultiAgentEnvironment(ParallelEnv):
             curr_agent = self.possible_agents[i]
             s = self.mdp_states[curr_agent]
             a = actions[curr_agent]
-            s_next = self.labeled_mdp.environment_step(s, a)
-            labels = self.labeled_mdp.get_mdp_label(s_next, i+1, self.test, self.rm_states[curr_agent])
-            for label in labels: 
-                if label in self.reward_machine.delta_u[self.rm_states[curr_agent]]:
+            s_next = self.labeled_mdp.environment_step(s, a, i+1)
+            labels = self.labeled_mdp.get_mdp_label(s_next, i+1, self.rm_states[curr_agent], self.test)
+            # for label in labels:
+            #     if label in self.reward_machine.delta_u[self.rm_states[curr_agent]]:
+            #         all_labels.append(label)
+            # if i != 0 and labels: 
+            #     print(labels)
+            crazies = [[] for i in range(len(self.possible_agents))]
+            # for label in labels:
+            #     # dont use crazies in our envs
+            #     if label == 'by' and self.labeled_mdp.get_state_description(s_next) != self.labeled_mdp.env_settings["yellow_button"]:
+            #          crazies[1].append(label)
+            #     elif label == 'bg' and self.labeled_mdp.get_state_description(s_next) != self.labeled_mdp.env_settings["green_button"]:
+            #         crazies[2].append(label)
+            #     elif label == "br" and self.labeled_mdp.get_state_description(s_next) != self.labeled_mdp.env_settings["red_button"]:
+            #         crazies[i].append(label)
+            #     elif label in self.reward_machine.delta_u[self.rm_states[curr_agent]]:
+            #         all_labels.append(label)
+            for label in labels:
+                # dont use crazies in our envs
+                if label == 'by' and self.labeled_mdp.get_state_description(s_next) != self.labeled_mdp.env_settings["yellow_button"]:
+                    crazies[1].append(label)
+                elif label == 'bg' and self.labeled_mdp.get_state_description(s_next) != self.labeled_mdp.env_settings["green_button"]:
+                    crazies[2].append(label)
+                elif label == "br" and self.labeled_mdp.get_state_description(s_next) != self.labeled_mdp.env_settings["red_button"]:
+                    crazies[0].append(label)
+                elif label == 'a3br' and self.labeled_mdp.get_state_description(s_next) != self.labeled_mdp.env_settings["red_button"]:
+                    crazies[1].append(label)
+                elif label == 'a2br' and self.labeled_mdp.get_state_description(s_next) != self.labeled_mdp.env_settings["red_button"]:
+                    crazies[2].append(label)
+                elif label in self.reward_machine.delta_u[self.rm_states[curr_agent]]:
                     all_labels.append(label)
+
+        # if self.test and 'br' in all_labels:
+        #     import pdb; pdb.set_trace()
+        # if 'a2br' in all_labels  or 'a3br' in all_labels:
+        #     import pdb; pdb.set_trace();
+
+        # if self.test and 'br' in all_labels:
+        #     import pdb; pdb.set_trace()
+        # if "g" in all_labels:
+        #     print(all_labels, self.test)
+        #     if self.test:
+        #         import pdb; pdb.set_trace();
 
         # if self.test and all([i != 4 for i in actions.values()]) and any([i==2 for i in actions.values()]):
         #     import pdb;pdb.set_trace()
 
 
         # print("ACTIONS", actions)
-        for i in range(self.num_agents):
-            curr_agent = self.agents[i]
+        for i in range(len(self.possible_agents)):
+            if self.possible_agents[i] not in actions:
+                continue
+            curr_agent = self.possible_agents[i]
             s = self.mdp_states[curr_agent]
             a = actions[curr_agent]
             # a = self.discretize_action(ca)
@@ -109,18 +153,53 @@ class MultiAgentEnvironment(ParallelEnv):
             #### FOR UPDATING AGENT FROM CURRENT STATE TO NEXT STATE ####
             current_u = self.rm_states[curr_agent]
             
-            s_next = self.labeled_mdp.environment_step(s, a)
+            s_next = self.labeled_mdp.environment_step(s, a, i+1)
             self.mdp_states[curr_agent] = s_next
 
             r = 0
 
             
-            for e in all_labels:
+            for e in all_labels + crazies[i]:
+            # for e in all_labels:
                 # import pdb; pdb.set_trace()
                 u2 = self.reward_machine.get_next_state(self.rm_states[curr_agent], e)
                 r = r + self.reward_machine.get_reward(self.rm_states[curr_agent], u2)
                 self.rm_states[curr_agent] = u2
 
+            # all_permutations = itertools.permutations(all_labels)
+
+            # max_distance = -float('inf')
+            # best_permutation = None
+
+            # # Iterate through all permutations of the labels
+            # for perm in all_permutations:
+            #     temp_state = self.rm_states[curr_agent]
+            #     temp_reward = 0
+            #     temp_distance = 0  # To count the number of state transitions
+                
+            #     for e in perm:
+            #         u2 = self.reward_machine.get_next_state(temp_state, e)
+            #         temp_reward += self.reward_machine.get_reward(temp_state, u2)
+                    
+            #         if u2 != temp_state:  # Increment distance only if the state changes
+            #             temp_distance += 1
+                    
+            #         temp_state = u2
+
+            #     # Update the best permutation if this one has more state transitions
+            #     if temp_distance > max_distance:
+            #         max_distance = temp_distance
+            #         best_permutation = perm
+
+            # # Apply the best permutation to the current agent
+            # for e in best_permutation:
+            #     u2 = self.reward_machine.get_next_state(self.rm_states[curr_agent], e)
+            #     r += self.reward_machine.get_reward(self.rm_states[curr_agent], u2)
+            #     self.rm_states[curr_agent] = u2
+
+
+            if self.labeled_mdp.u:
+                self.labeled_mdp.u[i+1] = self.rm_states[curr_agent]
 
              #### FOR UPDATING AGENT FROM CURRENT STATE TO NEXT STATE ####
             
@@ -174,7 +253,7 @@ class MultiAgentEnvironment(ParallelEnv):
                         else: 
                             u_old = perm[k]
                             s_new = self.mdp_states[ag]
-                            new_l = self.labeled_mdp.get_mdp_label(s_new, k+1, self.test, u_old)
+                            new_l = self.labeled_mdp.get_mdp_label(s_new, k+1, u_old, self.test)
                             new_r = 0
                             a = actions[ag]
                             u_temp = u_old
@@ -201,9 +280,9 @@ class MultiAgentEnvironment(ParallelEnv):
                         # import pdb; pdb.set_trace()
                         self.local_manager.model.replay_buffer.add(big_prev_states, big_new_states, np.array(big_actions),np.array(big_rewards), np.array(big_dones), infos)
 
-        # for curr_agent in self.agents:
-        #     observations[curr_agent] =  np.array([self.mdp_states[curr_agent], self.rm_states[curr_agent]])
-        #     terminations[curr_agent] = self.reward_machine.is_terminal_state(self.rm_states[curr_agent])
+        for curr_agent in self.agents:
+            observations[curr_agent] =  np.array([self.mdp_states[curr_agent], self.rm_states[curr_agent]])
+            terminations[curr_agent] = self.reward_machine.is_terminal_state(self.rm_states[curr_agent])
             
         self.state = observations
 
@@ -224,8 +303,8 @@ class MultiAgentEnvironment(ParallelEnv):
                     terminations[at] = False
         else:
             self.agents = []
-            if any(terminations.values()) and self.test:
-                print("\n\n\n\n\n\n", all(terminations.values()), "\n\n\n\n\n\n")
+            # if any(terminations.values()) and self.test:
+            #     print("\n\n\n\n\n\n", all(terminations.values()), "\n\n\n\n\n\n")
             if not self.test:
                 for agent in terminations:
                     if not terminations[agent]:
@@ -249,8 +328,16 @@ class MultiAgentEnvironment(ParallelEnv):
             else:
                 for ar in rewards:
                     rewards[ar] = 0
-            
+        # if "g" in all_labels and self.test and len(all_labels)>1:
+        #     print(all_labels, actions, rewards)
+
+        # if any(rewards.values()): 
+        #     print(terminations)
+        #     print()
+
         # print("\n\n\n", observations, rewards, terminations, truncations)
+        # if all_labels:
+        #     print(self.rm_states, actions, self.mdp_states, labels)
         return observations, rewards, terminations, truncations, infos
 
     def render(self):

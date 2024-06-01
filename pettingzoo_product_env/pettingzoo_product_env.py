@@ -7,7 +7,7 @@ import functools
 import copy
 import itertools
 import random
-
+from mdp_label_wrappers.easy_buttons_mdp_labeled import EasyButtonsLabeled
 
 class MultiAgentEnvironment(ParallelEnv):
     metadata = {
@@ -57,6 +57,7 @@ class MultiAgentEnvironment(ParallelEnv):
 
         self.mdp_states = {self.agents[i]:mdp_state_array[i] for i in range(len(self.agents))}
         self.rm_states = {self.agents[i]:rm_state_array[decomp_idx][rm_assignments[i]] for i in range(len(self.agents))}
+        # print(self.rm_states, self.mdp_states)
         # print(self.rm_states)
 
         observations = {agent: np.array([self.mdp_states[agent], self.rm_states[agent]]) for agent in self.agents}
@@ -94,51 +95,31 @@ class MultiAgentEnvironment(ParallelEnv):
             a = actions[curr_agent]
             s_next = self.labeled_mdp.environment_step(s, a, i+1)
             labels = self.labeled_mdp.get_mdp_label(s_next, i+1, self.rm_states[curr_agent], self.test)
-            # for label in labels:
-            #     if label in self.reward_machine.delta_u[self.rm_states[curr_agent]]:
-            #         all_labels.append(label)
-            # if i != 0 and labels: 
-            #     print(labels)
             crazies = [[] for i in range(len(self.possible_agents))]
-            # for label in labels:
-            #     # dont use crazies in our envs
-            #     if label == 'by' and self.labeled_mdp.get_state_description(s_next) != self.labeled_mdp.env_settings["yellow_button"]:
-            #          crazies[1].append(label)
-            #     elif label == 'bg' and self.labeled_mdp.get_state_description(s_next) != self.labeled_mdp.env_settings["green_button"]:
-            #         crazies[2].append(label)
-            #     elif label == "br" and self.labeled_mdp.get_state_description(s_next) != self.labeled_mdp.env_settings["red_button"]:
-            #         crazies[i].append(label)
-            #     elif label in self.reward_machine.delta_u[self.rm_states[curr_agent]]:
-            #         all_labels.append(label)
-            for label in labels:
-                # dont use crazies in our envs
-                if label == 'by' and self.labeled_mdp.get_state_description(s_next) != self.labeled_mdp.env_settings["yellow_button"]:
-                    crazies[1].append(label)
-                elif label == 'bg' and self.labeled_mdp.get_state_description(s_next) != self.labeled_mdp.env_settings["green_button"]:
-                    crazies[2].append(label)
-                elif label == "br" and self.labeled_mdp.get_state_description(s_next) != self.labeled_mdp.env_settings["red_button"]:
-                    crazies[0].append(label)
-                elif label == 'a3br' and self.labeled_mdp.get_state_description(s_next) != self.labeled_mdp.env_settings["red_button"]:
-                    crazies[1].append(label)
-                elif label == 'a2br' and self.labeled_mdp.get_state_description(s_next) != self.labeled_mdp.env_settings["red_button"]:
-                    crazies[2].append(label)
-                elif label in self.reward_machine.delta_u[self.rm_states[curr_agent]]:
-                    all_labels.append(label)
+            if type(self.labeled_mdp) == EasyButtonsLabeled:
+                for label in labels:
+                    # dont use crazies in our envs
+                    if label == 'by' and self.labeled_mdp.get_state_description(s_next) != self.labeled_mdp.env_settings["yellow_button"]:
+                        crazies[1].append(label)
+                    elif label == 'bg' and self.labeled_mdp.get_state_description(s_next) != self.labeled_mdp.env_settings["green_button"]:
+                        crazies[2].append(label)
+                    elif label == "br" and self.labeled_mdp.get_state_description(s_next) != self.labeled_mdp.env_settings["red_button"]:
+                        crazies[0].append(label)
+                    elif label == 'a3br' and self.labeled_mdp.get_state_description(s_next) != self.labeled_mdp.env_settings["red_button"]:
+                        crazies[1].append(label)
+                    elif label == 'a2br' and self.labeled_mdp.get_state_description(s_next) != self.labeled_mdp.env_settings["red_button"]:
+                        crazies[2].append(label)
+                    elif label in self.reward_machine.delta_u[self.rm_states[curr_agent]]:
+                        all_labels.append(label)
+            else: 
+                for label in labels:
+                    if label in self.reward_machine.delta_u[self.rm_states[curr_agent]]:
+                        all_labels.append(label)
 
-        # if self.test and 'br' in all_labels:
-        #     import pdb; pdb.set_trace()
-        # if 'a2br' in all_labels  or 'a3br' in all_labels:
-        #     import pdb; pdb.set_trace();
+        if "bg" in all_labels and self.test:
+            print("\n\n\nYAYYYY\n\n\n")
+                
 
-        # if self.test and 'br' in all_labels:
-        #     import pdb; pdb.set_trace()
-        # if "g" in all_labels:
-        #     print(all_labels, self.test)
-        #     if self.test:
-        #         import pdb; pdb.set_trace();
-
-        # if self.test and all([i != 4 for i in actions.values()]) and any([i==2 for i in actions.values()]):
-        #     import pdb;pdb.set_trace()
 
 
         # print("ACTIONS", actions)
@@ -198,7 +179,7 @@ class MultiAgentEnvironment(ParallelEnv):
             #     self.rm_states[curr_agent] = u2
 
 
-            if self.labeled_mdp.u:
+            if hasattr(self.labeled_mdp, "u"):
                 self.labeled_mdp.u[i+1] = self.rm_states[curr_agent]
 
              #### FOR UPDATING AGENT FROM CURRENT STATE TO NEXT STATE ####

@@ -1,7 +1,7 @@
 from mdps.hard_buttons_mdp import HardButtonsEnv
 
 class HardButtonsLabeled(HardButtonsEnv):
-    def get_mdp_label(self, s_next):
+    def get_mdp_label(self, s_next, *args):
         """
         Return the label of the next environment state and current RM state.
         """

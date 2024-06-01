@@ -31,14 +31,14 @@ class HardButtonsEnv():
         env_settings['Nc'] = 10
         env_settings['initial_states'] = [0, 5, 9]
         env_settings['walls'] = [(0, 2), (1, 2), (3, 2),
-                                    (1,4), (2,4), (3,4), (4,4), (5,4), (6,4), (7, 4),
+                                    (1,4), (2,4), (3,4), (4,4), (5,4),(6,4), (7,4),
                                     (4, 2), (4, 3),
-                                    (1, 6), (2, 6), (3,6), (4, 6), (4, 7), (5, 7), (6, 7)]
+                                    (1, 6), (2, 6), (3,6), (4, 6), (4, 7), (5,7), (6,7)]
         env_settings['yellow_button'] = (6,2)
         env_settings['green_button'] = (5,6)
         env_settings['red_button'] = (5,9)
 
-        env_settings['p'] = 1
+        env_settings['p'] = 0.98
         self.env_settings = env_settings
         self.p = env_settings["p"]
         # self.agent_id = agent_id
@@ -89,10 +89,10 @@ class HardButtonsEnv():
             self.forbidden_transitions.add((row+1, col, Actions.up))
             self.forbidden_transitions.add((row-1, col, Actions.down))
 
-    def reset(self):
+    def reset(self,*args):
         ...
 
-    def environment_step(self, s, a):
+    def environment_step(self, s, a, *args):
         """
         Execute action a from state s.
 

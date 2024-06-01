@@ -173,8 +173,14 @@ if __name__ == "__main__":
                 batch_size=256,
                 learning_rate=buttons_config['learning_rate'],
                 gamma = buttons_config['gamma'],
-                tensorboard_log=f"runs/{run.id}" if args.wandb else None
+                tensorboard_log=f"runs/{run.id}" if args.wandb else None,
+                max_grad_norm=buttons_config['max_grad_norm'],
+                vf_coef=buttons_config['vf_coef'],
+                # normalize_advantage=True,
+                target_kl=buttons_config['target_kl'],
+                ent_coef=buttons_config['ent_coef']
             )
+
 
             # model = DQN(
             #     "MlpPolicy",

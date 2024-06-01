@@ -5,6 +5,7 @@ import random
 import itertools
 from stable_baselines3.common.utils import obs_as_tensor
 import wandb
+import math
 
 class Manager:
     def __init__(self, num_agents, num_decomps=1, assignment_method = "ground_truth", model=None, wandb=False, seed=None):
@@ -147,6 +148,10 @@ class Manager:
                 # q = torch.mean(q_normalized, dim=1)
 
                 # q = torch.mean(q_values, dim=1)
+                if multiply:
+                    q = max(0, q) # cuz it can be negative twice
+                    # q = 1 / (1 + math.exp(-q))
+
 
                 if multiply:
                     accumulator *= q

@@ -113,14 +113,19 @@ def run_experiment(method, iteration, args, log_dir_base, global_lock):
                                  render=False)
     
     model = PPO(
-        MlpPolicy,
-        env,
-        verbose=1,
-        batch_size=256,
-        learning_rate=buttons_config['learning_rate'],
-        gamma = buttons_config['gamma'],
-        tensorboard_log=f"runs/{run.id}"
-    )
+                MlpPolicy,
+                env,
+                verbose=1,
+                batch_size=256,
+                learning_rate=buttons_config['learning_rate'],
+                gamma = buttons_config['gamma'],
+                tensorboard_log=f"runs/{run.id}" if args.wandb else None,
+                max_grad_norm=buttons_config['max_grad_norm'],
+                vf_coef=buttons_config['vf_coef'],
+                # normalize_advantage=True,
+                target_kl=buttons_config['target_kl'],
+                ent_coef=buttons_config['ent_coef']
+            )
 
     # model = DQN(
     #     "MlpPolicy",
@@ -177,7 +182,7 @@ def main():
 
     with ProcessManager() as manager:
         global_lock = manager.Lock()
-        with ProcessPoolExecutor(max_workers = 10) as executor:
+        with ProcessPoolExecutor(max_workers = 6) as executor:
             futures = []
             for method in assignment_methods:
                 for i in range(1, args.num_iterations + 1):

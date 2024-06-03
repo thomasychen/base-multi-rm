@@ -14,7 +14,7 @@ class MultiAgentEnvironment(ParallelEnv):
         "name": "custom_environment_v0",
     }
 
-    def __init__(self, manager, labeled_mdp_class, reward_machine:SparseRewardMachine, config, max_agents, cer= True, test = False, render_mode=None):
+    def __init__(self, manager, labeled_mdp_class, reward_machine:SparseRewardMachine, config, max_agents, cer= True, test = False, is_monolithic = False, render_mode=None):
         MultiAgentEnvironment.manager = manager
 
         # self.manager = manager
@@ -29,6 +29,8 @@ class MultiAgentEnvironment(ParallelEnv):
         self.test = test
         self.max_agents = max_agents
         self.local_manager = None
+
+        self.is_monolithic = is_monolithic
 
 
         self.possible_agents = ["agent_" + str(r) for r in range(self.max_agents)]
@@ -94,7 +96,7 @@ class MultiAgentEnvironment(ParallelEnv):
             s = self.mdp_states[curr_agent]
             a = actions[curr_agent]
             s_next = self.labeled_mdp.environment_step(s, a, i+1)
-            labels = self.labeled_mdp.get_mdp_label(s_next, i+1, self.rm_states[curr_agent], self.test)
+            labels = self.labeled_mdp.get_mdp_label(s_next, i+1, self.rm_states[curr_agent], self.test, self.is_monolithic)
             crazies = [[] for i in range(len(self.possible_agents))]
             if type(self.labeled_mdp) == EasyButtonsLabeled:
                 for label in labels:
@@ -234,7 +236,7 @@ class MultiAgentEnvironment(ParallelEnv):
                         else: 
                             u_old = perm[k]
                             s_new = self.mdp_states[ag]
-                            new_l = self.labeled_mdp.get_mdp_label(s_new, k+1, u_old, self.test)
+                            new_l = self.labeled_mdp.get_mdp_label(s_new, k+1, u_old, self.test, self.is_monolithic)
                             new_r = 0
                             a = actions[ag]
                             u_temp = u_old

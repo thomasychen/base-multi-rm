@@ -1,0 +1,43 @@
+0 # initial state 
+(0, 1, "to_rm1", 0)  # Connect to RM 1
+(0, 2, "to_rm2", 0)  # Connect to RM 2
+(0, 3, "to_rm3", 0)  # Connect to RM 3
+(1, 4, 'by', 0)  # Yellow button is pressed
+(4, 5, 'bg', 0)  # Green button is pressed
+(5, 6, 'a2br', 0)  # Agent 2 on red button
+(5, 7, 'a3br', 0)  # Agent 3 on red button
+(6, 8, 'a3br', 0)  # Agent 3 on red button
+(6, 5, 'a2lr', 0)  # Agent 2 left red button
+(7, 8, 'a2br', 0)  # Agent 2 on red button
+(7, 5, 'a3lr', 0)  # Agent 3 left red button
+(8, 6, 'a3lr', 0)  # Agent 3 left red button
+(8, 7, 'a2lr', 0)  # Agent 2 left red button
+(8, 9, 'br', 0)  # Red button has been pressed
+(9, 10, 'g', 1)  # Agent 1 reaches goal destination
+(10, 10, 'True', 0)  # 10 is a terminating state
+(2, 11, 'by', 0)  # Yellow button is pressed
+(11, 12, 'bg', 0)  # Green button is pressed
+(12, 13, 'a2br', 0)  # Agent 2 on red button
+(12, 14, 'a3br', 0)  # Agent 3 on red button
+(13, 15, 'a3br', 0)  # Agent 3 on red button
+(13, 12, 'a2lr', 0)  # Agent 2 left red button
+(14, 15, 'a2br', 0)  # Agent 2 on red button
+(14, 12, 'a3lr', 0)  # Agent 3 left red button
+(15, 13, 'a3lr', 0)  # Agent 3 left red button
+(15, 14, 'a2lr', 0)  # Agent 2 left red button
+(15, 16, 'br', 0)  # Red button has been pressed
+(16, 17, 'g', 1)  # Agent 1 reaches goal destination
+(17, 17, 'True', 0)  # 17 is a terminating state
+(3, 18, 'by', 0)  # Yellow button is pressed
+(18, 19, 'bg', 0)  # Green button is pressed
+(19, 20, 'a2br', 0)  # Agent 2 on red button
+(19, 21, 'a3br', 0)  # Agent 3 on red button
+(20, 22, 'a3br', 0)  # Agent 3 on red button
+(20, 19, 'a2lr', 0)  # Agent 2 left red button
+(21, 22, 'a2br', 0)  # Agent 2 on red button
+(21, 19, 'a3lr', 0)  # Agent 3 left red button
+(22, 20, 'a3lr', 0)  # Agent 3 left red button
+(22, 21, 'a2lr', 0)  # Agent 2 left red button
+(22, 23, 'br', 0)  # Red button has been pressed
+(23, 24, 'g', 1)  # Agent 1 reaches goal destination
+(24, 24, 'True', 0)  # 24 is a terminating state

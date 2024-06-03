@@ -73,7 +73,8 @@ parser.add_argument('--wandb', type=str2bool, default=False, help='Turn Wandb lo
 parser.add_argument('--timesteps', type=int, default=2000000, help='Number of timesteps to train model. Default is 2000000')
 parser.add_argument('--cer', type=str2bool, default=True, help='Turn CER on or off' )
 parser.add_argument('--decomposition_file', type=str, default="aux_buttons.txt",  help="The reward machine file for this decomposition")
-parser.add_argument('--experiment_name', type=str, default="buttons", help="Name of config file for environmen")
+parser.add_argument('--experiment_name', type=str, default="buttons", help="Name of config file for environment")
+parser.add_argument('--is_monolithic', type=str2bool, default=False, help="If monolothic RM")
 args = parser.parse_args()
 
 
@@ -132,6 +133,7 @@ if __name__ == "__main__":
                 'config': buttons_config,
                 'max_agents': buttons_config['num_agents'],
                 'cer': args.cer,
+                'is_monolithic': args.is_monolithic
             }
 
             env = MultiAgentEnvironment(**train_kwargs)

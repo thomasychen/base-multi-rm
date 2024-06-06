@@ -32,7 +32,7 @@ class Manager:
         self.total_selections = 0
 
         # UCB exploration parameter
-        self.ucb_c = 1.5
+        self.ucb_c = 1.25
         self.window = 0
         self.window_cnt = 0
 

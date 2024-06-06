@@ -1,7 +1,7 @@
 from utils.plot_utils import generate_plots
 import numpy as np
 
-generate_plots('logs/20240601-222506', 30)
+generate_plots('logs/ucb_vary', 30)
 
 # import numpy as np
 

@@ -120,7 +120,10 @@ class MultiAgentEnvironment(ParallelEnv):
 
         if "bg" in all_labels and self.test:
             print("\n\n\nYAYYYY\n\n\n")
-                
+            
+
+        # if "br" in all_labels:
+        #     import pdb; pdb.set_trace()
 
 
 
@@ -206,6 +209,8 @@ class MultiAgentEnvironment(ParallelEnv):
             #     for ar in self.agents:
             #         rewards[ar] = r
             #     print(rewards)
+        # if not self.test and rewards and all([i < 0 for i in rewards.values()]):
+        #     import pdb; pdb.set_trace();
         # print("TERMINATIONS", terminations)
         # if len(actions) == self.num_agents:
         if not self.test and self.cer:
@@ -305,10 +310,10 @@ class MultiAgentEnvironment(ParallelEnv):
         # print(self.rm_states)
 
         if self.test:
-            if all(terminations.values()):
+            if all(terminations.values()) and any([i > 0 for i in rewards.values()]):
                 for ar in rewards:
                     rewards[ar] = 1
-            else:
+            elif not all(terminations.values()):
                 for ar in rewards:
                     rewards[ar] = 0
         # if "g" in all_labels and self.test and len(all_labels)>1:

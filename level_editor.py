@@ -26,7 +26,7 @@ class LevelEditor(QMainWindow):
         self.setCentralWidget(central_widget)
         layout = QVBoxLayout(central_widget)
 
-        self.scene = QGraphicsScene()
+        self.scene = QGraphicsScene() 
         self.view = QGraphicsView(self.scene)
         self.view.setFixedSize(self.columns * self.cell_size + 2, self.rows * self.cell_size + 2)
         layout.addWidget(self.view)

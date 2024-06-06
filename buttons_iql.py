@@ -18,6 +18,7 @@ from manager.manager import Manager
 from stable_baselines3.common.callbacks import EvalCallback, CallbackList
 from mdp_label_wrappers.buttons_mdp_labeled import HardButtonsLabeled
 from mdp_label_wrappers.easy_buttons_mdp_labeled import EasyButtonsLabeled
+from mdp_label_wrappers.challenge_buttons_mdp_labeled import ChallengeButtonsLabeled
 from reward_machines.sparse_reward_machine import SparseRewardMachine
 from stable_baselines3.common.monitor import Monitor
 from pettingzoo.test import parallel_seed_test
@@ -126,9 +127,10 @@ if __name__ == "__main__":
 
             # buttons_config["initial_rm_states"] = extract_states_from_file(args.decomposition_file)
 
+
             train_kwargs = {
                 'manager': manager,
-                'labeled_mdp_class': HardButtonsLabeled if buttons_config['labeled_mdp_class'] == "HardButtonsLabeled" else EasyButtonsLabeled,
+                'labeled_mdp_class': eval(buttons_config['labeled_mdp_class']),
                 'reward_machine': train_rm,
                 'config': buttons_config,
                 'max_agents': buttons_config['num_agents'],

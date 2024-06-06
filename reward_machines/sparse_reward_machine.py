@@ -114,7 +114,7 @@ class SparseRewardMachine:
         # Check if reward is given for reaching the state in question
         for u0 in self.delta_r:
             if u1 in self.delta_r[u0]:
-                if self.delta_r[u0][u1] == 1:
+                if self.delta_r[u0][u1] == 1 or self.delta_r[u0][u1] == -1:
                     return True
         return False
             

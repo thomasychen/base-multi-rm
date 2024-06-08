@@ -2,12 +2,12 @@ num_agents: 2
 max_episode_length: 100
 initial_mdp_states: [90, 9]
 initial_rm_states:
-  - [9, 10]
   - [1, 2]
+  - [10, 11]
 gamma: 0.97
 learning_rate: 0.0005
-vf_coef: 0.5
-max_grad_norm: 0.5
+vf_coef: 10
+max_grad_norm: 10
 target_kl: 0.1
-ent_coef: 0.1
+ent_coef: 0.07
 labeled_mdp_class: "ChallengeButtonsLabeled"

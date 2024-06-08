@@ -15,6 +15,8 @@ class ChallengeButtonsLabeled(ChallengeButtonsEnv):
             l.append('bg')
         if (row, col) == self.env_settings['red_button']:
             l.append('br')
+        if (row, col) == self.env_settings['blue_button']:
+            l.append('bb')
 
         return l
 

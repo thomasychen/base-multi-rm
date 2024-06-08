@@ -32,7 +32,7 @@ class Manager:
         self.total_selections = 0
 
         # UCB exploration parameter
-        self.ucb_c = 1.25
+        self.ucb_c = 1.20
         self.window = 0
         self.window_cnt = 0
 
@@ -149,8 +149,8 @@ class Manager:
 
                 # q = torch.mean(q_values, dim=1)
                 if multiply:
-                    q = max(0, q) # cuz it can be negative twice
-                    # q = 1 / (1 + math.exp(-q))
+                    # q = max(0, q) # cuz it can be negative twice
+                    q = 1 / (1 + math.exp(-q))
 
 
                 if multiply:

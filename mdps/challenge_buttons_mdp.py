@@ -48,6 +48,7 @@ class ChallengeButtonsEnv():
         env_settings['yellow_button'] = (1, 1)
         env_settings['green_button'] = (5, 5)
         env_settings['red_button'] = (9, 9)
+        env_settings['blue_button'] = (1, 8)
 
 
         env_settings['p'] = 0.98
@@ -76,6 +77,7 @@ class ChallengeButtonsEnv():
         self.objects[self.env_settings['yellow_button']] = 'yb'
         self.objects[self.env_settings['green_button']] = 'gb'
         self.objects[self.env_settings['red_button']] = 'rb'
+        self.objects[self.env_settings['blue_button']] = 'bb'
 
         self.num_states = self.Nr * self.Nc
 

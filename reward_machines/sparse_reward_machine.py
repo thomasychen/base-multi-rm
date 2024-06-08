@@ -132,6 +132,7 @@ class SparseRewardMachine:
         if event not in self.delta_u[u1]:
             self.delta_u[u1][event] = u2
         else:
+            print(u1, u2, event, reward)
             raise Exception('Trying to make rm transition function non-deterministic.')
             # self.delta_u[u1][u2].append(event)
         # Adding reward-transition to delta_r

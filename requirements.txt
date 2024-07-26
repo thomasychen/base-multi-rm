@@ -54,7 +54,7 @@ msgpack==1.0.8
 networkx==3.3
 numpy==1.26.4
 opencv-python==4.9.0.80
--e git+ssh://git@github.com/HumanCompatibleAI/overcooked_ai.git@fa212be33f0379ac1fa20752f76d04cbcd6fbef3#egg=overcooked_ai
+-e git+https://github.com/thomasychen/overcooked_ai.git@fa212be33f0379ac1fa20752f76d04cbcd6fbef3#egg=overcooked_ai&subdirectory=../../overcooked_ai
 packaging==24.0
 pandas==2.2.2
 parso==0.8.4

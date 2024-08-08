@@ -23,7 +23,7 @@ class OvercookedWrapperEnv():
         # a1.featurize, a2.featurize = base_env.featurize_state_mdp, base_env.featurize_state_mdp
         agent_pair = AgentPair(a1, a2)
         # agent_pair = load_agent_pair("/temp", "ppo", "ppo")
-        self.env = OvercookedEnvPettingZoo(base_env, agent_pair)
+        self.env = OvercookedEnvPettingZoo(base_env, agent_pair, render_mode = "human")
         # self.env = gym.make("Overcooked-v0")
         # self.env.custom_init(base_env=base_env, featurize_fn=base_env.lossless_state_encoding_mdp)
 

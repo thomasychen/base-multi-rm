@@ -59,7 +59,7 @@ if __name__ == '__main__':
     env.reset()
     print("hi1")
 
-    model.learn(total_timesteps = 1000000)
+    model.learn(total_timesteps = 4000000)
 
     # env.close()
     

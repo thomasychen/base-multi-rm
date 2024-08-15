@@ -38,11 +38,12 @@ class OvercookedProductEnv(ParallelEnv):
     
     def reset(self, seed=None, options=None):
         self.agents = self.possible_agents[:]
+        self.timestep = 0
         # self.num_moves = 0
         # observations = {agent: NONE for agent in self.agents}
         # infos = {agent: {} for agent in self.agents}
         # self.state = observations
-        print("RESETTING")
+        # print("RESETTING")
 
         self.states = []
         if self.reset_key is None:
@@ -50,7 +51,7 @@ class OvercookedProductEnv(ParallelEnv):
         self.reset_key, key_r, key_a = jax.random.split(self.reset_key, 3)
         jax_observations, state = self.mdp.reset(key_r)
 
-        print("reset step", state.time)
+        # print("reset step", state.time)
         self.curr_state = state
         self.states.append([self.curr_state])
         infos = {agent: {} for agent in self.agents}
@@ -87,7 +88,12 @@ class OvercookedProductEnv(ParallelEnv):
         for agent, rew in rewards.items():
             self.eps_reward[agent] += rew
         dones = {i: bool(jax_dones[i]) for i in jax_dones}
+        self.timestep += 1
+        infos =  {agent: {"timesteps": self.timestep} for agent in self.agents}
         # print(dones)
+        if dones["__all__"]:
+            self.agents = []
+            # import pdb; pdb.set_trace();
 
         # If a user passes in actions with no agents, then just return empty observations, etc.
         # if not actions:
@@ -122,21 +128,23 @@ class OvercookedProductEnv(ParallelEnv):
 
         if self.render_mode == "human":
             self.render()
-        terminations = {i: False for i in actions}
-        terminations["__all__"] = False
+        # terminations = {i: False for i in actions}
+        # terminations["__all__"] = False
 
-        if state.time == 0:
-            print("episode reward: ", self.eps_reward)
-            self.eps_reward = {agent: 0 for agent in self.possible_agents}
+        # if state.time == 0:
+        #     # print("episode reward: ", self.eps_reward)
+        #     self.eps_reward = {agent: 0 for agent in self.possible_agents}
             # truncations = {i: True for i in actions}
             # truncations["__all__"] = True
             # jax_infos = {}
-            # self.agents = []
 
-        print("infos:", jax_infos)
+        # print("infos:", jax_infos)
+        
+        # if sum(jax_infos["shaped_reward"].values()) > 0:
+        #     import pdb; pdb.set_trace();
 
         
-        return obs, rewards, terminations, dones, jax_infos
+        return obs, {i: float(jax_infos["shaped_reward"][i]) for i in jax_infos["shaped_reward"]}, dones, dones, infos
 
     def render(self):
         self.viz.render(self.mdp.agent_view_size, self.curr_state, highlight=False)

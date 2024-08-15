@@ -9,11 +9,48 @@ from pettingzoo_product_env.overcooked_product_env import OvercookedProductEnv
 from jaxmarl import make
 from jaxmarl.environments.overcooked import Overcooked, overcooked_layouts, layout_grid_to_dict
 from stable_baselines3.common.logger import configure
-from stable_baselines3.common.callbacks import EvalCallback
+from stable_baselines3.common.callbacks import EvalCallback, CallbackList
 import torch.nn as nn
+import argparse
+from buttons_iql import str2bool
+import wandb
+from datetime import datetime
+import os
+from wandb.integration.sb3 import WandbCallback
+
+
+parser = argparse.ArgumentParser(description="Run reinforcement learning experiments with PettingZoo and Stable Baselines3.")
+parser.add_argument('--wandb', type=str2bool, default=False, help='Turn Wandb logging on or off. Default is off')
+args = parser.parse_args()
 
 if __name__ == '__main__':
-    max_steps = 100
+    real_base = "./logs/"
+    os.makedirs(real_base, exist_ok=True)
+
+    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+
+    log_dir_base = os.path.join(real_base, f"{timestamp}")
+    os.makedirs(log_dir_base, exist_ok=True)
+    if args.wandb:
+        experiment = "overcooked_pettingzoo_sb3"
+        config = {
+            "policy_type": "MlpPolicy",
+            "total_timesteps": 4000000,
+            "env_name": "OvercookedPettingZoo",
+        }
+
+        wandb_timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+        run_name = f"overcooked_{wandb_timestamp}"
+
+        run = wandb.init(
+            project=experiment,
+            entity="reinforce-learn",
+            config=config,
+            sync_tensorboard=True,
+            name=run_name
+        )
+    
+    max_steps = 400
     layout = overcooked_layouts["cramped_room"]
     jax_env = make('overcooked', layout=layout, max_steps=max_steps)
     env = OvercookedProductEnv(jax_env, render_mode = "human")
@@ -24,20 +61,19 @@ if __name__ == '__main__':
 
     jax_eval_env = make('overcooked', layout=layout, max_steps=max_steps)
     eval_env = OvercookedProductEnv(jax_eval_env)
-    # eval_env = ss.black_death_v3(eval_env)
+    eval_env = ss.black_death_v3(eval_env)
     eval_env = ss.pettingzoo_env_to_vec_env_v1(eval_env)
     eval_env = ss.concat_vec_envs_v1(eval_env, 1, num_cpus=1, base_class="stable_baselines3")
     eval_env = VecMonitor(eval_env)
 
-    eval_callback = EvalCallback(eval_env, eval_freq=500,
-                             deterministic=True, render=False)
-
-    # import pdb; pdb.set_trace();
-    logger = configure()
+    eval_callback = EvalCallback(eval_env, best_model_save_path=None,
+                                    log_path=log_dir_base, eval_freq=2000,
+                                    n_eval_episodes=1, deterministic=True)
 
     model = PPO(
     MlpPolicy,
     env,
+    tensorboard_log=f"runs/{run.id}" if args.wandb else None,
     verbose=1,
     learning_rate=2.5e-4,  # LR
     gamma=0.99,  # GAMMA
@@ -53,13 +89,18 @@ if __name__ == '__main__':
     )
     )
     model.learning_rate = lambda frac: 2.5e-4 * frac
-    print("hi")
-    model.set_logger(logger)
 
     env.reset()
-    print("hi1")
+
+    if args.wandb:
+        callback_list = CallbackList([eval_callback, WandbCallback(verbose=2,)])
+        print("RETARD\n\n")
+    else:
+        callback_list = CallbackList([eval_callback])
+        print("DUMBASSSS")
 
     model.learn(total_timesteps = 4000000)
-
+    if args.wandb:
+        wandb.finish()
     # env.close()
     

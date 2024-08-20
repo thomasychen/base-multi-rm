@@ -11,7 +11,7 @@ class OvercookedProductEnv(ParallelEnv):
         "name": "custom_environment_v0",
     }
 
-    def __init__(self, env:Overcooked, render_mode = None):
+    def __init__(self, env:Overcooked, render_mode = None, test = False):
         self.possible_agents = ["agent_" + str(r) for r in range(2)]
 
         # optional: a mapping between agent name and ID
@@ -24,6 +24,7 @@ class OvercookedProductEnv(ParallelEnv):
         self.viz = OvercookedVisualizer()
         self.eps_reward = {agent: 0 for agent in self.possible_agents}
         self.reset_key = None
+        self.test = test
 
         # self.key, self.key_r, self.key_a = jax.random.split(key, 3)
     
@@ -76,7 +77,7 @@ class OvercookedProductEnv(ParallelEnv):
         #      agent_1: np.array(0), 
              
         #  }
-
+        # print("CURRENT STEP", self.timestep)
         self.reset_key, key_a0, key_a1, key_s = jax.random.split(self.reset_key, 4)
 
         jax_obs, state, jax_rewards, jax_dones, jax_infos = self.mdp.step(key_s, self.curr_state, actions)
@@ -143,8 +144,8 @@ class OvercookedProductEnv(ParallelEnv):
         # if sum(jax_infos["shaped_reward"].values()) > 0:
         #     import pdb; pdb.set_trace();
 
-        
-        return obs, {i: float(jax_infos["shaped_reward"][i]) for i in jax_infos["shaped_reward"]}, dones, dones, infos
+        rewards = {i: float(jax_infos["shaped_reward"][i]) for i in jax_infos["shaped_reward"]} if not self.test else rewards
+        return obs, rewards, dones, dones, infos
 
     def render(self):
         self.viz.render(self.mdp.agent_view_size, self.curr_state, highlight=False)

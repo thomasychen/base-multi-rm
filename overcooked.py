@@ -60,15 +60,14 @@ if __name__ == '__main__':
     env = VecMonitor(env)
 
     jax_eval_env = make('overcooked', layout=layout, max_steps=max_steps)
-    eval_env = OvercookedProductEnv(jax_eval_env)
+    eval_env = OvercookedProductEnv(jax_eval_env, test=True)
     eval_env = ss.black_death_v3(eval_env)
     eval_env = ss.pettingzoo_env_to_vec_env_v1(eval_env)
     eval_env = ss.concat_vec_envs_v1(eval_env, 1, num_cpus=1, base_class="stable_baselines3")
     eval_env = VecMonitor(eval_env)
 
-    eval_callback = EvalCallback(eval_env, best_model_save_path=None,
-                                    log_path=log_dir_base, eval_freq=2000,
-                                    n_eval_episodes=1, deterministic=True)
+    eval_callback = EvalCallback(eval_env, best_model_save_path=f"{log_dir_base}/best/",
+                                    log_path=log_dir_base, eval_freq=4000, deterministic=False)
 
     model = PPO(
     MlpPolicy,
@@ -99,7 +98,7 @@ if __name__ == '__main__':
         callback_list = CallbackList([eval_callback])
         print("DUMBASSSS")
 
-    model.learn(total_timesteps = 4000000)
+    model.learn(total_timesteps = 4000000, callback=callback_list)
     if args.wandb:
         wandb.finish()
     # env.close()

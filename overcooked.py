@@ -21,6 +21,7 @@ from wandb.integration.sb3 import WandbCallback
 
 parser = argparse.ArgumentParser(description="Run reinforcement learning experiments with PettingZoo and Stable Baselines3.")
 parser.add_argument('--wandb', type=str2bool, default=False, help='Turn Wandb logging on or off. Default is off')
+parser.add_argument('--render', type=str2bool, default=False, help='Enable rendering during training. Default is off')
 args = parser.parse_args()
 
 if __name__ == '__main__':
@@ -53,7 +54,8 @@ if __name__ == '__main__':
     max_steps = 400
     layout = overcooked_layouts["cramped_room"]
     jax_env = make('overcooked', layout=layout, max_steps=max_steps)
-    env = OvercookedProductEnv(jax_env, render_mode = "human")
+    render_mode = "human" if args.render else None
+    env = OvercookedProductEnv(jax_env, render_mode = render_mode)
     env = ss.black_death_v3(env)
     env = ss.pettingzoo_env_to_vec_env_v1(env)
     env = ss.concat_vec_envs_v1(env, 1, num_cpus=1, base_class="stable_baselines3")
@@ -67,7 +69,7 @@ if __name__ == '__main__':
     eval_env = VecMonitor(eval_env)
 
     eval_callback = EvalCallback(eval_env, best_model_save_path=f"{log_dir_base}/best/",
-                                    log_path=log_dir_base, eval_freq=4000, deterministic=False)
+                                    log_path=log_dir_base, eval_freq=4000, deterministic=True)
 
     model = PPO(
     MlpPolicy,
@@ -93,12 +95,11 @@ if __name__ == '__main__':
 
     if args.wandb:
         callback_list = CallbackList([eval_callback, WandbCallback(verbose=2,)])
-        print("RETARD\n\n")
     else:
         callback_list = CallbackList([eval_callback])
-        print("DUMBASSSS")
+        print("Disabled Wa&B for this training run. Logging will not occur.")
 
-    model.learn(total_timesteps = 4000000, callback=callback_list)
+    model.learn(total_timesteps = 2500000, callback=callback_list, progress_bar=True)
     if args.wandb:
         wandb.finish()
     # env.close()

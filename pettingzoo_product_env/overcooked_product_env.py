@@ -144,7 +144,7 @@ class OvercookedProductEnv(ParallelEnv):
         # if sum(jax_infos["shaped_reward"].values()) > 0:
         #     import pdb; pdb.set_trace();
 
-        rewards = {i: float(jax_infos["shaped_reward"][i]) for i in jax_infos["shaped_reward"]} if not self.test else rewards
+        rewards = {i: float(jax_infos["shaped_reward"][i]) for i in jax_infos["shaped_reward"]} #if not self.test else rewards
         return obs, rewards, dones, dones, infos
 
     def render(self):

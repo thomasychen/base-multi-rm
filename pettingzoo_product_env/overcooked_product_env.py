@@ -5,13 +5,15 @@ import jax.numpy as jnp
 import numpy as np
 from jaxmarl.viz.overcooked_visualizer import OvercookedVisualizer
 from gymnasium.spaces import Box, Discrete
+from mdp_label_wrappers.generic_mdp_labeled import MDP_Labeler
+from reward_machines.sparse_reward_machine import SparseRewardMachine
 
 class OvercookedProductEnv(ParallelEnv):
     metadata = {
         "name": "custom_environment_v0",
     }
 
-    def __init__(self, env:Overcooked, render_mode = None, test = False):
+    def __init__(self, manager, labeled_mdp_class: MDP_Labeler, reward_machine: SparseRewardMachine, config, max_agents, test=False, is_monolithic=False, render_mode=None):
         self.possible_agents = ["agent_" + str(r) for r in range(2)]
 
         # optional: a mapping between agent name and ID
@@ -19,7 +21,8 @@ class OvercookedProductEnv(ParallelEnv):
             zip(self.possible_agents, list(range(len(self.possible_agents))))
         )
         self.render_mode = render_mode 
-        self.mdp = env
+        self.labeled_mdp = labeled_mdp_class(config)
+        self.mdp = self.labeled_mdp.jax_env
         self.states = []
         self.viz = OvercookedVisualizer()
         self.eps_reward = {agent: 0 for agent in self.possible_agents}

@@ -1,6 +1,7 @@
 from mdps.challenge_buttons_mdp import ChallengeButtonsEnv
+from mdp_label_wrappers.generic_mdp_labeled import MDP_Labeler
 
-class ChallengeButtonsLabeled(ChallengeButtonsEnv):
+class ChallengeButtonsLabeled(ChallengeButtonsEnv, MDP_Labeler):
     def get_mdp_label(self, s_next, *args):
         """
         Return the label of the next environment state and current RM state.

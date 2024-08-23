@@ -15,7 +15,7 @@ from stable_baselines3.common.vec_env.vec_monitor import VecMonitor
 import supersuit as ss
 from reward_machines.sparse_reward_machine import SparseRewardMachine
 from mdp_label_wrappers.buttons_mdp_labeled import HardButtonsLabeled
-from pettingzoo_product_env.pettingzoo_product_env import MultiAgentEnvironment
+from pettingzoo_product_env.buttons_product_env import MultiAgentEnvironment
 from manager.manager import Manager
 # from threading import Lock
 from wandb.integration.sb3 import WandbCallback

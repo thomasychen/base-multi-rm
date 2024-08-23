@@ -1,0 +1,24 @@
+num_agents: 2
+max_episode_length: 100
+initial_mdp_states: [90, 9]
+initial_rm_states:
+  - [1, 2]
+  - [10, 11]
+  # - [19, 20]
+  # - [28, 29]
+  # - [37, 38]
+  # - [46, 47]
+  # - [55, 56]
+  # - [64, 65]
+  # - [73, 74]
+  # - [82, 83]
+  # - [91, 92]
+  # - [100, 101]
+gamma: 0.97
+learning_rate: 0.0005
+vf_coef: 0.5
+max_grad_norm: 0.5
+target_kl: 0.1
+ent_coef: 0.1
+labeled_mdp_class: "ChallengeButtonsLabeled"
+eval_freq: 200

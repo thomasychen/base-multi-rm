@@ -11,3 +11,4 @@ max_grad_norm: 10
 target_kl: 0.05
 ent_coef: 0.1
 labeled_mdp_class: "EasyButtonsLabeled"
+eval_freq: 200

@@ -1,7 +1,8 @@
 from mdps.easy_buttons_mdp import EasyButtonsEnv
 import numpy as np
+from mdp_label_wrappers.generic_mdp_labeled import MDP_Labeler
 
-class EasyButtonsLabeled(EasyButtonsEnv):
+class EasyButtonsLabeled(EasyButtonsEnv, MDP_Labeler):
 
     # def environment_step(self, s, a, agent_id):
     #     s_next, last_action = self.get_next_state(s,a, agent_id)

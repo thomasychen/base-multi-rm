@@ -1,5 +1,3 @@
-from pettingzoo.test import parallel_api_test
-from pettingzoo_product_env.pettingzoo_product_env import MultiAgentEnvironment
 import yaml
 from stable_baselines3.common.noise import OrnsteinUhlenbeckActionNoise
 from mdp_label_wrappers.buttons_mdp_labeled import HardButtonsLabeled
@@ -32,14 +30,13 @@ import pandas as pd
 from utils.plot_utils import generate_plots
 import re
 import torch as th
+from pettingzoo_product_env.overcooked_product_env import OvercookedProductEnv
+from pettingzoo_product_env.buttons_product_env import ButtonsProductEnv
+from jaxmarl.environments.overcooked import overcooked_layouts
+from mdp_label_wrappers.overcooked_cramped_labeled import OvercookedCrampedLabeled
 
 ## WANDB KILL SWITCH
 # ps aux|grep wandb|grep -v grep | awk '{print $2}'|xargs kill -9
-
-
-# log_dir = "./logs/"
-# os.makedirs(log_dir, exist_ok=True)
-# new_logger = configure(log_dir, ["stdout", "csv", "tensorboard"])
 
 def str2bool(v):
     if isinstance(v, bool):
@@ -72,10 +69,15 @@ parser.add_argument('--assignment_methods', type=str, default="ground_truth naiv
 parser.add_argument('--num_iterations', type=int, default=5, help='Number of iterations for the experiment. Default is 5.')
 parser.add_argument('--wandb', type=str2bool, default=False, help='Turn Wandb logging on or off. Default is off')
 parser.add_argument('--timesteps', type=int, default=2000000, help='Number of timesteps to train model. Default is 2000000')
-parser.add_argument('--cer', type=str2bool, default=True, help='Turn CER on or off' )
 parser.add_argument('--decomposition_file', type=str, default="aux_buttons.txt",  help="The reward machine file for this decomposition")
-parser.add_argument('--experiment_name', type=str, default="buttons", help="Name of config file for environment")
+parser.add_argument('--experiment_name', type=str, default="buttons", help="Name of config file for environment eg: ")
 parser.add_argument('--is_monolithic', type=str2bool, default=False, help="If monolothic RM")
+parser.add_argument('--env', type=str, default="buttons", help="Specify between the buttons grid world or overcooked")
+parser.add_argument('--render', type=str2bool, default=False, help='Enable rendering during training. Default is off')
+
+# python run.py --assignment_methods ground_truth --num_iterations 1 --wandb t --timesteps 10000 --decomposition_file aux_buttons.txt --experiment_name buttons --is_monolithic f --env buttons --render f
+# python run.py --assignment_methods ground_truth --num_iterations 1 --wandb t --timesteps 10000 --decomposition_file aux_cramped_room.txt --experiment_name cramped_room --is_monolithic f --env overcooked --render f
+
 args = parser.parse_args()
 
 
@@ -102,8 +104,8 @@ if __name__ == "__main__":
                 experiment = "test_pettingzoo_sb3"
                 config = {
                     "policy_type": "MlpPolicy",
-                    "total_timesteps": 1000000,
-                    "env_name": "Buttons",
+                    "total_timesteps": args.timesteps,
+                    "env_name": f"{args.env}",
                 }
 
                 wandb_timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
@@ -117,28 +119,29 @@ if __name__ == "__main__":
                     name=run_name
                 )
 
-            with open(f'config/{args.experiment_name}.yaml', 'r') as file:
-                buttons_config = yaml.safe_load(file)
+            with open(f'config/{args.env}/{args.experiment_name}.yaml', 'r') as file:
+                run_config = yaml.safe_load(file)
 
-            print(buttons_config)
-            # num_agents = 3
-            manager = Manager(num_agents=buttons_config['num_agents'], num_decomps = len(buttons_config["initial_rm_states"]),assignment_method=method, wandb=args.wandb, seed = i)
-            train_rm = SparseRewardMachine(f"reward_machines/{args.experiment_name}/{args.decomposition_file}")
-
-            # buttons_config["initial_rm_states"] = extract_states_from_file(args.decomposition_file)
-
+            print(run_config)
+            manager = Manager(num_agents=run_config['num_agents'], num_decomps = len(run_config["initial_rm_states"]),assignment_method=method, wandb=args.wandb, seed = i)
+            train_rm = SparseRewardMachine(f"reward_machines/{args.env}/{args.experiment_name}/{args.decomposition_file}")
+            render_mode = "human" if args.render else None
+            run_config["render_mode"] = render_mode
 
             train_kwargs = {
                 'manager': manager,
-                'labeled_mdp_class': eval(buttons_config['labeled_mdp_class']),
+                'labeled_mdp_class': eval(run_config['labeled_mdp_class']),
                 'reward_machine': train_rm,
-                'config': buttons_config,
-                'max_agents': buttons_config['num_agents'],
-                'cer': args.cer,
-                'is_monolithic': args.is_monolithic
+                'config': run_config,
+                'max_agents': run_config['num_agents'],
+                'is_monolithic': args.is_monolithic,
+                'render_mode': render_mode
             }
-
-            env = MultiAgentEnvironment(**train_kwargs)
+            
+            if args.env == "buttons":
+                env = ButtonsProductEnv(**train_kwargs)
+            elif args.env == "overcooked":
+                env = OvercookedProductEnv(**train_kwargs)
     
             env = ss.black_death_v3(env)
             env = ss.pettingzoo_env_to_vec_env_v1(env)
@@ -147,140 +150,70 @@ if __name__ == "__main__":
 
             log_dir = os.path.join(method_log_dir_base, f"iteration_{i}")
             os.makedirs(log_dir, exist_ok=True)
-            # new_logger = configure(log_dir, ["stdout", "csv", "tensorboard"])
 
 
-            # eval_log_dir = "./eval_logs/"
-            # os.makedirs(eval_log_dir, exist_ok=True)
             eval_kwargs = train_kwargs.copy()
             eval_kwargs['test'] = True
 
-            eval_env = MultiAgentEnvironment(**eval_kwargs)
+            if args.env == "buttons":
+                eval_env = ButtonsProductEnv(**train_kwargs)
+            elif args.env == "overcooked":
+                eval_env = OvercookedProductEnv(**train_kwargs)
+            
             eval_env = ss.black_death_v3(eval_env)
             eval_env = ss.pettingzoo_env_to_vec_env_v1(eval_env)
             eval_env = ss.concat_vec_envs_v1(eval_env, 1, num_cpus=1, base_class="stable_baselines3")
             eval_env = VecMonitor(eval_env)
 
 
-            eval_callback = EvalCallback(eval_env, best_model_save_path=None,
-                                    log_path=log_dir, eval_freq=200,
-                                    n_eval_episodes=10, deterministic=True,
-                                    render=False)
-
-
-            policy_kwargs = dict(activation_fn=th.nn.ReLU, net_arch=[128, 128])
-
+            eval_callback = EvalCallback(eval_env, best_model_save_path=f"{log_dir}/best/",
+                                    log_path=log_dir, eval_freq=run_config["eval_freq"],
+                                    n_eval_episodes=10, deterministic=True)
+            policy_kwargs = None
+            if "activation_fn" in run_config:
+                if run_config["activation_fn"] == "relu":
+                    fn = th.nn.ReLU
+                elif run_config["activation_fn"] == "tanh":
+                    fn = th.nn.Tanh
+                policy_kwargs = dict(activation_fn=fn)
+            
             model = PPO(
                 MlpPolicy,
                 env,
                 verbose=1,
                 batch_size=256,
-                learning_rate=buttons_config['learning_rate'],
-                gamma = buttons_config['gamma'],
+                learning_rate=run_config['learning_rate'] if "learning_rate" in run_config else 0.0003,
+                gamma = run_config['gamma'] if "gamma" in run_config else 0.99,
+                n_epochs = run_config["n_epochs"] if "n_epochs" in run_config else 10,
                 tensorboard_log=f"runs/{run.id}" if args.wandb else None,
-                max_grad_norm=buttons_config['max_grad_norm'],
-                vf_coef=buttons_config['vf_coef'],
-                # normalize_advantage=True,
-                target_kl=buttons_config['target_kl'],
-                ent_coef=buttons_config['ent_coef']
+                max_grad_norm=run_config['max_grad_norm'] if "max_grad_norm" in run_config else 0.5,
+                vf_coef=run_config['vf_coef'] if "vf_coef" in run_config else 0.5,
+                target_kl=run_config['target_kl'] if "target_kl" in run_config else None,
+                ent_coef=run_config['ent_coef'] if "ent_coef" in run_config else 0, 
+                policy_kwargs = policy_kwargs, 
             )
+        
+            if "env" == "overcooked":
+                model.learning_rate = lambda frac: 2.5e-4 * frac
 
 
-            # model = DQN(
-            #     "MlpPolicy",
-            #     env,
-            #     verbose=1,
-            #     exploration_initial_eps= 1,
-            #     exploration_final_eps=0.05, 
-            #     exploration_fraction=0.1,
-            #     batch_size=512,
-            #     learning_rate=0.001,
-            #     gamma = buttons_config['gamma'],
-            #     buffer_size=5000,
-            #     target_update_interval=100,
-            #     tensorboard_log=f"runs/{run.id}" if args.wandb else None,
-            #     max_grad_norm=1,
-            # )
-            
-            # model = DQN(
-            #     "MlpPolicy",
-            #     env,
-            #     verbose=1,
-            #     exploration_initial_eps= 1,
-            #     exploration_final_eps=0.05, 
-            #     exploration_fraction=0.25,
-            #     batch_size=5000,
-            #     learning_rate=0.0001,
-            #     gamma = buttons_config['gamma'],
-            #     buffer_size=20000,
-            #     target_update_interval=1000,
-            #     tensorboard_log=f"runs/{run.id}" if args.wandb else None,
-            #     max_grad_norm=1,
-            # )
-            # model = DQN(
-            #     "MlpPolicy",
-            #     env,
-            #     verbose=1,
-            #     exploration_initial_eps= 1,
-            #     exploration_final_eps=0.05, 
-            #     exploration_fraction=0.25,
-            #     batch_size=512,
-            #     learning_rate=0.0001,
-            #     gamma = 0.88,
-            #     buffer_size=7000,
-            #     target_update_interval=100,
-            #     tensorboard_log=f"runs/{run.id}" if args.wandb else None,
-            #     max_grad_norm=1,
-            #     policy_kwargs=policy_kwargs
-            # )
-            # model.set_logger(new_logger)
-            
-            # print("BUTTONSIQL", manager)
             manager.set_model(model)
             env.reset()
-
-            
-
-            # callback_list = None
-            # callback_list = CallbackList([eval_callback, WandbCallback(verbose=2,)])
 
 
             if args.wandb:
                 callback_list = CallbackList([eval_callback, WandbCallback(verbose=2,)])
-                print("RETARD\n\n")
+                print("Wandb Disabled")
 
             else:
                 callback_list = CallbackList([eval_callback])
-                print("DUMBASSSS")
+                print("Wandb Enabled")
 
             model.learn(total_timesteps=args.timesteps, callback=callback_list, log_interval=10, progress_bar=False)
-
-
-            # # model.save(f"{env.unwrapped.metadata.get('name')}_{time.strftime('%Y%m%d-%H%M%S')}")
-
-            # print("Model has been saved.")
-            # print(f"Finished training on {str(env.unwrapped.metadata['name'])}.")
-
             env.close()
-
-            # data = np.load('./eval_logs/evaluations.npz')
-            # test_steps = data['ep_lengths'].mean(axis=1, keepdims=True)
-            # test_reward = data['results'].mean(axis=1,keepdims = True)
-            
-            # # Log the array to wandb with the index as x-axis
-            # for i, length in enumerate(test_steps):
-            #     wandb.log({"Test Mean Episode Length": test_steps[i][0], "Test Mean Episode Reward": test_reward[i][0]})
 
             # Finish your run
             if args.wandb:
                 wandb.finish()
-            # wandb.finish()
-            
-            # Read the log file for this iteration
-            # log_path = os.path.join(log_dir, "progress.csv")
-            # data_frame = read_csv(log_path)
-
-            # all_mean_rewards.append(data_frame["eval/mean_reward"])
-            # all_mean_ep_lengths.append(data_frame["eval/mean_ep_length"])
 
 

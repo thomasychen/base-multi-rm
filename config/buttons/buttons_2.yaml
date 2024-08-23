@@ -12,6 +12,7 @@ max_grad_norm: 0.5
 target_kl: 0.1
 ent_coef: 0.1
 labeled_mdp_class: "HardButtonsLabeled"
+eval_freq: 200
 
 # num_agents: 2
 # max_episode_length: 100

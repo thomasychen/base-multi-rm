@@ -84,6 +84,9 @@ class OvercookedProductEnv(ParallelEnv):
         self.reset_key, key_a0, key_a1, key_s = jax.random.split(self.reset_key, 4)
 
         jax_obs, state, jax_rewards, jax_dones, jax_infos = self.mdp.step(key_s, self.curr_state, actions)
+
+        self.labeled_mdp.get_mdp_label(state, jax_rewards)
+
         # print("step", state.time)
         self.curr_state = state
         self.states[-1].append(state)

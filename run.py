@@ -38,6 +38,8 @@ from mdp_label_wrappers.overcooked_cramped_labeled import OvercookedCrampedLabel
 ## WANDB KILL SWITCH
 # ps aux|grep wandb|grep -v grep | awk '{print $2}'|xargs kill -9
 
+# python run.py --assignment_methods ground_truth --num_iterations 1
+
 def str2bool(v):
     if isinstance(v, bool):
         return v
@@ -76,7 +78,7 @@ parser.add_argument('--env', type=str, default="buttons", help="Specify between 
 parser.add_argument('--render', type=str2bool, default=False, help='Enable rendering during training. Default is off')
 
 # python run.py --assignment_methods ground_truth --num_iterations 1 --wandb t --timesteps 10000 --decomposition_file aux_buttons.txt --experiment_name buttons --is_monolithic f --env buttons --render f
-# python run.py --assignment_methods ground_truth --num_iterations 1 --wandb t --timesteps 10000 --decomposition_file aux_cramped_room.txt --experiment_name cramped_room --is_monolithic f --env overcooked --render f
+# python run.py --assignment_methods ground_truth --num_iterations 1 --wandb t --timesteps 1000000 --decomposition_file aux_cramped_room.txt --experiment_name cramped_room --is_monolithic f --env overcooked --render f
 
 args = parser.parse_args()
 

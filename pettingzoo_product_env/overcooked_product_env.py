@@ -8,6 +8,7 @@ from gymnasium.spaces import Box, Discrete
 from mdp_label_wrappers.generic_mdp_labeled import MDP_Labeler
 from reward_machines.sparse_reward_machine import SparseRewardMachine
 
+
 class OvercookedProductEnv(ParallelEnv):
     metadata = {
         "name": "custom_environment_v0",
@@ -34,7 +35,7 @@ class OvercookedProductEnv(ParallelEnv):
 
     def observation_space(self, agent):
         # gymnasium spaces are defined and documented here: https://gymnasium.farama.org/api/spaces/
-        return Box(0, 255, self.mdp.obs_shape)
+        return Box(0, 255, self.labeled_mdp.obs_shape)
 
     def action_space(self, agent):
         # return self.mdp.action_space()
@@ -47,15 +48,16 @@ class OvercookedProductEnv(ParallelEnv):
         # observations = {agent: NONE for agent in self.agents}
         # infos = {agent: {} for agent in self.agents}
         # self.state = observations
-        # print("RESETTING")
+        print("RESETTING")
 
         self.states = []
         if self.reset_key is None:
             self.reset_key = jax.random.PRNGKey(0)
         self.reset_key, key_r, key_a = jax.random.split(self.reset_key, 3)
         jax_observations, state = self.mdp.reset(key_r)
+        jax_observations = self.labeled_mdp.trim_observation(jax_observations)
 
-        # print("reset step", state.time)
+        print("reset step", state.time)
         self.curr_state = state
         self.states.append([self.curr_state])
         infos = {agent: {} for agent in self.agents}
@@ -80,21 +82,24 @@ class OvercookedProductEnv(ParallelEnv):
         #      agent_1: np.array(0), 
              
         #  }
-        # print("CURRENT STEP", self.timestep)
+        print("CURRENT STEP", self.timestep)
         self.reset_key, key_a0, key_a1, key_s = jax.random.split(self.reset_key, 4)
 
         jax_obs, state, jax_rewards, jax_dones, jax_infos = self.mdp.step(key_s, self.curr_state, actions)
 
-        self.labeled_mdp.get_mdp_label(state, jax_rewards)
+        jax_obs, labels = self.labeled_mdp.get_mdp_label(state, jax_rewards)
+        
 
         # print("step", state.time)
         self.curr_state = state
         self.states[-1].append(state)
         obs = {i: jnp.transpose(jax_obs[i], (1, 0, 2)) for i in jax_obs}
         rewards = {i: float(jax_rewards[i]) for i in jax_rewards}
-        for agent, rew in rewards.items():
-            self.eps_reward[agent] += rew
+        # for agent, rew in rewards.items():
+        #     self.eps_reward[agent] += rew
         dones = {i: bool(jax_dones[i]) for i in jax_dones}
+        if any([i > 0 for i in rewards.values()]): 
+            dones = {i: True for i in jax_dones}
         self.timestep += 1
         infos =  {agent: {"timesteps": self.timestep} for agent in self.agents}
         # print(dones)

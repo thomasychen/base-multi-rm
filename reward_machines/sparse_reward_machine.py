@@ -1,3 +1,6 @@
+from dfa import DFA, dict2dfa, dfa2dict
+from dfa_identify.active import find_dfa_decomposition
+
 class SparseRewardMachine:
     def __init__(self,file=None):
         # <U,u0,delta_u,delta_r>
@@ -7,6 +10,7 @@ class SparseRewardMachine:
         self.delta_u = {} # state-transition function
         self.delta_r = {} # reward-transition function
         self.T = set()    # set of terminal states (they are automatically detected)
+        self.accepting = set() # set of accepting states
         if file is not None:
             self._load_reward_machine(file)
         
@@ -88,6 +92,9 @@ class SparseRewardMachine:
         lines = [l.rstrip() for l in f]
         f.close()
         # setting the DFA
+        self._load_reward_machine_from_str_lines(lines)
+    
+    def _load_reward_machine_from_str_lines(self, lines):
         self.u0 = eval(lines[0])
         # adding transitions
         for e in lines[1:]:
@@ -139,3 +146,52 @@ class SparseRewardMachine:
         if u1 not in self.delta_r:
             self.delta_r[u1] = {}
         self.delta_r[u1][u2] = reward
+        if reward > 0:
+            self.accepting.add(u2)
+
+def rm_to_dfa(reward_machine):
+    '''
+    Convert a reward machine object to a DFA for usage in DFA decomposition.
+    '''
+    dfa_dict = {}
+    for state in reward_machine.delta_u:
+        dfa_dict[state] = (state in reward_machine.accepting, reward_machine.delta_u[state])
+    return dict2dfa(dfa_dict)
+
+def dfa_to_rm(dfa_obj):
+    '''
+    Convert a DFA object to a reward machine object.
+    '''
+    dfa_dict = dfa2dict(dfa_obj)
+
+    reward_machine = SparseRewardMachine()
+    for state in dfa_dict:
+        reward_machine._add_state([state])
+        reward_machine.delta_u[state] = {}
+        reward_machine.delta_r[state] = {}
+        for event in dfa_dict[state][1]:
+            next_state = dfa_dict[state][1][event]
+            reward_machine.delta_u[state][event] = next_state
+            reward_machine.delta_r[state][next_state] = dfa_dict[state][0]
+    return reward_machine
+
+def generate_rm_decompositions(monolithic_rm, num_decompositions, disregard_list=None):
+    # convert rm to a DFA
+    dfa_obj = rm_to_dfa(monolithic_rm)
+    # create decomposition generator
+    decomp_gnr = find_dfa_decomposition(dfa_obj)
+    disregard_list = [] if disregard_list is None else disregard_list
+    # yield decompositions, ignoring ones that we want to throw out
+    decomps = []
+    while len(decomps) < num_decompositions:
+        candidate = next(decomp_gnr)
+        if candidate in disregard_list:
+            continue
+        else:
+            decomps.append(candidate)
+    return decomps
+
+def select_top_k_decompositions(decomposition_candidates, k):
+    # here, use a selection heuristic to select the top k candidates. 
+    # TODO: implement a heuristic.
+    pass

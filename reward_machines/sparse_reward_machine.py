@@ -155,8 +155,16 @@ def rm_to_dfa(reward_machine):
     '''
     dfa_dict = {}
     for state in reward_machine.delta_u:
-        dfa_dict[state] = (state in reward_machine.accepting, reward_machine.delta_u[state])
-    return dict2dfa(dfa_dict)
+        if 'True' in reward_machine.delta_u[state]:
+            transition_dict = {}
+        else:
+            transition_dict = reward_machine.delta_u[state]
+        for ap in reward_machine.get_events():
+            # add stuttering semantics
+            if ap not in transition_dict and ap != 'True':
+                transition_dict[ap] = state
+        dfa_dict[state] = (state in reward_machine.accepting, transition_dict)
+    return dict2dfa(dfa_dict, reward_machine.u0)
 
 def dfa_to_rm(dfa_obj):
     '''
@@ -165,6 +173,7 @@ def dfa_to_rm(dfa_obj):
     dfa_dict = dfa2dict(dfa_obj)
 
     reward_machine = SparseRewardMachine()
+    dfa_dict, initial_state = dfa_dict[0], dfa_dict[1]
     for state in dfa_dict:
         reward_machine._add_state([state])
         reward_machine.delta_u[state] = {}
@@ -172,14 +181,21 @@ def dfa_to_rm(dfa_obj):
         for event in dfa_dict[state][1]:
             next_state = dfa_dict[state][1][event]
             reward_machine.delta_u[state][event] = next_state
-            reward_machine.delta_r[state][next_state] = dfa_dict[state][0]
+            reward_machine.delta_r[state][next_state] = int(dfa_dict[next_state][0])
+            if dfa_dict[state][0]:
+                reward_machine.T.add(state)
+                reward_machine.accepting.add(state) 
+    reward_machine.u0 = initial_state
     return reward_machine
 
-def generate_rm_decompositions(monolithic_rm, num_decompositions, disregard_list=None):
+def generate_rm_decompositions(monolithic_rm, num_decompositions, num_agents, disregard_list=None, n_queries=25):
     # convert rm to a DFA
     dfa_obj = rm_to_dfa(monolithic_rm)
     # create decomposition generator
-    decomp_gnr = find_dfa_decomposition(dfa_obj)
+    aps = monolithic_rm.get_events()
+    if 'True' in aps:
+        aps.remove('True')
+    decomp_gnr = find_dfa_decomposition(monolithic_dfa=dfa_obj, alphabet=aps, n_dfas=num_agents, n_queries=n_queries)
     disregard_list = [] if disregard_list is None else disregard_list
     # yield decompositions, ignoring ones that we want to throw out
     decomps = []
@@ -188,7 +204,8 @@ def generate_rm_decompositions(monolithic_rm, num_decompositions, disregard_list
         if candidate in disregard_list:
             continue
         else:
-            decomps.append(candidate)
+            rm_set = [dfa_to_rm(dfao) for dfao in candidate]
+            decomps.append(rm_set)
     return decomps
 
 def select_top_k_decompositions(decomposition_candidates, k):

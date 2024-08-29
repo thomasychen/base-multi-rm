@@ -74,6 +74,7 @@ parser.add_argument('--timesteps', type=int, default=2000000, help='Number of ti
 parser.add_argument('--decomposition_file', type=str, default="aux_buttons.txt",  help="The reward machine file for this decomposition")
 parser.add_argument('--experiment_name', type=str, default="buttons", help="Name of config file for environment eg: ")
 parser.add_argument('--is_monolithic', type=str2bool, default=False, help="If monolothic RM")
+parser.add_argument('--num_candidates', type=int, default=0, help="Use automated decomposition for a monolithic reward machine. If 0, run the monolithic RM as is.")
 parser.add_argument('--env', type=str, default="buttons", help="Specify between the buttons grid world or overcooked")
 parser.add_argument('--render', type=str2bool, default=False, help='Enable rendering during training. Default is off')
 

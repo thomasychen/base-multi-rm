@@ -6,6 +6,13 @@ from jaxmarl import make
 from stable_baselines3.common.evaluation import evaluate_policy
 from jaxmarl.environments.overcooked import Overcooked, overcooked_layouts
 from pettingzoo.utils import parallel_to_aec
+from reward_machines.sparse_reward_machine import SparseRewardMachine, dfa_to_rm, generate_rm_decompositions
+from mdp_label_wrappers.buttons_mdp_labeled import HardButtonsLabeled
+from manager.manager import Manager
+# from threading import Lock
+from wandb.integration.sb3 import WandbCallback
+from multiprocessing import Lock, Manager as ProcessManager
+from concurrent.futures import ProcessPoolExecutor
 
 def run_trained_model(model_path, steps):
     # Define environment and configuration
@@ -77,4 +84,9 @@ def run_trained_model(model_path, steps):
 
     # print(f"Mean reward: {mean_reward} +/- {std_reward}")
 
-run_trained_model("/Users/nikhil/Desktop/research_rl/base-multi-rm/logs/20240820-002431/best/best_model.zip", 1)
+def test_dfa_generation():
+    # load in RM
+    brm = SparseRewardMachine("reward_machines/buttons/buttons/team_buttons.txt")
+    # convert to DFA
+    decomps = generate_rm_decompositions(brm, 3, 2, n_queries=25)
+    return decomps

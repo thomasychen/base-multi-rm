@@ -130,7 +130,13 @@ class Manager:
             for i in range(len(permutation)):
                 # starting_rm_state = self.start_nodes[permutation[i]]
                 # curr_state = np.row_stack(([agent_list[i].s_i], [starting_rm_state])).T
-                curr_state = np.array([[init_mdp_states[i], init_rm_states[permutation[i]]]])
+                # curr_state = np.append(init_mdp_states[i], init_rm_states[permutation[i]])
+                if np.isscalar(init_mdp_states[i]) and np.isscalar(init_rm_states[permutation[i]]):
+                    # Convert scalars to 1D arrays and concatenate
+                    curr_state = np.array([[init_mdp_states[i], init_rm_states[permutation[i]]]])
+                else:
+                    # Concatenate the 1D lists or arrays
+                    curr_state = np.append(init_mdp_states[i], init_rm_states[permutation[i]])
                 # obs_tensor = torch.tensor(curr_state, dtype=torch.float32).unsqueeze(0)
 
                 # import pdb; pdb.set_trace()

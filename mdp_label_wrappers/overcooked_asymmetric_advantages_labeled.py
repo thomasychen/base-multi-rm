@@ -3,9 +3,9 @@ from jaxmarl.environments.overcooked import overcooked_layouts
 from jaxmarl import make
 import numpy as np
 
-class OvercookedCrampedLabeled(MDP_Labeler):
+class OvercookedAsymmetricAdvantagesLabeled(MDP_Labeler):
     def __init__(self, run_config):
-        self.layout = overcooked_layouts["cramped_room"]
+        self.layout = overcooked_layouts["asymm_advantages"]
         self.jax_env = make('overcooked', layout=self.layout, max_steps=run_config["max_episode_length"])
         self.render_mode = run_config["render_mode"]
 
@@ -14,10 +14,11 @@ class OvercookedCrampedLabeled(MDP_Labeler):
         self.obs_shape[2] -= 3
         self.obs_shape = np.product(self.obs_shape)
 
-    def any_elem(self, matrix, num, ignore_i=-1, ignore_j=-1):
+
+    def any_elem(self, matrix, num, ignore_set = set()):
         for i in range(len(matrix)):
             for j in range(len(matrix[0])):
-                if matrix[i][j] == num and not (i == ignore_i and j == ignore_j):
+                if matrix[i][j] == num and (i, j) not in ignore_set:
                     return True
         return False
     
@@ -33,14 +34,14 @@ class OvercookedCrampedLabeled(MDP_Labeler):
             return "o1"
         elif self.any_elem(obs[16], 2):
             return "o2"
-        elif self.any_elem_nonzero(obs[20]) or obs[21][0][2] == 1:
+        elif self.any_elem_nonzero(obs[20]) or obs[21][2][4] == 1 or obs[21][3][4] == 1:
             return "o3"
         else:
             return None
         
     def has_soup(self, obs):
         # 
-        if self.any_elem(obs[21], 1, 0, 2):
+        if self.any_elem(obs[21], 1, set([(2, 4), (3, 4)])):
             return "p"
         return None
         

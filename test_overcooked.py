@@ -88,5 +88,7 @@ def test_dfa_generation():
     # load in RM
     brm = SparseRewardMachine("reward_machines/buttons/buttons/team_buttons.txt")
     # convert to DFA
-    decomps = generate_rm_decompositions(brm, 3, 2, n_queries=25)
+    decomps = generate_rm_decompositions(brm, 3, 2, n_queries=100)
     return decomps
+
+test_dfa_generation()

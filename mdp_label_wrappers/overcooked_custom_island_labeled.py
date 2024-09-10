@@ -1,11 +1,21 @@
 from mdp_label_wrappers.generic_mdp_labeled import MDP_Labeler
-from jaxmarl.environments.overcooked import overcooked_layouts
+from jaxmarl.environments.overcooked import overcooked_layouts, layout_grid_to_dict
 from jaxmarl import make
 import numpy as np
 
-class OvercookedCrampedLabeled(MDP_Labeler):
+class OvercookedCustomIslandLabeled(MDP_Labeler):
     def __init__(self, run_config):
-        self.layout = overcooked_layouts["cramped_room"]
+       
+
+        counter_circuit_grid = """
+WWWWWWW
+O XWO X
+WA P AW
+WWBWBWW
+"""
+
+        
+        self.layout = layout_grid_to_dict(counter_circuit_grid)
         self.jax_env = make('overcooked', layout=self.layout, max_steps=run_config["max_episode_length"])
         self.render_mode = run_config["render_mode"]
 

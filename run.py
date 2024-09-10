@@ -35,6 +35,8 @@ from pettingzoo_product_env.buttons_product_env import ButtonsProductEnv
 from jaxmarl.environments.overcooked import overcooked_layouts
 from mdp_label_wrappers.overcooked_cramped_labeled import OvercookedCrampedLabeled
 from mdp_label_wrappers.overcooked_asymmetric_advantages_labeled import OvercookedAsymmetricAdvantagesLabeled
+from mdp_label_wrappers.overcooked_custom_island_labeled import OvercookedCustomIslandLabeled
+
 
 ## WANDB KILL SWITCH
 # ps aux|grep wandb|grep -v grep | awk '{print $2}'|xargs kill -9

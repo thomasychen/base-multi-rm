@@ -155,7 +155,8 @@ class OvercookedProductEnv(ParallelEnv):
       
             rm_rewards[agent] = r
         
-        terminations = {i: bool(rm_rewards[i]) for i in self.agents}
+        terminations = {i: self.reward_machine.is_terminal_state(self.rm_states[i]) for i in self.agents}
+        print(terminations) if self.reward_machine.is_terminal_state(self.rm_states['agent_0']) else None
         
         new_agents = []
         for i in self.agents:
@@ -238,7 +239,8 @@ class OvercookedProductEnv(ParallelEnv):
         #     import pdb; pdb.set_trace();
         # if self.timestep >= self.env_config["max_episode_length"]:
         #     import pdb; pdb.set_trace()
-        rewards = {i: float(jax_infos["shaped_reward"][i]) for i in jax_infos["shaped_reward"]} #if not self.test else rewards
+        # rewards = {i: float(jax_infos["shaped_reward"][i]) for i in jax_infos["shaped_reward"]} #if not self.test else rewards
+        rewards = rm_rewards
         #TODO: return rm_rewards instead of rewards
         return obs, rewards, terminations, truncations, infos
 

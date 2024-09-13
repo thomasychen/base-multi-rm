@@ -43,7 +43,7 @@ class OvercookedProductEnv(ParallelEnv):
 
     def observation_space(self, agent):
         # flattened_shape = [int(np.prod(self.labeled_mdp.obs_shape) + len(self.reward_machine.get_states()))]
-        flattened_shape = [self.labeled_mdp.obs_shape + len(self.reward_machine.get_states())]
+        flattened_shape = [self.labeled_mdp.obs_shape + self.reward_machine.get_one_hot_size(len(self.possible_agents))]
         # gymnasium spaces are defined and documented here: https://gymnasium.farama.org/api/spaces/
         return Box(0, 255, flattened_shape)
 
@@ -71,15 +71,15 @@ class OvercookedProductEnv(ParallelEnv):
         # Init variables
         rm_array = copy.deepcopy(self.env_config["initial_rm_states"]) if np.array(self.env_config["initial_rm_states"]).ndim == 2 else [copy.deepcopy(self.env_config["initial_rm_states"])]
         
-        def one_hot_encode(value, num_classes):
-            """One-hot encode a single value."""
-            one_hot = np.zeros(num_classes)
-            one_hot[value] = 1
-            return one_hot
+        # def one_hot_encode(value, num_classes):
+        #     """One-hot encode a single value."""
+        #     one_hot = np.zeros(num_classes)
+        #     one_hot[value] = 1
+        #     return one_hot
         
-        n = len(self.reward_machine.get_states())
+        # n = len(self.reward_machine.get_states())
 
-        rm_state_array = [[one_hot_encode(value, n) for value in sublist] for sublist in rm_array]
+        rm_state_array = [[self.reward_machine.get_one_hot_encoded_state(state, len(self.possible_agents)) for state in init_states] for init_states in rm_array]
         # import pdb; pdb.set_trace()
 
         # rm_state_array = [np.zeros(n) for _ in range(len(self.agents))]
@@ -251,18 +251,21 @@ class OvercookedProductEnv(ParallelEnv):
     def flatten_and_add_rm(self, obs, rm_state):
         # import pdb; pdb.set_trace();
 
-        n = len(self.reward_machine.get_states())
-        # Flatten the 3D observation array
+        # n = len(self.reward_machine.get_states())
+        # # Flatten the 3D observation array
         flattened_obs = obs.flatten()
 
-        # Create an n-length array of zeros
-        n = len(self.reward_machine.get_states())
-        rm_array = np.zeros(n)
+        # # Create an n-length array of zeros
+        # n = len(self.reward_machine.get_states())
+        # rm_array = np.zeros(n)
 
-        # Set the rm_state index to 1
-        rm_array[rm_state] = 1
+        # # Set the rm_state index to 1
+        # rm_array[rm_state] = 1
+        rm_ohe = self.reward_machine.get_one_hot_encoded_state(rm_state, len(self.possible_agents))
+        if rm_state == 2:
+            import pdb; pdb.set_trace()
 
         # Concatenate the flattened observation and the rm_array
-        result = np.concatenate((flattened_obs, rm_array))
+        result = np.concatenate((flattened_obs, rm_ohe))
 
         return result

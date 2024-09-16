@@ -17,7 +17,7 @@ from stable_baselines3.common.callbacks import EvalCallback, CallbackList
 from mdp_label_wrappers.buttons_mdp_labeled import HardButtonsLabeled
 from mdp_label_wrappers.easy_buttons_mdp_labeled import EasyButtonsLabeled
 from mdp_label_wrappers.challenge_buttons_mdp_labeled import ChallengeButtonsLabeled
-from reward_machines.sparse_reward_machine import SparseRewardMachine
+from reward_machines.sparse_reward_machine import SparseRewardMachine, generate_rm_decompositions
 from stable_baselines3.common.monitor import Monitor
 from pettingzoo.test import parallel_seed_test
 from stable_baselines3.common.utils import set_random_seed
@@ -132,6 +132,8 @@ if __name__ == "__main__":
             print(run_config)
             manager = Manager(num_agents=run_config['num_agents'], num_decomps = len(run_config["initial_rm_states"]),assignment_method=method, wandb=args.wandb, seed = i)
             train_rm = SparseRewardMachine(f"reward_machines/{args.env}/{args.experiment_name}/{args.decomposition_file}")
+            if args.num_candidates > 0:  # generate automatic decompositions
+                train_rm = generate_rm_decompositions(train_rm, args.num_candidates, run_config['num_agents'], disregard_list=None, n_queries=50) # TODO: un-hard-code this
             render_mode = "human" if args.render else None
             run_config["render_mode"] = render_mode
 
@@ -216,7 +218,7 @@ if __name__ == "__main__":
                 callback_list = CallbackList([eval_callback])
                 print("Wandb Enabled")
 
-            model.learn(total_timesteps=args.timesteps, callback=callback_list, log_interval=10, progress_bar=False)
+            model.learn(total_timesteps=args.timesteps, callback=callback_list, log_interval=10, progress_bar=True)
             env.close()
 
             # Finish your run

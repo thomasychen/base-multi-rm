@@ -1,5 +1,6 @@
 from dfa import DFA, dict2dfa, dfa2dict
 from dfa_identify.active import find_dfa_decomposition
+import numpy as np
 
 class SparseRewardMachine:
     def __init__(self,file=None):
@@ -11,8 +12,15 @@ class SparseRewardMachine:
         self.delta_r = {} # reward-transition function
         self.T = set()    # set of terminal states (they are automatically detected)
         self.accepting = set() # set of accepting states
+        self.max_subtask_size = 0  # to store size of the largest subgraph
+        self.state_to_subtask = {}  # to store state -> subtask number
+        self.subtask_start_states = {}  # to store the starting state of each subtask
+        self.num_subtasks = 0  # total number of subtasks
+        
         if file is not None:
             self._load_reward_machine(file)
+        # One hot encoding setup for reward machine states and decomp idx
+        self.find_max_subgraph_size_and_assign_subtasks()
         
     def __repr__(self):
         s = "MACHINE:\n"
@@ -72,7 +80,70 @@ class SparseRewardMachine:
                 is_event_available = True
         return is_event_available
 
+    def find_max_subgraph_size_and_assign_subtasks(self):
+        """Find the largest subgraph connected to u0, store its size in self.max_subtask_size, 
+        assign subtasks, and save the number of subtasks and the starting state of each subtask."""
+        visited = set()  # Track visited states
+        largest_size = 0
+        subtask_number = 0
+        self.subtask_start_states = {}  # Reset subtask start states
+
+        # Iterate through neighbors of u0, treating each as the root of a subgraph
+        for event, next_state in self.delta_u.get(self.u0, {}).items():
+            if next_state not in visited:
+                # Record the starting state for this subtask
+                self.subtask_start_states[subtask_number] = next_state
+                # Calculate subgraph size and assign subtask
+                subgraph_size = self._dfs_subgraph_size_and_assign(next_state, visited, subtask_number)
+                largest_size = max(largest_size, subgraph_size)
+                subtask_number += 1  # Move to the next subtask for the next unvisited neighbor
+
+        self.max_subtask_size = largest_size
+        self.num_subtasks = subtask_number  # Save the total number of subtasks
+        return largest_size
+    
+    def get_one_hot_size(self, num_agents):
+        return (self.num_subtasks // num_agents) + num_agents + self.max_subtask_size
+
+    def get_one_hot_encoded_state(self, state, num_agents):
+        """Returns 3 one-hot encoded arrays for the given state."""
+        if state not in self.state_to_subtask:
+            raise ValueError("State not assigned to any subtask!")
+
+        # Get the subtask number for the given state
+        subtask_number = self.state_to_subtask[state]
+        
+        # One-hot encode which decomposition the state belongs to
+        decomposition_idx = subtask_number // num_agents
+        decomposition_onehot = np.zeros(self.num_subtasks // num_agents, dtype=int)
+        decomposition_onehot[decomposition_idx] = 1
+
+        # One-hot encode which subtask this is
+        agent_idx = subtask_number % num_agents
+        agent_onehot = np.zeros(num_agents, dtype=int)
+        agent_onehot[agent_idx] = 1
+
+        # One-hot encode the state's position within the subtask
+        start_state = self.subtask_start_states[subtask_number]
+        state_position = state - start_state
+        state_position_onehot = np.zeros(self.max_subtask_size, dtype=int)
+        state_position_onehot[state_position] = 1
+
+        concatenated_onehot = np.concatenate((decomposition_onehot, agent_onehot, state_position_onehot))
+        
+        return concatenated_onehot
     # Private methods -----------------------------------
+
+    def _dfs_subgraph_size_and_assign(self, state, visited, subtask_number):
+        """Helper function to perform DFS, return the size of the subgraph, and assign the subtask number."""
+        visited.add(state)
+        self.state_to_subtask[state] = subtask_number  # Assign the state to its subtask
+
+        size = 1  # Include the current node
+        for event, next_state in self.delta_u.get(state, {}).items():
+            if next_state not in visited:
+                size += self._dfs_subgraph_size_and_assign(next_state, visited, subtask_number)
+        return size
 
     def _load_reward_machine(self, file):
         """

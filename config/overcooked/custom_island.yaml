@@ -1,7 +1,8 @@
 num_agents: 2
 # initial_mdp_states: []
 initial_rm_states: 
-  - [1, 2]
+  - [1, 4]
+  - [8, 11]
 labeled_mdp_class: "OvercookedCustomIslandLabeled"
 max_episode_length: 400
 eval_freq: 200000

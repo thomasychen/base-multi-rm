@@ -85,6 +85,8 @@ parser.add_argument('--render', type=str2bool, default=False, help='Enable rende
 # python run.py --assignment_methods ground_truth --num_iterations 1 --wandb f --timesteps 1000000 --decomposition_file aux_cramped_room.txt --experiment_name cramped_room --is_monolithic f --env overcooked --render f
 # python run.py --assignment_methods ground_truth --num_iterations 1 --wandb f --timesteps 1000000 --decomposition_file aux_asymm_advantages.txt --experiment_name asymm_advantages --is_monolithic f --env overcooked --render t
 # python run.py --assignment_methods ground_truth --num_iterations 1 --wandb f --timesteps 1000000 --decomposition_file aux_custom_island.txt --experiment_name custom_island --is_monolithic f --env overcooked --render t
+# Used to test the automatic decomposition.
+# python3 run.py --assignment_methods UCB --wandb False --decomposition_file team_buttons.txt --num_candidates 3 --is_monolithic True
 
 args = parser.parse_args()
 

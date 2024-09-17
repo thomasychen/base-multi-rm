@@ -134,7 +134,7 @@ if __name__ == "__main__":
             manager = Manager(num_agents=run_config['num_agents'], num_decomps = len(run_config["initial_rm_states"]),assignment_method=method, wandb=args.wandb, seed = i)
             train_rm = SparseRewardMachine(f"reward_machines/{args.env}/{args.experiment_name}/{args.decomposition_file}")
             if args.num_candidates > 0:  # generate automatic decompositions
-                train_rm = generate_rm_decompositions(train_rm, args.num_candidates, run_config['num_agents'], disregard_list=None, n_queries=50) # TODO: un-hard-code this
+                train_rm = generate_rm_decompositions(train_rm, args.num_candidates, run_config['num_agents'], disregard_list=None, n_queries=100) # TODO: un-hard-code this
             render_mode = "human" if args.render else None
             run_config["render_mode"] = render_mode
 

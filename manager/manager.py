@@ -18,6 +18,10 @@ class Manager:
         self.num_agents = num_agents
         self.num_decomps = num_decomps
         self.curr_permutation_qs = [{} for i in range(self.num_decomps)]
+        # self.decomp_counts = {}
+        # for i in range(self.num_decomps):
+        #     for perm in itertools.permutations(range(num_agents)):
+        #         self.decomp_counts[f"{i}_{perm}"] = 0
         self.epsilon = 1
         self.epsilon_decay = 0.999
         self.wandb = wandb
@@ -41,6 +45,7 @@ class Manager:
 
     # init_rm_states is a list of the rm states of each decomp
     def get_rm_assignments(self, init_mdp_states, init_rm_states, test=False):
+        # import pdb; pdb.set_trace();
         # self.window_cnt += 1
         # if self.window_cnt % self.window != 0:
         #     return self.curr_assignment
@@ -118,7 +123,16 @@ class Manager:
             raise Exception("STUPID ASS MF")
 
         # print(self.curr_permutation_qs)
-        # print(self.curr_assignment, "decomp_idx", init_rm_states[self.curr_decomp])
+        print(self.curr_assignment, "decomp_idx", self.curr_decomp)
+
+        
+        if self.wandb:
+            for i in range(len(self.permutation_counts)):
+                for perm in self.permutation_counts[i]:
+                    wandb.log({f"count for {i}_{perm}": self.permutation_counts[i][perm]})
+                    wandb.log({f"reward for {i}_{perm}": self.permutation_total_rewards[i][perm]})
+
+
         return self.curr_assignment, self.curr_decomp
 
 

@@ -95,7 +95,9 @@ class OvercookedProductEnv(ParallelEnv):
         self.rm_states = {self.agents[i]: rm_array[decomp_idx][rm_assignments[i]] for i in range(len(self.agents))}
         # print(self.rm_states, self.mdp_states)
         # print(self.rm_states)
-
+        # print("MANAGER LOGS")
+        # print(rm_assignments, decomp_idx)
+        # print(self.rm_states)
         
         print("reset step", state.time)
         self.curr_state = state
@@ -163,7 +165,9 @@ class OvercookedProductEnv(ParallelEnv):
             if not terminations[i]:
                 new_agents.append(i)
         self.agents = new_agents
-    
+        if not self.agents:
+            self.manager.update_rewards(1)
+
 
         
         # print("step", state.time)
@@ -262,8 +266,6 @@ class OvercookedProductEnv(ParallelEnv):
         # # Set the rm_state index to 1
         # rm_array[rm_state] = 1
         rm_ohe = self.reward_machine.get_one_hot_encoded_state(rm_state, len(self.possible_agents))
-        if rm_state == 2:
-            import pdb; pdb.set_trace()
 
         # Concatenate the flattened observation and the rm_array
         result = np.concatenate((flattened_obs, rm_ohe))

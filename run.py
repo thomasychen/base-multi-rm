@@ -84,7 +84,7 @@ parser.add_argument('--render', type=str2bool, default=False, help='Enable rende
 # python run.py --assignment_methods ground_truth --num_iterations 1 --wandb t --timesteps 10000 --decomposition_file aux_buttons.txt --experiment_name buttons --is_monolithic f --env buttons --render f
 # python run.py --assignment_methods ground_truth --num_iterations 1 --wandb f --timesteps 1000000 --decomposition_file aux_cramped_room.txt --experiment_name cramped_room --is_monolithic f --env overcooked --render f
 # python run.py --assignment_methods ground_truth --num_iterations 1 --wandb f --timesteps 1000000 --decomposition_file aux_asymm_advantages.txt --experiment_name asymm_advantages --is_monolithic f --env overcooked --render t
-# python run.py --assignment_methods ground_truth --num_iterations 1 --wandb f --timesteps 1000000 --decomposition_file aux_custom_island.txt --experiment_name custom_island --is_monolithic f --env overcooked --render t
+# python run.py --assignment_methods UCB --num_iterations 1 --wandb f --timesteps 1000000 --decomposition_file aux_custom_island.txt --experiment_name custom_island --is_monolithic f --env overcooked --render t
 
 args = parser.parse_args()
 
@@ -211,13 +211,14 @@ if __name__ == "__main__":
 
             if args.wandb:
                 callback_list = CallbackList([eval_callback, WandbCallback(verbose=2,)])
-                print("Wandb Disabled")
+                # callback_list = CallbackList([WandbCallback(verbose=2,)])
+                print("Wandb Enabled")
 
             else:
                 callback_list = CallbackList([eval_callback])
-                print("Wandb Enabled")
+                print("Wandb Disabled")
 
-            model.learn(total_timesteps=args.timesteps, callback=callback_list, log_interval=10, progress_bar=False)
+            model.learn(total_timesteps=args.timesteps, callback=callback_list, log_interval=1, progress_bar=False)
             env.close()
 
             # Finish your run

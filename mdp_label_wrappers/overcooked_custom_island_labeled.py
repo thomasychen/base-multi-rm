@@ -9,14 +9,16 @@ class OvercookedCustomIslandLabeled(MDP_Labeler):
 
         counter_circuit_grid = """
 WWWWWWW
-O XWO X
+W XWO X
 WA P AW
-WWBWBWW
+W  W  W
+WWBWWWW
 """
 
         
         self.layout = layout_grid_to_dict(counter_circuit_grid)
         self.jax_env = make('overcooked', layout=self.layout, max_steps=run_config["max_episode_length"])
+        print(run_config)
         self.render_mode = run_config["render_mode"]
 
         # Because we removed 3 layers

@@ -84,9 +84,11 @@ parser.add_argument('--render', type=str2bool, default=False, help='Enable rende
 # python run.py --assignment_methods ground_truth --num_iterations 1 --wandb t --timesteps 10000 --decomposition_file aux_buttons.txt --experiment_name buttons --is_monolithic f --env buttons --render f
 # python run.py --assignment_methods ground_truth --num_iterations 1 --wandb f --timesteps 1000000 --decomposition_file aux_cramped_room.txt --experiment_name cramped_room --is_monolithic f --env overcooked --render f
 # python run.py --assignment_methods ground_truth --num_iterations 1 --wandb f --timesteps 1000000 --decomposition_file aux_asymm_advantages.txt --experiment_name asymm_advantages --is_monolithic f --env overcooked --render t
-# python run.py --assignment_methods ground_truth --num_iterations 1 --wandb f --timesteps 1000000 --decomposition_file aux_custom_island.txt --experiment_name custom_island --is_monolithic f --env overcooked --render t
+# python run.py --assignment_methods UCB --num_iterations 1 --wandb t --timesteps 1000000 --decomposition_file aux_custom_island.txt --experiment_name custom_island --is_monolithic f --env overcooked --render t
 # Used to test the automatic decomposition.
 # python3 run.py --assignment_methods UCB --wandb False --decomposition_file team_buttons.txt --num_candidates 3 --is_monolithic True
+
+# For overcooked automatic decomposition
 
 args = parser.parse_args()
 
@@ -166,12 +168,12 @@ if __name__ == "__main__":
 
             eval_kwargs = train_kwargs.copy()
             eval_kwargs['test'] = True
-            eval_kwargs["render_mode"] = None
+            eval_kwargs["render_mode"] = "human"
 
             if args.env == "buttons":
-                eval_env = ButtonsProductEnv(**train_kwargs)
+                eval_env = ButtonsProductEnv(**eval_kwargs)
             elif args.env == "overcooked":
-                eval_env = OvercookedProductEnv(**train_kwargs)
+                eval_env = OvercookedProductEnv(**eval_kwargs)
             
             eval_env = ss.black_death_v3(eval_env)
             eval_env = ss.pettingzoo_env_to_vec_env_v1(eval_env)
@@ -181,7 +183,7 @@ if __name__ == "__main__":
 
             eval_callback = EvalCallback(eval_env, best_model_save_path=f"{log_dir}/best/",
                                     log_path=log_dir, eval_freq=run_config["eval_freq"],
-                                    n_eval_episodes=1, deterministic=True)
+                                    n_eval_episodes=5, deterministic=True)
             policy_kwargs = None
             if "activation_fn" in run_config:
                 if run_config["activation_fn"] == "relu":

@@ -7,5 +7,5 @@ initial_rm_states:
   - [22, 23]
 labeled_mdp_class: "OvercookedCustomIslandLabeled"
 max_episode_length: 400
-eval_freq: 800
+eval_freq: 4000
 gamma: 0.9

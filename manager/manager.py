@@ -31,6 +31,8 @@ class Manager:
         self.permutation_counts = [{perm: 0 for perm in itertools.permutations(range(num_agents))} for i in range(self.num_decomps)]
         # print(self.permutation_counts)
         self.permutation_total_rewards = [{perm: 0.0 for perm in itertools.permutations(range(num_agents))} for i in range(self.num_decomps)]
+        self.permutation_curr_rewards = [{perm: 0.0 for perm in itertools.permutations(range(self.num_agents))} for i in range(self.num_decomps)]
+
         # print(self.permutation_total_rewards)
         # print("HELLO", self.permutation_counts)
         self.total_selections = 0
@@ -98,10 +100,12 @@ class Manager:
 
             if self.total_selections < len(self.permutation_counts)*len(self.permutation_counts[0]):
                 # Ensure each permutation is selected at least once in the beginning
+                # print("IN UCB", self.total_selections, len(self.permutation_counts), len(self.permutation_counts[0]))
                 decomp_idx = self.total_selections // len(self.permutation_counts[0])
                 # print(decomp_idx)
                 assign_idx = self.total_selections % len(self.permutation_counts[0])
                 self.curr_assignment = list(self.permutation_counts[decomp_idx].keys())[assign_idx]
+                self.curr_decomp = decomp_idx
                 
             else:
                 # Calculate UCB value for each permutation and select the one with the highest UCB value
@@ -130,7 +134,7 @@ class Manager:
             for i in range(len(self.permutation_counts)):
                 for perm in self.permutation_counts[i]:
                     wandb.log({f"count for {i}_{perm}": self.permutation_counts[i][perm]})
-                    wandb.log({f"reward for {i}_{perm}": self.permutation_total_rewards[i][perm]})
+                    wandb.log({f"reward for {i}_{perm}": self.permutation_curr_rewards[i][perm]})
 
 
         return self.curr_assignment, self.curr_decomp
@@ -204,6 +208,8 @@ class Manager:
     def update_rewards(self, reward):
         # Update the total reward for a permutation after an assignment is completed
         self.permutation_total_rewards[self.curr_decomp][tuple(self.curr_assignment)] += reward
+        self.permutation_curr_rewards = [{perm: 0.0 for perm in itertools.permutations(range(self.num_agents))} for i in range(self.num_decomps)]
+        self.permutation_curr_rewards[self.curr_decomp][tuple(self.curr_assignment)] = reward
     
     def calculate_ucb_value(self, permutation, decomp):
         # Calculate the UCB value for a given permutation

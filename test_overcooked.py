@@ -13,13 +13,65 @@ from manager.manager import Manager
 from wandb.integration.sb3 import WandbCallback
 from multiprocessing import Lock, Manager as ProcessManager
 from concurrent.futures import ProcessPoolExecutor
+from mdp_label_wrappers.overcooked_custom_island_labeled import OvercookedCustomIslandLabeled
+import yaml
+import argparse
+from stable_baselines3.ppo import MlpPolicy
+
+def str2bool(v):
+    if isinstance(v, bool):
+        return v
+    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+        return True
+    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')
+    
+parser = argparse.ArgumentParser(description="Run reinforcement learning experiments with PettingZoo and Stable Baselines3.")
+parser.add_argument('--assignment_methods', type=str, default="ground_truth naive random add multiply UCB", help='The assignment method for the manager. Default is "ground_truth".')
+parser.add_argument('--num_iterations', type=int, default=5, help='Number of iterations for the experiment. Default is 5.')
+parser.add_argument('--wandb', type=str2bool, default=False, help='Turn Wandb logging on or off. Default is off')
+parser.add_argument('--timesteps', type=int, default=2000000, help='Number of timesteps to train model. Default is 2000000')
+parser.add_argument('--decomposition_file', type=str, default="aux_buttons.txt",  help="The reward machine file for this decomposition")
+parser.add_argument('--experiment_name', type=str, default="buttons", help="Name of config file for environment eg: ")
+parser.add_argument('--is_monolithic', type=str2bool, default=False, help="If monolothic RM")
+parser.add_argument('--num_candidates', type=int, default=0, help="Use automated decomposition for a monolithic reward machine. If 0, run the monolithic RM as is.")
+parser.add_argument('--env', type=str, default="buttons", help="Specify between the buttons grid world or overcooked")
+parser.add_argument('--render', type=str2bool, default=False, help='Enable rendering during training. Default is off')
+
+args = parser.parse_args()
+
+# python test_overcooked.py --env overcooked --experiment_name custom_island --decomposition_file aux_custom_island.txt --is_monolithic f --wandb f --render t
 
 def run_trained_model(model_path, steps):
     # Define environment and configuration
     max_steps = 400
-    layout = overcooked_layouts["cramped_room"]
-    jax_eval_env = make('overcooked', layout=layout, max_steps=max_steps)
-    env = OvercookedProductEnv(jax_eval_env, render_mode = "human", test = True)
+
+    # layout = overcooked_layouts["cramped_room"]
+    # jax_eval_env = make('overcooked', layout=layout, max_steps=max_steps)
+    with open(f'config/{args.env}/{args.experiment_name}.yaml', 'r') as file:
+        run_config = yaml.safe_load(file)
+    manager = Manager(num_agents=run_config['num_agents'], num_decomps = len(run_config["initial_rm_states"]),assignment_method="ground_truth", wandb=args.wandb, seed = 1)
+    run_config["render_mode"] = "human"
+    train_rm = SparseRewardMachine(f"reward_machines/{args.env}/{args.experiment_name}/{args.decomposition_file}")
+
+    train_kwargs = {
+                'manager': manager,
+                'labeled_mdp_class': eval(run_config['labeled_mdp_class']),
+                'reward_machine': train_rm,
+                'config': run_config,
+                'max_agents': run_config['num_agents'],
+                'is_monolithic': args.is_monolithic,
+                'render_mode': run_config["render_mode"],
+    }
+    env = OvercookedProductEnv(**train_kwargs)
+    # env = ss.black_death_v3(env)
+    # env = ss.pettingzoo_env_to_vec_env_v1(env)
+    # env = ss.concat_vec_envs_v1(env, 1, num_cpus=1, base_class="stable_baselines3")
+    # env = VecMonitor(env)
+
+    # OvercookedCustomIslandLabeled
     # eval_env = ss.black_death_v3(eval_env)
     # eval_env = ss.pettingzoo_env_to_vec_env_v1(eval_env)
     # eval_env = ss.concat_vec_envs_v1(eval_env, 1, num_cpus=1, base_class="stable_baselines3")
@@ -35,7 +87,6 @@ def run_trained_model(model_path, steps):
     #     return env
 
     env = parallel_to_aec(env)
-
 
     # Load the trained model
     model = PPO.load(model_path)
@@ -91,4 +142,5 @@ def test_dfa_generation():
     decomps = generate_rm_decompositions(brm, 3, 2, n_queries=100)
     return decomps
 
-test_dfa_generation()
+# test_dfa_generation()
+run_trained_model('/Users/nikhil/Desktop/research_rl/base-multi-rm/logs/20240921-003226/ground_truth/iteration_1/best/best_model.zip', 400)

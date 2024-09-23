@@ -164,7 +164,8 @@ class OvercookedProductEnv(ParallelEnv):
             if not terminations[i]:
                 new_agents.append(i)
         self.agents = new_agents
-        if not self.agents and not self.test:
+        if terminations and not self.agents and not self.test:
+            print("completed?", terminations, new_agents, self.timestep)
             self.manager.update_rewards(1*(self.env_config['gamma']**self.timestep))
 
 
@@ -245,12 +246,14 @@ class OvercookedProductEnv(ParallelEnv):
         # rewards = {i: float(jax_infos["shaped_reward"][i]) for i in jax_infos["shaped_reward"]} #if not self.test else rewards
         rewards = rm_rewards
         if self.test:
-            print("TESTING", rewards)
+            # print("TESTING", rewards)
+            if all(rm_rewards.values()):
+                print("TESTING ALL DONE", rewards, terminations)
+  
             if not all(rm_rewards.values()):
                  rewards = {i:0 for i in self.possible_agents}
                  self.agents = self.possible_agents[:]
                  terminations = {i: False for i in self.possible_agents}
-                 print("TESTING NOT ALL DONE", rewards, terminations)
         #TODO: return rm_rewards instead of rewards
         return obs, rewards, terminations, truncations, infos
 

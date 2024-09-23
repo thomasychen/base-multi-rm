@@ -19,7 +19,6 @@ class OvercookedProductEnv(ParallelEnv):
         self.possible_agents = ["agent_" + str(r) for r in range(2)]
         self.env_config = config
 
-
         # optional: a mapping between agent name and ID
         self.agent_name_mapping = dict(
             zip(self.possible_agents, list(range(len(self.possible_agents))))
@@ -158,15 +157,15 @@ class OvercookedProductEnv(ParallelEnv):
             rm_rewards[agent] = r
         
         terminations = {i: self.reward_machine.is_terminal_state(self.rm_states[i]) for i in self.agents}
-        print(terminations) if self.reward_machine.is_terminal_state(self.rm_states['agent_0']) else None
+        # print(terminations) if self.reward_machine.is_terminal_state(self.rm_states['agent_0']) else None
         
         new_agents = []
         for i in self.agents:
             if not terminations[i]:
                 new_agents.append(i)
         self.agents = new_agents
-        if not self.agents:
-            self.manager.update_rewards(1)
+        if not self.agents and not self.test:
+            self.manager.update_rewards(1*(self.env_config['gamma']**self.timestep))
 
 
         
@@ -245,6 +244,13 @@ class OvercookedProductEnv(ParallelEnv):
         #     import pdb; pdb.set_trace()
         # rewards = {i: float(jax_infos["shaped_reward"][i]) for i in jax_infos["shaped_reward"]} #if not self.test else rewards
         rewards = rm_rewards
+        if self.test:
+            print("TESTING", rewards)
+            if not all(rm_rewards.values()):
+                 rewards = {i:0 for i in self.possible_agents}
+                 self.agents = self.possible_agents[:]
+                 terminations = {i: False for i in self.possible_agents}
+                 print("TESTING NOT ALL DONE", rewards, terminations)
         #TODO: return rm_rewards instead of rewards
         return obs, rewards, terminations, truncations, infos
 

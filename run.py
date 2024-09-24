@@ -168,7 +168,7 @@ if __name__ == "__main__":
 
             eval_kwargs = train_kwargs.copy()
             eval_kwargs['test'] = True
-            eval_kwargs["render_mode"] = "human"
+            eval_kwargs["render_mode"] = render_mode
 
             if args.env == "buttons":
                 eval_env = ButtonsProductEnv(**eval_kwargs)
@@ -183,7 +183,7 @@ if __name__ == "__main__":
 
             eval_callback = EvalCallback(eval_env, best_model_save_path=f"{log_dir}/best/",
                                     log_path=log_dir, eval_freq=run_config["eval_freq"],
-                                    n_eval_episodes=5, deterministic=True)
+                                    n_eval_episodes=1, deterministic=True)
             policy_kwargs = None
             if "activation_fn" in run_config:
                 if run_config["activation_fn"] == "relu":

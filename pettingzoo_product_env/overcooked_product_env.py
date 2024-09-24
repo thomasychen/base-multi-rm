@@ -159,14 +159,14 @@ class OvercookedProductEnv(ParallelEnv):
         terminations = {i: self.reward_machine.is_terminal_state(self.rm_states[i]) for i in self.agents}
         # print(terminations) if self.reward_machine.is_terminal_state(self.rm_states['agent_0']) else None
         
-        new_agents = []
-        for i in self.agents:
-            if not terminations[i]:
-                new_agents.append(i)
-        self.agents = new_agents
-        if terminations and not self.agents and not self.test:
-            print("completed?", terminations, new_agents, self.timestep)
-            self.manager.update_rewards(1*(self.env_config['gamma']**self.timestep))
+        # new_agents = []
+        # for i in self.agents:
+        #     if not terminations[i]:
+        #         new_agents.append(i)
+        # self.agents = new_agents
+        # if terminations and not self.agents and not self.test:
+        #     print("completed?", terminations, new_agents, self.timestep)
+        #     self.manager.update_rewards(1*(self.env_config['gamma']**self.timestep))
 
 
         
@@ -185,10 +185,9 @@ class OvercookedProductEnv(ParallelEnv):
         self.timestep += 1
         infos =  {agent: {"timesteps": self.timestep} for agent in self.agents}
 
-        env_truncation = self.timestep >= self.env_config["max_episode_length"]
-        truncations = {agent: env_truncation for agent in self.agents}
-        if env_truncation:
-            self.agents = []
+        if self.render_mode == "human":
+            self.render()
+        
         # print(dones)
         # if dones["__all__"]:
         #     self.agents = []
@@ -224,9 +223,6 @@ class OvercookedProductEnv(ParallelEnv):
         # env_truncation = (state.time == 0)
         # truncations = {agent: False for agent in self.agents}
         # truncations["__all__"] = False
-
-        if self.render_mode == "human":
-            self.render()
         # terminations = {i: False for i in actions}
         # terminations["__all__"] = False
 
@@ -244,16 +240,63 @@ class OvercookedProductEnv(ParallelEnv):
         # if self.timestep >= self.env_config["max_episode_length"]:
         #     import pdb; pdb.set_trace()
         # rewards = {i: float(jax_infos["shaped_reward"][i]) for i in jax_infos["shaped_reward"]} #if not self.test else rewards
+
+        env_truncation = self.timestep >= self.env_config["max_episode_length"]
+
+
+        truncations = {agent: env_truncation for agent in self.agents}
+
+
+
+        if env_truncation:
+            self.agents = []
+            # print("TRUNCATED REWARDS", rewards)
+            if self.test:
+                for at in terminations:
+                    terminations[at] = False
+        else:
+            self.agents = []
+            # if any(terminations.values()) and self.test:
+            #     print("\n\n\n\n\n\n", all(terminations.values()), "\n\n\n\n\n\n")
+            if not self.test:
+                for agent in terminations:
+                    if not terminations[agent]:
+                        self.agents.append(agent)
+                if not self.agents:
+                    self.manager.update_rewards(1*self.env_config["gamma"]**self.timestep)
+            else:
+                if not all(terminations.values()):
+                    self.agents = self.possible_agents[:]
+                    for at in terminations:
+                        terminations[at] = False
+    
+            # if not self.agents:
+            #     print("FINISHED REWARDS", rewards)
+        # print(self.rm_states)
         rewards = rm_rewards
         if self.test:
-            # print("TESTING", rewards)
-            if all(rm_rewards.values()):
-                print("TESTING ALL DONE", rewards, terminations)
+            # print("TESTING", self.timestep, truncations, self.agents, terminations)
+            if all(terminations.values()) and any([i > 0 for i in rewards.values()]):
+                for ar in rewards:
+                    rewards[ar] = 1
+            elif not all(terminations.values()):
+                for ar in rewards:
+                    rewards[ar] = 0
+
+
+        # if env_truncation:
+        #     self.agents = []
+        # rewards = rm_rewards
+        # if self.test:
+        #     # print("TESTING", rewards)
+        #     print("TESTING", self.timestep, truncations, self.agents, terminations)
+        #     if all(rm_rewards.values()):
+        #         print("TESTING ALL DONE", rewards, terminations)
   
-            if not all(rm_rewards.values()):
-                 rewards = {i:0 for i in self.possible_agents}
-                 self.agents = self.possible_agents[:]
-                 terminations = {i: False for i in self.possible_agents}
+        #     if not all(rm_rewards.values()):
+        #          rewards = {i:0 for i in self.possible_agents}
+        #          self.agents = self.possible_agents[:]
+        #          terminations = {i: False for i in self.possible_agents}
         #TODO: return rm_rewards instead of rewards
         return obs, rewards, terminations, truncations, infos
 

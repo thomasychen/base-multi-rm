@@ -38,7 +38,7 @@ class Manager:
         self.total_selections = 0
 
         # UCB exploration parameter
-        self.ucb_c = 1.5
+        self.ucb_c = 0.69
         self.window = 0
         self.window_cnt = 0
 
@@ -133,7 +133,7 @@ class Manager:
         if self.wandb:
             for i in range(len(self.permutation_counts)):
                 for perm in self.permutation_counts[i]:
-                    wandb.log({f"count for {i}_{perm}": self.permutation_counts[i][perm]})
+                    wandb.log({f"selection rate for {i}_{perm}": self.permutation_counts[i][perm] / self.total_selections})
                     wandb.log({f"reward for {i}_{perm}": self.permutation_curr_rewards[i][perm]})
 
 

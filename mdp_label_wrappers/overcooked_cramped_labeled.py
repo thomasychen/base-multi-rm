@@ -54,6 +54,7 @@ class OvercookedCrampedLabeled(MDP_Labeler):
         # import pdb; pdb.set_trace()
         obs = old_obs["agent_0"]
         obs = obs.transpose(2, 0, 1)
+        
 
 
         # For onions

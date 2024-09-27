@@ -122,13 +122,13 @@ class Manager:
             # Update counts and total selections
             perm_tuple = tuple(self.curr_assignment)
             self.permutation_counts[self.curr_decomp][perm_tuple] += 1
-            self.total_selections += 1
         else:
             raise Exception("STUPID ASS MF")
 
         # print(self.curr_permutation_qs)
         print(self.curr_assignment, "decomp_idx", self.curr_decomp)
 
+        self.total_selections += 1
         
         if self.wandb:
             for i in range(len(self.permutation_counts)):

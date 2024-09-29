@@ -17,6 +17,8 @@ class SparseRewardMachine:
         self.subtask_start_states = {}  # to store the starting state of each subtask
         self.num_subtasks = 0  # total number of subtasks
         self.state_to_subtask_idx = {}
+        self.is_monolithic = False
+        
         if file is not None:
             self._load_reward_machine(file)
         # One hot encoding setup for reward machine states and decomp idx
@@ -107,6 +109,8 @@ class SparseRewardMachine:
         return largest_size
     
     def get_one_hot_size(self, num_agents):
+        if self.is_monolithic:
+            return len(self.get_states())
         return (self.num_subtasks // num_agents) + num_agents + self.max_subtask_size
 
     def get_one_hot_encoded_state(self, state, num_agents):
@@ -115,6 +119,11 @@ class SparseRewardMachine:
         """given state number, need to know: which decomp, which subtask,
         first 2 things already done
           how deep in subtask it is."""
+        if self.is_monolithic:
+            onehot = np.zeros(len(self.get_states()), dtype=int)
+            onehot[state] = 1
+            return onehot
+
         if state not in self.state_to_subtask:
             raise ValueError("State not assigned to any subtask!")
 

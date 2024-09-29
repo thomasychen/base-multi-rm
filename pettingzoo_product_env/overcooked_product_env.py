@@ -15,7 +15,7 @@ class OvercookedProductEnv(ParallelEnv):
         "name": "custom_environment_v0",
     }
 
-    def __init__(self, manager, labeled_mdp_class: MDP_Labeler, reward_machine: SparseRewardMachine, config, max_agents, test=False, is_monolithic=False, render_mode=None):
+    def __init__(self, manager, labeled_mdp_class: MDP_Labeler, reward_machine: SparseRewardMachine, config, max_agents, test=False, is_monolithic=False, addl_mono_rm: SparseRewardMachine=None, render_mode=None, monolithic_weight=1.0):
         self.possible_agents = ["agent_" + str(r) for r in range(2)]
         self.env_config = config
 
@@ -31,6 +31,8 @@ class OvercookedProductEnv(ParallelEnv):
         self.eps_reward = {agent: 0 for agent in self.possible_agents}
         self.reset_key = None
         self.test = test
+        self.addl_monolithic_rm = addl_mono_rm # Potentially give the monolithic here so everyone know's global states (for potentially dependent dynamics)
+        self.monolithic_weight = monolithic_weight
         # self.rm_states = []
         OvercookedProductEnv.manager = manager
         self.local_manager = None
@@ -42,7 +44,10 @@ class OvercookedProductEnv(ParallelEnv):
 
     def observation_space(self, agent):
         # flattened_shape = [int(np.prod(self.labeled_mdp.obs_shape) + len(self.reward_machine.get_states()))]
-        flattened_shape = [self.labeled_mdp.obs_shape + self.reward_machine.get_one_hot_size(len(self.possible_agents))]
+        if self.addl_monolithic_rm is None:
+            flattened_shape = [self.labeled_mdp.obs_shape + self.reward_machine.get_one_hot_size(len(self.possible_agents))]
+        else:
+            flattened_shape = [self.labeled_mdp.obs_shape + self.reward_machine.get_one_hot_size(len(self.possible_agents)) + self.addl_monolithic_rm.get_one_hot_size(len(self.possible_agents))]
         # gymnasium spaces are defined and documented here: https://gymnasium.farama.org/api/spaces/
         return Box(0, 255, flattened_shape)
 
@@ -77,6 +82,8 @@ class OvercookedProductEnv(ParallelEnv):
         #     return one_hot
         
         # n = len(self.reward_machine.get_states())
+        if self.addl_monolithic_rm is not None:
+            self.monolithic_rm_state = self.addl_monolithic_rm.get_initial_state()
 
         rm_state_array = [[self.reward_machine.get_one_hot_encoded_state(state, len(self.possible_agents)) for state in init_states] for init_states in rm_array]
         # import pdb; pdb.set_trace()
@@ -146,6 +153,7 @@ class OvercookedProductEnv(ParallelEnv):
         #     import pdb; pdb.set_trace()
         #     print(labels, self.rm_states)
         rm_rewards = {}
+        mono_rm_reward = 0
         for i in range(len(self.possible_agents)):
             agent = self.possible_agents[i]
             r = 0
@@ -153,10 +161,22 @@ class OvercookedProductEnv(ParallelEnv):
                 u2 = self.reward_machine.get_next_state(self.rm_states[agent], e)
                 r = r + self.reward_machine.get_reward(self.rm_states[agent], u2)
                 self.rm_states[agent] = u2
-      
-            rm_rewards[agent] = r
+                if self.addl_monolithic_rm is not None:
+                    next_ms = self.addl_monolithic_rm.get_next_state(self.monolithic_rm_state, e) #TODO: check that the order invariance here doesn't matter
+                    mono_rm_reward += self.monolithic_weight*self.addl_monolithic_rm.get_reward(self.monolithic_rm_state, next_ms)
+                    self.monolithic_rm_state = next_ms
+        if self.addl_monolithic_rm is not None:
+            for agent in self.possible_agents:
+                rm_rewards[agent] = r + mono_rm_reward
         
-        terminations = {i: self.reward_machine.is_terminal_state(self.rm_states[i]) for i in self.agents}
+        #TODO: commented this out. we keep all agents going until the end even if they've accomplished their goal
+        #terminations = {i: self.reward_machine.is_terminal_state(self.rm_states[i]) for i in self.agents} 
+        terminations = {i: False for i in self.agents}
+        #TODO: add termination if the monolithic finishes
+        if self.addl_monolithic_rm is not None:
+            if self.addl_monolithic_rm.is_terminal_state(self.monolithic_rm_state):
+                terminations = {i: True for i in self.agents}
+        
         # print(terminations) if self.reward_machine.is_terminal_state(self.rm_states['agent_0']) else None
         
         # new_agents = []
@@ -318,8 +338,11 @@ class OvercookedProductEnv(ParallelEnv):
         # # Set the rm_state index to 1
         # rm_array[rm_state] = 1
         rm_ohe = self.reward_machine.get_one_hot_encoded_state(rm_state, len(self.possible_agents))
-
-        # Concatenate the flattened observation and the rm_array
-        result = np.concatenate((flattened_obs, rm_ohe))
+        if self.addl_monolithic_rm is not None:
+            mono_ohe = self.addl_monolithic_rm.get_one_hot_encoded_state(self.monolithic_rm_state, len(self.possible_agents))
+            result = np.concatenate((flattened_obs, rm_ohe, mono_ohe))
+        else:
+            # Concatenate the flattened observation and the rm_array
+            result = np.concatenate((flattened_obs, rm_ohe, mono_ohe))
 
         return result

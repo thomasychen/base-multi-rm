@@ -16,6 +16,7 @@ class SparseRewardMachine:
         self.state_to_subtask = {}  # to store state -> subtask number
         self.subtask_start_states = {}  # to store the starting state of each subtask
         self.num_subtasks = 0  # total number of subtasks
+        self.is_monolithic = False
         
         if file is not None:
             self._load_reward_machine(file)
@@ -103,10 +104,17 @@ class SparseRewardMachine:
         return largest_size
     
     def get_one_hot_size(self, num_agents):
+        if self.is_monolithic:
+            return len(self.get_states())
         return (self.num_subtasks // num_agents) + num_agents + self.max_subtask_size
 
     def get_one_hot_encoded_state(self, state, num_agents):
         """Returns 3 one-hot encoded arrays for the given state."""
+        if self.is_monolithic:
+            onehot = np.zeros(len(self.get_states()), dtype=int)
+            onehot[state] = 1
+            return onehot
+
         if state not in self.state_to_subtask:
             raise ValueError("State not assigned to any subtask!")
 

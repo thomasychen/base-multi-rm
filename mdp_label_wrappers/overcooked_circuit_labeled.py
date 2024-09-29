@@ -3,20 +3,16 @@ from jaxmarl.environments.overcooked import overcooked_layouts, layout_grid_to_d
 from jaxmarl import make
 import numpy as np
 
-class OvercookedCustomIslandLabeled(MDP_Labeler):
+class OvercookedCircuitLabeled(MDP_Labeler):
     def __init__(self, run_config):
         
-       
-
         counter_circuit_grid = """
-WWWWWWW
-W XWO X
-WA P AW
-W  W  W
-WWBWWWW
+WWWPPWWW
+W A    W
+B WWWW X
+W     AW
+WWWOOWWW
 """
-
-
         
         self.layout = layout_grid_to_dict(counter_circuit_grid)
         self.jax_env = make('overcooked', layout=self.layout, max_steps=run_config["max_episode_length"])
@@ -47,15 +43,14 @@ WWBWWWW
             return "o1"
         elif self.any_elem(obs[16], 2):
             return "o2"
-        # pot locations is (2, 3)
-        elif self.any_elem_nonzero(obs[20]) or obs[21][2][3] == 1:
+        elif self.any_elem_nonzero(obs[20]) or obs[21][0][2] == 1:
             return "o3"
         else:
             return None
         
     def has_soup(self, obs):
-        # ignore pot location at (2, 3)
-        if self.any_elem(obs[21], 1, 2, 3):
+        # 
+        if self.any_elem(obs[21], 1, 0, 2):
             return "p"
         return None
         
@@ -73,7 +68,8 @@ WWBWWWW
 
         # For onions
         onions = self.num_onions(obs)
-        if onions:
+        if onions:  
+            import pdb; pdb.set_trace()
             l.append(onions)
         # For soup plated
         soup = self.has_soup(obs)
@@ -90,6 +86,7 @@ WWBWWWW
         #     l.append("move1")
         # For dish done
         if reward["agent_0"] > 0:
+            # import pdb; pdb.set_trace()
             l.append("d")
 
         # self.jax_env.get_obs(s_next)

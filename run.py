@@ -36,7 +36,7 @@ from jaxmarl.environments.overcooked import overcooked_layouts
 from mdp_label_wrappers.overcooked_cramped_labeled import OvercookedCrampedLabeled
 from mdp_label_wrappers.overcooked_asymmetric_advantages_labeled import OvercookedAsymmetricAdvantagesLabeled
 from mdp_label_wrappers.overcooked_custom_island_labeled import OvercookedCustomIslandLabeled
-
+from mdp_label_wrappers.overcooked_circuit_labeled import OvercookedCircuitLabeled
 
 ## WANDB KILL SWITCH
 # ps aux|grep wandb|grep -v grep | awk '{print $2}'|xargs kill -9
@@ -85,12 +85,15 @@ parser.add_argument('--render', type=str2bool, default=False, help='Enable rende
 # python run.py --assignment_methods ground_truth --num_iterations 1 --wandb t --timesteps 10000 --decomposition_file aux_buttons.txt --experiment_name buttons --is_monolithic f --env buttons --render f
 # python run.py --assignment_methods ground_truth --num_iterations 1 --wandb f --timesteps 1000000 --decomposition_file aux_cramped_room.txt --experiment_name cramped_room --is_monolithic f --env overcooked --render f
 # python run.py --assignment_methods ground_truth --num_iterations 1 --wandb f --timesteps 1000000 --decomposition_file aux_asymm_advantages.txt --experiment_name asymm_advantages --is_monolithic f --env overcooked --render t
-# python run.py --assignment_methods UCB --num_iterations 1 --wandb t --timesteps 1000000 --decomposition_file aux_custom_island.txt --experiment_name custom_island --is_monolithic f --env overcooked --render t
-# python run.py --assignment_methods UCB --num_iterations 1 --wandb t --timesteps 4000000 --decomposition_file aux_custom_island.txt --experiment_name custom_island --is_monolithic f --env overcooked --render f
+# python run.py --assignment_methods ground_truth --num_iterations 1 --wandb f --timesteps 1000000 --decomposition_file aux_custom_island.txt --experiment_name custom_island --is_monolithic f --env overcooked --render t
+
+
+# circuit
+# python run.py --assignment_methods ground_truth --num_iterations 1 --wandb t --timesteps 1000000 --decomposition_file aux_circuit.txt --experiment_name circuit --is_monolithic f --env overcooked --render t
+
 # Used to test the automatic decomposition.
 # python3 run.py --assignment_methods UCB --wandb False --decomposition_file team_buttons.txt --num_candidates 3 --is_monolithic True
 
-# For overcooked automatic decomposition
 
 args = parser.parse_args()
 
@@ -230,7 +233,7 @@ if __name__ == "__main__":
                 callback_list = CallbackList([eval_callback])
                 print("Wandb Disabled")
 
-            model.learn(total_timesteps=args.timesteps, callback=callback_list, log_interval=10, progress_bar=True)
+            model.learn(total_timesteps=args.timesteps, callback=callback_list, log_interval=10, progress_bar=False)
             env.close()
             # Finish your run
             if args.wandb:

@@ -16,11 +16,13 @@ class SparseRewardMachine:
         self.state_to_subtask = {}  # to store state -> subtask number
         self.subtask_start_states = {}  # to store the starting state of each subtask
         self.num_subtasks = 0  # total number of subtasks
-        
+        self.state_to_subtask_idx = {}
         if file is not None:
             self._load_reward_machine(file)
         # One hot encoding setup for reward machine states and decomp idx
         self.find_max_subgraph_size_and_assign_subtasks()
+        print(self.state_to_subtask_idx)
+        print(self.state_to_subtask)
         
     def __repr__(self):
         s = "MACHINE:\n"
@@ -82,21 +84,23 @@ class SparseRewardMachine:
 
     def find_max_subgraph_size_and_assign_subtasks(self):
         """Find the largest subgraph connected to u0, store its size in self.max_subtask_size, 
-        assign subtasks, and save the number of subtasks and the starting state of each subtask."""
-        visited = set()  # Track visited states
+        assign subtasks, and save the number of subtasks and the starting state of each subtask."""  # Track visited states
         largest_size = 0
         subtask_number = 0
         self.subtask_start_states = {}  # Reset subtask start states
 
         # Iterate through neighbors of u0, treating each as the root of a subgraph
         for event, next_state in self.delta_u.get(self.u0, {}).items():
-            if next_state not in visited:
-                # Record the starting state for this subtask
-                self.subtask_start_states[subtask_number] = next_state
-                # Calculate subgraph size and assign subtask
-                subgraph_size = self._dfs_subgraph_size_and_assign(next_state, visited, subtask_number)
-                largest_size = max(largest_size, subgraph_size)
-                subtask_number += 1  # Move to the next subtask for the next unvisited neighbor
+            visited = set()
+            # Record the starting state for this subtask
+            self.subtask_start_states[subtask_number] = next_state
+            # Calculate subgraph size and assign subtask
+            subgraph_size = self._dfs_subgraph_size_and_assign(next_state, visited, subtask_number)
+            visited = list(visited)
+            for i in range(len(visited)):
+                self.state_to_subtask_idx[visited[i]] = i
+            largest_size = max(largest_size, subgraph_size)
+            subtask_number += 1  # Move to the next subtask for the next unvisited neighbor
 
         self.max_subtask_size = largest_size
         self.num_subtasks = subtask_number  # Save the total number of subtasks
@@ -107,6 +111,10 @@ class SparseRewardMachine:
 
     def get_one_hot_encoded_state(self, state, num_agents):
         """Returns 3 one-hot encoded arrays for the given state."""
+
+        """given state number, need to know: which decomp, which subtask,
+        first 2 things already done
+          how deep in subtask it is."""
         if state not in self.state_to_subtask:
             raise ValueError("State not assigned to any subtask!")
 
@@ -124,8 +132,8 @@ class SparseRewardMachine:
         agent_onehot[agent_idx] = 1
 
         # One-hot encode the state's position within the subtask
-        start_state = self.subtask_start_states[subtask_number]
-        state_position = state - start_state
+        # start_state = self.subtask_start_states[subtask_number]
+        state_position = self.state_to_subtask_idx[state]
         state_position_onehot = np.zeros(self.max_subtask_size, dtype=int)
         state_position_onehot[state_position] = 1
 

@@ -102,6 +102,10 @@ parser.add_argument('--render', type=str2bool, default=False, help='Enable rende
 
 # Used to test the automatic decomposition.
 # python3 run.py --assignment_methods UCB --wandb False --decomposition_file team_buttons.txt --num_candidates 3 --is_monolithic True
+
+#### with mono observation ####
+# python run.py --assignment_methods UCB --num_iterations 1 --wandb f --timesteps 1000000 --decomposition_file aux_cramped_room.txt --experiment_name cramped_room --is_monolithic f --env overcooked --render t --add_mono_file mono_cramped_room.txt
+
 ########### overcooked ###########
 
 args = parser.parse_args()

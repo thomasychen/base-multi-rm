@@ -4,3 +4,4 @@
 (2, 3, 'o3', 0) # onion 3
 (3, 4,  'p',  0) # Plate
 (4, 5, 'd', 1) # Deliver
+(5, 5, 'True', 0) # Done

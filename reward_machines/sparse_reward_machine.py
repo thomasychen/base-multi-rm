@@ -115,6 +115,11 @@ class SparseRewardMachine:
 
     def get_one_hot_encoded_state(self, state, num_agents):
         """Returns 3 one-hot encoded arrays for the given state."""
+        if self.is_monolithic:
+            onehot = np.zeros(len(self.get_states()), dtype=int)
+            onehot[state] = 1
+            return onehot
+
         if state not in self.state_to_subtask:
             raise ValueError("State not assigned to any subtask!")
 

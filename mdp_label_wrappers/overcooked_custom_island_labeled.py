@@ -20,7 +20,7 @@ WWBWWWW
         
         self.layout = layout_grid_to_dict(counter_circuit_grid)
         self.jax_env = make('overcooked', layout=self.layout, max_steps=run_config["max_episode_length"])
-        print(run_config)
+        # print(run_config)
         self.render_mode = run_config["render_mode"]
 
         # Because we removed 3 layers

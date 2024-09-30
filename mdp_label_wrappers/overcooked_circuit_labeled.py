@@ -24,10 +24,10 @@ WWWOOWWW
         self.obs_shape[2] -= 3
         self.obs_shape = np.product(self.obs_shape)
 
-    def any_elem(self, matrix, num, ignore_i=-1, ignore_j=-1):
+    def any_elem(self, matrix, num, ignore_i=set(), ignore_j=set()):
         for i in range(len(matrix)):
             for j in range(len(matrix[0])):
-                if matrix[i][j] == num and not (i == ignore_i and j == ignore_j):
+                if matrix[i][j] == num and not (i in ignore_i and j in ignore_j):
                     return True
         return False
     
@@ -43,14 +43,15 @@ WWWOOWWW
             return "o1"
         elif self.any_elem(obs[16], 2):
             return "o2"
-        elif self.any_elem_nonzero(obs[20]) or obs[21][0][2] == 1:
+        # pot locations is (0, 3), (0, 4)
+        elif self.any_elem_nonzero(obs[20]) or obs[21][0][3] == 1 or obs[21][0][4] == 1:
             return "o3"
         else:
             return None
         
     def has_soup(self, obs):
-        # 
-        if self.any_elem(obs[21], 1, 0, 2):
+        # pot locations is (0, 3), (0, 4)
+        if self.any_elem(obs[21], 1, set([0, 0]), set([0, 4])):
             return "p"
         return None
         
@@ -65,11 +66,11 @@ WWWOOWWW
         obs = old_obs["agent_0"]
         obs = obs.transpose(2, 0, 1)
 
-
         # For onions
         onions = self.num_onions(obs)
-        if onions:  
-            import pdb; pdb.set_trace()
+        if onions:
+            if "o3" in onions:
+                import pdb; pdb.set_trace()
             l.append(onions)
         # For soup plated
         soup = self.has_soup(obs)

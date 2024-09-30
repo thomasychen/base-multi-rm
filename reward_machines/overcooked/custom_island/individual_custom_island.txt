@@ -1,0 +1,15 @@
+0 # Auxiliary node to connect to the initial states of each RM copy
+(0, 3, "to_rm1", 0)  # Connect to RM 1
+(0, 2, "to_rm2", 0)  # Connect to RM 2
+(3, 4, "o1", 0)
+(4, 5, "o2", 0)
+(5, 6, "o3", 0)
+(6, 7, "p", 0)
+(7, 8, "d", 1)
+(8, 8, "True", 0)
+(2, 9, "o1", 0)
+(9, 10, "o2", 0)
+(10, 11, "o3", 0)
+(11, 12, "p", 0)
+(12, 13, "d", 1)
+(13, 13, "True", 0)

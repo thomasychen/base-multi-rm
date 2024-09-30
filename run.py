@@ -82,18 +82,31 @@ parser.add_argument('--env', type=str, default="buttons", help="Specify between 
 parser.add_argument('--add_mono_file', type=str, default="None", help="Provide a monolithic file for global statekeeping along with a decomposed strategy")
 parser.add_argument('--render', type=str2bool, default=False, help='Enable rendering during training. Default is off')
 
+########### buttons ###########
 # python run.py --assignment_methods ground_truth --num_iterations 1 --wandb t --timesteps 10000 --decomposition_file aux_buttons.txt --experiment_name buttons --is_monolithic f --env buttons --render f
+# python run.py --assignment_methods UCB --num_iterations 1 --wandb t --timesteps 10000 --decomposition_file buttons_decompositions.txt --experiment_name buttons --is_monolithic f --env buttons --render f
+########### buttons ###########
+
+
+########### overcooked ###########
 # python run.py --assignment_methods ground_truth --num_iterations 1 --wandb f --timesteps 1000000 --decomposition_file aux_cramped_room.txt --experiment_name cramped_room --is_monolithic f --env overcooked --render f
 # python run.py --assignment_methods ground_truth --num_iterations 1 --wandb f --timesteps 1000000 --decomposition_file aux_asymm_advantages.txt --experiment_name asymm_advantages --is_monolithic f --env overcooked --render t
 # python run.py --assignment_methods ground_truth --num_iterations 1 --wandb f --timesteps 1000000 --decomposition_file aux_custom_island.txt --experiment_name custom_island --is_monolithic f --env overcooked --render t
+# python run.py --assignment_methods UCB --num_iterations 1 --wandb f --timesteps 1000000 --decomposition_file aux_custom_island.txt --experiment_name custom_island --is_monolithic f --env overcooked --render t
 
+# monolithic custom island
+# python run.py --assignment_methods ground_truth --num_iterations 1 --wandb f --timesteps 1000000 --decomposition_file individual_custom_island.txt --experiment_name custom_island --is_monolithic f --env overcooked --render t
 
 # circuit
-# python run.py --assignment_methods ground_truth --num_iterations 1 --wandb t --timesteps 1000000 --decomposition_file aux_circuit.txt --experiment_name circuit --is_monolithic f --env overcooked --render t
+# python run.py --assignment_methods ground_truth --num_iterations 1 --wandb f --timesteps 1000000 --decomposition_file aux_circuit.txt --experiment_name circuit --is_monolithic f --env overcooked --render t
 
 # Used to test the automatic decomposition.
 # python3 run.py --assignment_methods UCB --wandb False --decomposition_file team_buttons.txt --num_candidates 3 --is_monolithic True
 
+#### with mono observation ####
+# python run.py --assignment_methods UCB --num_iterations 1 --wandb f --timesteps 1000000 --decomposition_file aux_cramped_room.txt --experiment_name cramped_room --is_monolithic f --env overcooked --render t --add_mono_file mono_cramped_room.txt
+
+########### overcooked ###########
 
 args = parser.parse_args()
 

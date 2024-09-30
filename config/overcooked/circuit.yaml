@@ -7,5 +7,5 @@ initial_rm_states:
   - [22, 23]
 labeled_mdp_class: "OvercookedCircuitLabeled"
 max_episode_length: 400
-eval_freq: 4000
+eval_freq: 40000
 gamma: 0.96

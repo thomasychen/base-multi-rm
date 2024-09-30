@@ -88,7 +88,7 @@ parser.add_argument('--render', type=str2bool, default=False, help='Enable rende
 
 
 # circuit
-# python run.py --assignment_methods ground_truth --num_iterations 1 --wandb t --timesteps 1000000 --decomposition_file aux_circuit.txt --experiment_name circuit --is_monolithic f --env overcooked --render t
+# python run.py --assignment_methods ground_truth --num_iterations 1 --wandb f --timesteps 1000000 --decomposition_file aux_circuit.txt --experiment_name circuit --is_monolithic f --env overcooked --render t
 
 # Used to test the automatic decomposition.
 # python3 run.py --assignment_methods UCB --wandb False --decomposition_file team_buttons.txt --num_candidates 3 --is_monolithic True

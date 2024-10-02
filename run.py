@@ -235,6 +235,7 @@ if __name__ == "__main__":
 
             manager.set_model(model)
             env.reset()
+            eval_env.reset()
 
 
             if args.wandb:
@@ -248,6 +249,7 @@ if __name__ == "__main__":
 
             model.learn(total_timesteps=args.timesteps, callback=callback_list, log_interval=10, progress_bar=False)
             env.close()
+            eval_env.close()
             # Finish your run
             if args.wandb:
                 wandb.finish()

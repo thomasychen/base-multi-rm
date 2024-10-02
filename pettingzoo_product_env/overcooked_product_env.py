@@ -165,9 +165,10 @@ class OvercookedProductEnv(ParallelEnv):
                     next_ms = self.addl_monolithic_rm.get_next_state(self.monolithic_rm_state, e) #TODO: check that the order invariance here doesn't matter
                     mono_rm_reward += self.monolithic_weight*self.addl_monolithic_rm.get_reward(self.monolithic_rm_state, next_ms)
                     self.monolithic_rm_state = next_ms
+            rm_rewards[agent] = r
         if self.addl_monolithic_rm is not None:
             for agent in self.possible_agents:
-                rm_rewards[agent] = r + mono_rm_reward
+                rm_rewards[agent] += mono_rm_reward
         
         #TODO: commented this out. we keep all agents going until the end even if they've accomplished their goal
         #terminations = {i: self.reward_machine.is_terminal_state(self.rm_states[i]) for i in self.agents} 
@@ -283,7 +284,7 @@ class OvercookedProductEnv(ParallelEnv):
                     if not terminations[agent]:
                         self.agents.append(agent)
                 if not self.agents:
-                    self.manager.update_rewards(1*self.env_config["gamma"]**self.timestep)
+                    self.local_manager.update_rewards(1*self.env_config["gamma"]**self.timestep)
             else:
                 if not all(terminations.values()):
                     self.agents = self.possible_agents[:]

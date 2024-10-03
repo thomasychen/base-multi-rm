@@ -14,4 +14,3 @@
 (7, 10, 'by', 1) # Yellow button is pressed 3rd
 (8, 10, 'bg', 1) # Green button is pressed 3rd
 (9, 10, 'by', 1) # Yellow button is pressed 3rd
-(10, 10, 'True', 0) # 10 is a terminating state

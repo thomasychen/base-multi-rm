@@ -51,7 +51,7 @@ WWWOOWWW
         
     def has_soup(self, obs):
         # pot locations is (0, 3), (0, 4)
-        if self.any_elem(obs[21], 1, set([0, 0]), set([0, 4])):
+        if self.any_elem(obs[21], 1, set([0, 0]), set([3, 4])):
             return "p"
         return None
         

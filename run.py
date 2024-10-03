@@ -79,6 +79,7 @@ parser.add_argument('--experiment_name', type=str, default="buttons", help="Name
 parser.add_argument('--is_monolithic', type=str2bool, default=False, help="If monolothic RM")
 parser.add_argument('--num_candidates', type=int, default=0, help="Use automated decomposition for a monolithic reward machine. If 0, run the monolithic RM as is.")
 parser.add_argument('--env', type=str, default="buttons", help="Specify between the buttons grid world or overcooked")
+parser.add_argument('--add_mono_file', type=str, default="None", help="Provide a monolithic file for global statekeeping along with a decomposed strategy")
 parser.add_argument('--render', type=str2bool, default=False, help='Enable rendering during training. Default is off')
 
 ########### buttons ###########
@@ -98,9 +99,15 @@ parser.add_argument('--render', type=str2bool, default=False, help='Enable rende
 
 # circuit
 # python run.py --assignment_methods ground_truth --num_iterations 1 --wandb f --timesteps 1000000 --decomposition_file aux_circuit.txt --experiment_name circuit --is_monolithic f --env overcooked --render t
+# python run.py --assignment_methods ground_truth --num_iterations 1 --wandb t --timesteps 4000000 --decomposition_file aux_circuit.txt --experiment_name circuit --is_monolithic f --env overcooked --render f --add_mono_file mono_circuit.txt
 
 # Used to test the automatic decomposition.
 # python3 run.py --assignment_methods UCB --wandb False --decomposition_file team_buttons.txt --num_candidates 3 --is_monolithic True
+
+#### with mono observation ####
+# python run.py --assignment_methods UCB --num_iterations 1 --wandb f --timesteps 1000000 --decomposition_file aux_cramped_room.txt --experiment_name cramped_room --is_monolithic f --env overcooked --render t --add_mono_file mono_cramped_room.txt
+# python run.py --assignment_methods UCB --num_iterations 1 --wandb t --timesteps 4000000 --decomposition_file aux_cramped_room.txt --experiment_name cramped_room --is_monolithic f --env overcooked --render f
+# python run.py --assignment_methods UCB --num_iterations 1 --wandb t --timesteps 4000000 --decomposition_file individual_cramped_room.txt --experiment_name cramped_room --is_monolithic f --env overcooked --render f
 ########### overcooked ###########
 
 args = parser.parse_args()
@@ -116,7 +123,6 @@ if __name__ == "__main__":
 
     log_dir_base = os.path.join(real_base, f"{timestamp}")
     os.makedirs(log_dir_base, exist_ok=True)
-
     for method in assignment_methods:
 
         method_log_dir_base = os.path.join(log_dir_base, f"{method}")
@@ -150,6 +156,9 @@ if __name__ == "__main__":
             print(run_config)
             manager = Manager(num_agents=run_config['num_agents'], num_decomps = len(run_config["initial_rm_states"]),assignment_method=method, wandb=args.wandb, seed = i)
             train_rm = SparseRewardMachine(f"reward_machines/{args.env}/{args.experiment_name}/{args.decomposition_file}")
+            mono_rm = SparseRewardMachine(f"reward_machines/{args.env}/{args.experiment_name}/{args.add_mono_file}") if args.add_mono_file != "None" else None
+            if mono_rm is not None:
+                mono_rm.is_monolithic = True
             if args.num_candidates > 0:  # generate automatic decompositions
                 train_rm = generate_rm_decompositions(train_rm, args.num_candidates, run_config['num_agents'], disregard_list=None, n_queries=100) # TODO: un-hard-code this
             render_mode = "human" if args.render else None
@@ -163,6 +172,7 @@ if __name__ == "__main__":
                 'max_agents': run_config['num_agents'],
                 'is_monolithic': args.is_monolithic,
                 'render_mode': render_mode,
+                'addl_mono_rm': mono_rm,
             }
             
             if args.env == "buttons":
@@ -227,6 +237,7 @@ if __name__ == "__main__":
 
             manager.set_model(model)
             env.reset()
+            eval_env.reset()
 
 
             if args.wandb:
@@ -240,7 +251,7 @@ if __name__ == "__main__":
 
             model.learn(total_timesteps=args.timesteps, callback=callback_list, log_interval=10, progress_bar=False)
             env.close()
-
+            eval_env.close()
             # Finish your run
             if args.wandb:
                 wandb.finish()

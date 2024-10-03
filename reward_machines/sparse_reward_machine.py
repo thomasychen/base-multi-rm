@@ -17,12 +17,14 @@ class SparseRewardMachine:
         self.subtask_start_states = {}  # to store the starting state of each subtask
         self.num_subtasks = 0  # total number of subtasks
         self.state_to_subtask_idx = {}
+        self.is_monolithic = False
+        
         if file is not None:
             self._load_reward_machine(file)
         # One hot encoding setup for reward machine states and decomp idx
         self.find_max_subgraph_size_and_assign_subtasks()
-        print(self.state_to_subtask_idx)
-        print(self.state_to_subtask)
+        # print(self.state_to_subtask_idx)
+        # print(self.state_to_subtask)
         
     def __repr__(self):
         s = "MACHINE:\n"
@@ -107,14 +109,17 @@ class SparseRewardMachine:
         return largest_size
     
     def get_one_hot_size(self, num_agents):
+        if self.is_monolithic:
+            return len(self.get_states())
         return (self.num_subtasks // num_agents) + num_agents + self.max_subtask_size
 
     def get_one_hot_encoded_state(self, state, num_agents):
         """Returns 3 one-hot encoded arrays for the given state."""
+        if self.is_monolithic:
+            onehot = np.zeros(len(self.get_states()), dtype=int)
+            onehot[state] = 1
+            return onehot
 
-        """given state number, need to know: which decomp, which subtask,
-        first 2 things already done
-          how deep in subtask it is."""
         if state not in self.state_to_subtask:
             raise ValueError("State not assigned to any subtask!")
 
@@ -228,6 +233,54 @@ class SparseRewardMachine:
         if reward > 0:
             self.accepting.add(u2)
 
+    def add_transition_and_reward_only(self, u1, u2, event, reward):
+        ''' 
+        Similar to _add_transition, this function is public and called when you project and parallelize reward machines. 
+        Differences between these two functions:
+            add_transition expects:
+                (u1, u2) to already be in the state space
+                event to already be in the event space
+
+        Inputs:
+            u1: element of rm.U
+            u2: element of rm.U
+            event: string, element of rm.events
+            reward: int or float (probably 0 or 1)
+        '''
+        # add transition 
+        if u1 not in self.delta_u:
+            self.delta_u[u1] = {}
+        if event in self.delta_u[u1]:
+            if self.delta_u[u1][event] != u2:
+                raise Exception('Trying to make rm transition function non-deterministic.')
+        if event not in self.delta_u[u1]:
+            self.delta_u[u1][event] = u2
+
+        # Adding reward-transition to delta_r
+        if u1 not in self.delta_r:
+            self.delta_r[u1] = {}
+        self.delta_r[u1][u2] = reward
+    
+    def get_name_from_class(self, cl):
+        '''
+        This function finds the "name" of a state that corresponds to a 
+        particular class. 
+
+        k is a key in self.equivalence_class_name_dict 
+        if (k, cl) is an item of self.equivalence_class_name_dict, return k
+        Inputs: 
+            cl: (set), element of an equivalence class, value in self.equivalence_class_name_dict
+       
+        '''
+        dict = self.equivalence_class_name_dict
+        name_full = [k for k in dict if dict[k]==cl] # should have len = 1
+
+        if len(name_full) == 0:
+            sr = 'class ' + str(cl) + 'was not in the equivalence_class_name_dict for this reward machine'
+            raise Exception(sr)
+
+        return name_full[0]
+
 def rm_to_dfa(reward_machine):
     '''
     Convert a reward machine object to a DFA for usage in DFA decomposition.
@@ -296,7 +349,7 @@ def combine_to_single_rm(rm_list, tag="rm", skip_aux=False):
     return subsuming_rm
 
 
-def generate_rm_decompositions(monolithic_rm, num_decompositions, num_agents, disregard_list=None, n_queries=25):
+def generate_rm_decompositions_using_dfas(monolithic_rm, num_decompositions, num_agents, disregard_list=None, n_queries=25):
     # convert rm to a DFA
     dfa_obj = rm_to_dfa(monolithic_rm)
     # create decomposition generator
@@ -319,8 +372,3 @@ def generate_rm_decompositions(monolithic_rm, num_decompositions, num_agents, di
             decomps.append(candidate)
     full_subsuming_rm = combine_to_single_rm(decomped_mono_rms, tag='rm')
     return full_subsuming_rm
-
-def select_top_k_decompositions(decomposition_candidates, k):
-    # here, use a selection heuristic to select the top k candidates. 
-    # TODO: implement a heuristic.
-    pass

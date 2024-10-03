@@ -314,8 +314,8 @@ def project_rm(event_space, rm):
     
 
 # Example usage:
-X = {1, 2, 3}
-ex_rm = SparseRewardMachine("overcooked/asymm_advantages/mono_asymm_adv.txt")
-num_agents = 2
-result = generate_rm_decompositions(ex_rm, num_agents, top_k=5)
-print(result)
+# X = {1, 2, 3}
+# ex_rm = SparseRewardMachine("overcooked/asymm_advantages/mono_asymm_adv.txt")
+# num_agents = 2
+# result = generate_rm_decompositions(ex_rm, num_agents, top_k=5)
+# print(result)

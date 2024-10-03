@@ -177,6 +177,9 @@ class OvercookedProductEnv(ParallelEnv):
         if self.addl_monolithic_rm is not None:
             if self.addl_monolithic_rm.is_terminal_state(self.monolithic_rm_state):
                 terminations = {i: True for i in self.agents}
+        else:
+            if all([self.reward_machine.is_terminal_state(self.rm_states[i]) for i in self.agents]):
+                terminations = {i: True for i in self.agents}
         
         # print(terminations) if self.reward_machine.is_terminal_state(self.rm_states['agent_0']) else None
         
@@ -344,6 +347,6 @@ class OvercookedProductEnv(ParallelEnv):
             result = np.concatenate((flattened_obs, rm_ohe, mono_ohe))
         else:
             # Concatenate the flattened observation and the rm_array
-            result = np.concatenate((flattened_obs, rm_ohe, mono_ohe))
+            result = np.concatenate((flattened_obs, rm_ohe))
 
         return result

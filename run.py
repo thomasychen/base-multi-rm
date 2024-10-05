@@ -17,7 +17,7 @@ from stable_baselines3.common.callbacks import EvalCallback, CallbackList
 from mdp_label_wrappers.buttons_mdp_labeled import HardButtonsLabeled
 from mdp_label_wrappers.easy_buttons_mdp_labeled import EasyButtonsLabeled
 from mdp_label_wrappers.challenge_buttons_mdp_labeled import ChallengeButtonsLabeled
-from reward_machines.sparse_reward_machine import SparseRewardMachine, generate_rm_decompositions
+from reward_machines.sparse_reward_machine import SparseRewardMachine
 from stable_baselines3.common.monitor import Monitor
 from pettingzoo.test import parallel_seed_test
 from stable_baselines3.common.utils import set_random_seed
@@ -109,6 +109,7 @@ parser.add_argument('--render', type=str2bool, default=False, help='Enable rende
 # python run.py --assignment_methods UCB --num_iterations 1 --wandb t --timesteps 4000000 --decomposition_file aux_cramped_room.txt --experiment_name cramped_room --is_monolithic f --env overcooked --render f
 # python run.py --assignment_methods UCB --num_iterations 1 --wandb t --timesteps 4000000 --decomposition_file individual_cramped_room.txt --experiment_name cramped_room --is_monolithic f --env overcooked --render f
 ########### overcooked ###########
+# python run.py --assignment_methods ground_truth --num_iterations 1 --wandb f --timesteps 4000000 --decomposition_file individual_cramped_room.txt --experiment_name cramped_room --is_monolithic f --env overcooked --render t
 
 args = parser.parse_args()
 
@@ -159,8 +160,8 @@ if __name__ == "__main__":
             mono_rm = SparseRewardMachine(f"reward_machines/{args.env}/{args.experiment_name}/{args.add_mono_file}") if args.add_mono_file != "None" else None
             if mono_rm is not None:
                 mono_rm.is_monolithic = True
-            if args.num_candidates > 0:  # generate automatic decompositions
-                train_rm = generate_rm_decompositions(train_rm, args.num_candidates, run_config['num_agents'], disregard_list=None, n_queries=100) # TODO: un-hard-code this
+            # if args.num_candidates > 0:  # generate automatic decompositions
+            #     train_rm = generate_rm_decompositions(train_rm, args.num_candidates, run_config['num_agents'], disregard_list=None, n_queries=100) # TODO: un-hard-code this
             render_mode = "human" if args.render else None
             run_config["render_mode"] = render_mode
 

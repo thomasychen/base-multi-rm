@@ -6,7 +6,7 @@ from jaxmarl import make
 from stable_baselines3.common.evaluation import evaluate_policy
 from jaxmarl.environments.overcooked import Overcooked, overcooked_layouts
 from pettingzoo.utils import parallel_to_aec
-from reward_machines.sparse_reward_machine import SparseRewardMachine, dfa_to_rm, generate_rm_decompositions
+from reward_machines.sparse_reward_machine import SparseRewardMachine, dfa_to_rm
 from mdp_label_wrappers.buttons_mdp_labeled import HardButtonsLabeled
 from manager.manager import Manager
 # from threading import Lock
@@ -14,6 +14,7 @@ from wandb.integration.sb3 import WandbCallback
 from multiprocessing import Lock, Manager as ProcessManager
 from concurrent.futures import ProcessPoolExecutor
 from mdp_label_wrappers.overcooked_custom_island_labeled import OvercookedCustomIslandLabeled
+from mdp_label_wrappers.overcooked_cramped_labeled import OvercookedCrampedLabeled
 import yaml
 import argparse
 from stable_baselines3.ppo import MlpPolicy
@@ -43,6 +44,7 @@ parser.add_argument('--render', type=str2bool, default=False, help='Enable rende
 args = parser.parse_args()
 
 # python test_overcooked.py --env overcooked --experiment_name custom_island --decomposition_file aux_custom_island.txt --is_monolithic f --wandb f --render t
+# python test_overcooked.py --env overcooked --experiment_name cramped_room --decomposition_file individual_cramped_room.txt --is_monolithic f --wandb f --render t
 
 def run_trained_model(model_path, steps):
     # Define environment and configuration
@@ -143,4 +145,4 @@ def test_dfa_generation():
     return decomps
 
 # test_dfa_generation()
-run_trained_model('/Users/nikhil/Desktop/research_rl/base-multi-rm/logs/20240921-003226/ground_truth/iteration_1/best/best_model.zip', 400)
+run_trained_model('/Users/thomaschen/base-multi-rm/logs/20241002-175909/UCB/iteration_1/best/best_model.zip', 400)

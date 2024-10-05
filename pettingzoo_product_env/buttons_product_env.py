@@ -289,6 +289,8 @@ class ButtonsProductEnv(ParallelEnv):
             if self.test:
                 for at in terminations:
                     terminations[at] = False
+            else: 
+                self.manager.update_rewards(0)
         else:
             self.agents = []
             # if any(terminations.values()) and self.test:

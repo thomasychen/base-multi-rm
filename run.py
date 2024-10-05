@@ -18,7 +18,10 @@ from mdp_label_wrappers.buttons_mdp_labeled import HardButtonsLabeled
 from mdp_label_wrappers.easy_buttons_mdp_labeled import EasyButtonsLabeled
 from mdp_label_wrappers.challenge_buttons_mdp_labeled import ChallengeButtonsLabeled
 from reward_machines.sparse_reward_machine import SparseRewardMachine
+<<<<<<< HEAD
 from reward_machines.rm_generator import generate_rm_decompositions
+=======
+>>>>>>> fix manager wandb issue
 from stable_baselines3.common.monitor import Monitor
 from pettingzoo.test import parallel_seed_test
 from stable_baselines3.common.utils import set_random_seed
@@ -110,6 +113,7 @@ parser.add_argument('--render', type=str2bool, default=False, help='Enable rende
 # python run.py --assignment_methods UCB --num_iterations 1 --wandb t --timesteps 4000000 --decomposition_file aux_cramped_room.txt --experiment_name cramped_room --is_monolithic f --env overcooked --render f
 # python run.py --assignment_methods UCB --num_iterations 1 --wandb t --timesteps 4000000 --decomposition_file individual_cramped_room.txt --experiment_name cramped_room --is_monolithic f --env overcooked --render f
 ########### overcooked ###########
+# python run.py --assignment_methods ground_truth --num_iterations 1 --wandb f --timesteps 4000000 --decomposition_file individual_cramped_room.txt --experiment_name cramped_room --is_monolithic f --env overcooked --render t
 
 args = parser.parse_args()
 

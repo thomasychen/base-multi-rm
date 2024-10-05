@@ -279,6 +279,8 @@ class OvercookedProductEnv(ParallelEnv):
             if self.test:
                 for at in terminations:
                     terminations[at] = False
+            else:
+                self.manager.update_rewards(0)
         else:
             self.agents = []
             # if any(terminations.values()) and self.test:
@@ -288,7 +290,7 @@ class OvercookedProductEnv(ParallelEnv):
                     if not terminations[agent]:
                         self.agents.append(agent)
                 if not self.agents:
-                    self.local_manager.update_rewards(1*self.env_config["gamma"]**self.timestep)
+                    self.manager.update_rewards(1*self.env_config["gamma"]**self.timestep)
             else:
                 if not all(terminations.values()):
                     self.agents = self.possible_agents[:]

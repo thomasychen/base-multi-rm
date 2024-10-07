@@ -17,7 +17,8 @@ from stable_baselines3.common.callbacks import EvalCallback, CallbackList
 from mdp_label_wrappers.buttons_mdp_labeled import HardButtonsLabeled
 from mdp_label_wrappers.easy_buttons_mdp_labeled import EasyButtonsLabeled
 from mdp_label_wrappers.challenge_buttons_mdp_labeled import ChallengeButtonsLabeled
-from reward_machines.sparse_reward_machine import SparseRewardMachine, generate_rm_decompositions
+from reward_machines.sparse_reward_machine import SparseRewardMachine
+from reward_machines.rm_generator import generate_rm_decompositions
 from stable_baselines3.common.monitor import Monitor
 from pettingzoo.test import parallel_seed_test
 from stable_baselines3.common.utils import set_random_seed
@@ -160,7 +161,7 @@ if __name__ == "__main__":
             if mono_rm is not None:
                 mono_rm.is_monolithic = True
             if args.num_candidates > 0:  # generate automatic decompositions
-                train_rm = generate_rm_decompositions(train_rm, args.num_candidates, run_config['num_agents'], disregard_list=None, n_queries=100) # TODO: un-hard-code this
+                train_rm = generate_rm_decompositions(train_rm run_config['num_agents'], top_k=args.num_candidates)
             render_mode = "human" if args.render else None
             run_config["render_mode"] = render_mode
 

@@ -15,6 +15,7 @@ from multiprocessing import Lock, Manager as ProcessManager
 from concurrent.futures import ProcessPoolExecutor
 from mdp_label_wrappers.overcooked_custom_island_labeled import OvercookedCustomIslandLabeled
 from mdp_label_wrappers.overcooked_cramped_labeled import OvercookedCrampedLabeled
+from mdp_label_wrappers.overcooked_interesting_cramped_labeled  import OvercookedInterestingCrampedLabeled
 import yaml
 import argparse
 from stable_baselines3.ppo import MlpPolicy
@@ -40,10 +41,14 @@ parser.add_argument('--is_monolithic', type=str2bool, default=False, help="If mo
 parser.add_argument('--num_candidates', type=int, default=0, help="Use automated decomposition for a monolithic reward machine. If 0, run the monolithic RM as is.")
 parser.add_argument('--env', type=str, default="buttons", help="Specify between the buttons grid world or overcooked")
 parser.add_argument('--render', type=str2bool, default=False, help='Enable rendering during training. Default is off')
+parser.add_argument('--add_mono_file', type=str, default="None", help="Provide a monolithic file for global statekeeping along with a decomposed strategy")
 
 args = parser.parse_args()
 
+# OVERCOOKED
 # python test_overcooked.py --env overcooked --experiment_name custom_island --decomposition_file aux_custom_island.txt --is_monolithic f --wandb f --render t
+# python test_overcooked.py --env overcooked --experiment_name cramped_room --decomposition_file individual_cramped_room.txt --is_monolithic f --wandb f --render t
+
 # python test_overcooked.py --env overcooked --experiment_name cramped_room --decomposition_file individual_cramped_room.txt --is_monolithic f --wandb f --render t
 
 def run_trained_model(model_path, steps):
@@ -57,7 +62,10 @@ def run_trained_model(model_path, steps):
     manager = Manager(num_agents=run_config['num_agents'], num_decomps = len(run_config["initial_rm_states"]),assignment_method="ground_truth", wandb=args.wandb, seed = 1)
     run_config["render_mode"] = "human"
     train_rm = SparseRewardMachine(f"reward_machines/{args.env}/{args.experiment_name}/{args.decomposition_file}")
-
+    mono_rm = SparseRewardMachine(f"reward_machines/{args.env}/{args.experiment_name}/{args.add_mono_file}") if args.add_mono_file != "None" else None
+    if mono_rm is not None:
+        mono_rm.is_monolithic = True
+        
     train_kwargs = {
                 'manager': manager,
                 'labeled_mdp_class': eval(run_config['labeled_mdp_class']),
@@ -66,6 +74,7 @@ def run_trained_model(model_path, steps):
                 'max_agents': run_config['num_agents'],
                 'is_monolithic': args.is_monolithic,
                 'render_mode': run_config["render_mode"],
+                'addl_mono_rm': mono_rm,
     }
     env = OvercookedProductEnv(**train_kwargs)
     # env = ss.black_death_v3(env)
@@ -109,7 +118,7 @@ def run_trained_model(model_path, steps):
             if termination or truncation:
                 break
             else:
-                act = model.predict(obs, deterministic=True)[0]
+                act = model.predict(obs, deterministic=False)[0]
 
             env.step(act)
     env.close()
@@ -145,4 +154,4 @@ def test_dfa_generation():
     return decomps
 
 # test_dfa_generation()
-run_trained_model('/Users/thomaschen/base-multi-rm/logs/20241002-175909/UCB/iteration_1/best/best_model.zip', 400)
+run_trained_model('/Users/thomaschen/base-multi-rm/logs/20241007-231124/UCB/iteration_1/best/best_model.zip', 500)

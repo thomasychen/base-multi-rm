@@ -155,8 +155,11 @@ class OvercookedProductEnv(ParallelEnv):
         rm_rewards = {}
         mono_rm_reward = 0
         for i in range(len(self.possible_agents)):
+            pseudo_reward = 0
+
             agent = self.possible_agents[i]
             r = 0
+            old_state = self.rm_states[agent]
             for e in labels:
                 u2 = self.reward_machine.get_next_state(self.rm_states[agent], e)
                 r = r + self.reward_machine.get_reward(self.rm_states[agent], u2)
@@ -164,8 +167,15 @@ class OvercookedProductEnv(ParallelEnv):
                 if self.addl_monolithic_rm is not None:
                     next_ms = self.addl_monolithic_rm.get_next_state(self.monolithic_rm_state, e) #TODO: check that the order invariance here doesn't matter
                     mono_rm_reward += self.monolithic_weight*self.addl_monolithic_rm.get_reward(self.monolithic_rm_state, next_ms)
+                    if next_ms != self.monolithic_rm_state and self.reward_machine.is_terminal_state(old_state):
+                        pseudo_reward = 1
                     self.monolithic_rm_state = next_ms
-            rm_rewards[agent] = r
+                    
+            rm_rewards[agent] = r + pseudo_reward
+            # if 'o3' in labels:
+            #     import pdb; pdb.set_trace()
+            # if pseudo_reward == 1:
+            #     import pdb; pdb.set_trace()
         if self.addl_monolithic_rm is not None:
             for agent in self.possible_agents:
                 rm_rewards[agent] += mono_rm_reward

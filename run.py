@@ -105,6 +105,7 @@ parser.add_argument('--render', type=str2bool, default=False, help='Enable rende
 
 # interesting cramped
 # python run.py --assignment_methods ground_truth --num_iterations 1 --wandb f --timesteps 1000000 --decomposition_file aux_interesting_cramped_room.txt --experiment_name interesting_cramped_room --is_monolithic f --env overcooked --render t --add_mono_file mono_interesting_cramped_room.txt
+# python test_overcooked.py --assignment_methods ground_truth --num_iterations 1 --wandb f --timesteps 1000000 --decomposition_file aux_interesting_cramped_room.txt --experiment_name interesting_cramped_room --is_monolithic f --env overcooked --render t --add_mono_file mono_interesting_cramped_room.txt
 
 # Used to test the automatic decomposition.
 # python3 run.py --assignment_methods UCB --wandb False --decomposition_file team_buttons.txt --num_candidates 3 --is_monolithic True

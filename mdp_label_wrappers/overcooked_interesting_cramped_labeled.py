@@ -9,7 +9,6 @@ class OvercookedInterestingCrampedLabeled(MDP_Labeler):
         counter_circuit_grid = """
 WWPWW
 WW WW
-WW WW
 O   O
 WA AB
 WWWXW
@@ -77,6 +76,7 @@ WWWXW
         soup = self.has_soup(obs)
         if soup:
             # import pdb; pdb.set_trace()
+        
             l.append(soup)
         # # for moving agent out of way after placing onions to not obstruct other agent
         # import pdb; pdb.set_trace()

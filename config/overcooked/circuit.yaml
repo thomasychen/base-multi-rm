@@ -1,7 +1,7 @@
 num_agents: 2
 # initial_mdp_states: []
 initial_rm_states: 
-  - [1, 4]
+  - [4, 1]
   - [8, 12]
   - [15, 21]
   - [22, 23]

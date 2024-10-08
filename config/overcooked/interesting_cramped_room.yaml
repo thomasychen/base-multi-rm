@@ -1,0 +1,11 @@
+num_agents: 2
+# initial_mdp_states: []
+initial_rm_states:
+  - [1, 4]
+  - [8, 12]
+  - [15, 21]
+  - [22, 23]
+labeled_mdp_class: "OvercookedInterestingCrampedLabeled"
+max_episode_length: 500
+eval_freq: 40000
+gamma: 0.98

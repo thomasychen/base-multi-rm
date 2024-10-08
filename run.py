@@ -18,10 +18,7 @@ from mdp_label_wrappers.buttons_mdp_labeled import HardButtonsLabeled
 from mdp_label_wrappers.easy_buttons_mdp_labeled import EasyButtonsLabeled
 from mdp_label_wrappers.challenge_buttons_mdp_labeled import ChallengeButtonsLabeled
 from reward_machines.sparse_reward_machine import SparseRewardMachine
-<<<<<<< HEAD
 from reward_machines.rm_generator import generate_rm_decompositions
-=======
->>>>>>> fix manager wandb issue
 from stable_baselines3.common.monitor import Monitor
 from pettingzoo.test import parallel_seed_test
 from stable_baselines3.common.utils import set_random_seed

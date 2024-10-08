@@ -119,7 +119,7 @@ class OvercookedProductEnv(ParallelEnv):
 
         # observations = {i: np.concatenate((flattened_obs, ohe_rm)) for i, flattened_obs, ohe_rm in zip(self.agents, mdp_state_array, rm_state_array)}
         # observations = {i: self.flatten_and_add_rm(observations[i], self.rm_states[i]) for i in observations}
-        
+    
         return observations, infos
     
     def step(self, actions):

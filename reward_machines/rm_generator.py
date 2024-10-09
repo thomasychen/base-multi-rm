@@ -53,14 +53,14 @@ def generate_rm_decompositions(monolithic_rm: SparseRewardMachine, num_agents: i
     Returns:
         _type_: _description_
     """
-    ex_rm = SparseRewardMachine("overcooked/asymm_advantages/mono_asymm_adv.txt")
-    num_agents = 2
     incompatible_pairs = []
     weights = [1, .5, 0]
-    configs = Configurations(num_agents, ex_rm, enforced_set = enforced_dict, forbidden_set = forbidden_dict, weights = weights, incompatible_pairs= incompatible_pairs)
+    configs = Configurations(num_agents, monolithic_rm, enforced_set = enforced_dict, forbidden_set = forbidden_dict, weights = weights, incompatible_pairs= incompatible_pairs)
     root = Node(name = 'root', future_events = configs.future_events, all_events= configs.all_events, knapsack = configs.forbidden_set) #forbidden set is the starting knapsack
-    bd = root.traverse_last_minute_change(configs, num_solutions=top_k)  
+    bd = root.traverse_last_minute_change(configs, num_solutions=top_k)
+    hf.print_results(configs, bd)  
     rm_decomps = {}
+    import pdb; pdb.set_trace()
     for sol_idx, solution in enumerate(bd):
         score, k = solution
         event_spaces, event_spaces_dict = hf.get_event_spaces_from_knapsack(configs.all_events, k) # event_spaces_dict = {agent: [events] }
@@ -340,7 +340,9 @@ def project_rm(event_space, rm):
 
 # Example usage:
 # ex_rm = SparseRewardMachine("overcooked/asymm_advantages/mono_asymm_adv.txt")
-# num_agents = 2
+# ex_rm = SparseRewardMachine("buttons/buttons/team_buttons.txt")
+# num_agents = 3
+# forbidden_dict = {0: ['by'], 1: ['bg'], 2: ['br']}
 # result = generate_rm_decompositions(ex_rm, num_agents, top_k=5)
 # print(result)
 

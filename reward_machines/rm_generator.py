@@ -1,5 +1,10 @@
 import itertools
 from sparse_reward_machine import SparseRewardMachine, combine_to_single_rm
+import task_assignment.bisimilarity_check as bs
+import task_assignment.helper_functions as hf
+from task_assignment.tree_search import Node 
+from task_assignment.configurations import Configurations
+
 
 def generate_le_decompositions(set_x, num_subsets, size_weight=1.0, fairness_weight=0.4, top_k=5):
     # Step 1: Generate all possible subsets of X (including overlapping possibilities)
@@ -35,13 +40,33 @@ def score_decomposition_fairness(decomposition):
     assert fairness_score <= 1
     return fairness_score
 
-def generate_rm_decompositions(monolithic_rm: SparseRewardMachine, num_agents, top_k=5):
-    event_decomps_and_scores = generate_le_decompositions(monolithic_rm.get_events(), num_agents, top_k=top_k)
-    rm_decomps = []
-    for event_sets, score in event_decomps_and_scores:
-        decomp = [project_rm(set(event_set), monolithic_rm) for event_set in event_sets]
-        rm_decomps.append(combine_to_single_rm(decomp))
-    subsuming_rm = combine_to_single_rm(rm_decomps)
+def generate_rm_decompositions(monolithic_rm: SparseRewardMachine, num_agents: int, top_k: int=5, enforced_dict: dict=None, forbidden_dict: dict=None):
+    """
+
+    Args:
+        monolithic_rm (SparseRewardMachine): monolithic reward machine we want to decompose
+        num_agents (int): number of agents present
+        top_k (int, optional): Number of decompositions we want to introduce. Defaults to 5.
+        enforced_dict (_type_, optional): _description_. Defaults to None.
+        forbidden_dict (_type_, optional): _description_. Defaults to None.
+
+    Returns:
+        _type_: _description_
+    """
+    ex_rm = SparseRewardMachine("overcooked/asymm_advantages/mono_asymm_adv.txt")
+    num_agents = 2
+    incompatible_pairs = []
+    weights = [1, .5, 0]
+    configs = Configurations(num_agents, ex_rm, enforced_set = enforced_dict, forbidden_set = forbidden_dict, weights = weights, incompatible_pairs= incompatible_pairs)
+    root = Node(name = 'root', future_events = configs.future_events, all_events= configs.all_events, knapsack = configs.forbidden_set) #forbidden set is the starting knapsack
+    bd = root.traverse_last_minute_change(configs, num_solutions=top_k)  
+    rm_decomps = {}
+    for sol_idx, solution in enumerate(bd):
+        score, k = solution
+        event_spaces, event_spaces_dict = hf.get_event_spaces_from_knapsack(configs.all_events, k) # event_spaces_dict = {agent: [events] }
+        decomp = {idx: project_rm(set(event_set), monolithic_rm) for idx, event_set in event_spaces_dict.items()}
+        rm_decomps[sol_idx] = combine_to_single_rm(decomp)
+    subsuming_rm = combine_to_single_rm(rm_decomps, tag="decomp")
     return subsuming_rm
 
 # The below code adapted from https://github.com/smithsophia1688/automated_task_assignment_with_rm
@@ -314,8 +339,22 @@ def project_rm(event_space, rm):
     
 
 # Example usage:
-# X = {1, 2, 3}
 # ex_rm = SparseRewardMachine("overcooked/asymm_advantages/mono_asymm_adv.txt")
 # num_agents = 2
 # result = generate_rm_decompositions(ex_rm, num_agents, top_k=5)
 # print(result)
+
+
+
+# for testing
+# incompatible_pairs = []
+# weights = [1, .5, 0]
+# enforced_agent_event_dict = {0:[], 1:[]}
+# forbidden_agent_event_dict = {0:[], 1:[]}
+# configs = Configurations(num_agents, ex_rm, enforced_set = enforced_agent_event_dict, forbidden_set = forbidden_agent_event_dict, weights = weights, incompatible_pairs= incompatible_pairs)
+# root = Node(name = 'root', future_events = configs.future_events, all_events= configs.all_events, knapsack = configs.forbidden_set) #forbidden set is the starting knapsack
+# bd = root.traverse_last_minute_change(configs, num_solutions=5)
+# hf.print_results(configs, bd)
+# knapsack = bd[1][0]
+# import pdb; pdb.set_trace()
+# num_agents = 2

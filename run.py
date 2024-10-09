@@ -161,7 +161,8 @@ if __name__ == "__main__":
             if mono_rm is not None:
                 mono_rm.is_monolithic = True
             if args.num_candidates > 0:  # generate automatic decompositions
-                train_rm = generate_rm_decompositions(train_rm run_config['num_agents'], top_k=args.num_candidates)
+                #TODO: look for forbidden events or required events in config
+                train_rm = generate_rm_decompositions(train_rm, run_config['num_agents'], top_k=args.num_candidates)
             render_mode = "human" if args.render else None
             run_config["render_mode"] = render_mode
 

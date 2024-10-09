@@ -161,8 +161,14 @@ if __name__ == "__main__":
                 mono_rm.is_monolithic = True
             if args.num_candidates > 0:  # generate automatic decompositions
                 #TODO: look for forbidden events or required events in config
+                forbidden = {}
+                for idx, fb in enumerate(run_config["forbidden_events"]):
+                    forbidden[idx] = fb
+                required = {}
+                for idx, req in enumerate(run_config["required_events"]):
+                    required[idx] = req
                 new_initial_rm_states = []
-                train_rm, rm_initial_states = generate_rm_decompositions(mono_rm, run_config['num_agents'], top_k=args.num_candidates)
+                train_rm, rm_initial_states = generate_rm_decompositions(mono_rm, run_config['num_agents'], top_k=args.num_candidates, enforced_dict=required, forbidden_dict=forbidden)
                 for rm in rm_initial_states:
                     istates = []
                     for agentidx in range(run_config['num_agents']):
@@ -170,7 +176,7 @@ if __name__ == "__main__":
                     new_initial_rm_states.append(istates)
                 run_config["initial_rm_states"] = new_initial_rm_states
                 train_rm.find_max_subgraph_size_and_assign_subtasks()
-                # import pdb; pdb.set_trace()
+                import pdb; pdb.set_trace()
             manager = Manager(num_agents=run_config['num_agents'], num_decomps = len(run_config["initial_rm_states"]),assignment_method=method, wandb=args.wandb, seed = i)
             render_mode = "human" if args.render else None
             run_config["render_mode"] = render_mode

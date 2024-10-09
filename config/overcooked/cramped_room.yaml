@@ -2,6 +2,12 @@ num_agents: 2
 # initial_mdp_states: []
 initial_rm_states: 
   - [1, 4]
+forbidden_events:
+  - []
+  - []
+required_events:
+  - ['c']
+  - ['c']
 labeled_mdp_class: "OvercookedCrampedLabeled"
 max_episode_length: 400
 eval_freq: 4000

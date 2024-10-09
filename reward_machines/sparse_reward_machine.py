@@ -351,7 +351,7 @@ def combine_to_single_rm(rm_dict, tag="rm", skip_aux=False):
     current_offset = 1
     for idx, rm_obj in rm_dict.items():
         subsuming_rm._add_state(st + current_offset for st in rm_obj.get_states())
-        subsuming_rm.delta_u[auxiliary_state]["to_{}{}".format(tag, idx + 1)] = rm_obj.get_initial_state() + current_offset
+        subsuming_rm.delta_u[auxiliary_state]["to_{}{}".format(tag, idx)] = rm_obj.get_initial_state() + current_offset
         subsuming_rm.delta_r[auxiliary_state][rm_obj.get_initial_state() + current_offset] = 0
         for r_k, r_v in rm_obj.delta_r.items():
             subsuming_rm.delta_r[r_k + current_offset] = {}

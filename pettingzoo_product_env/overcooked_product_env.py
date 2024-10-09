@@ -8,14 +8,16 @@ from gymnasium.spaces import Box, Discrete
 from mdp_label_wrappers.generic_mdp_labeled import MDP_Labeler
 from reward_machines.sparse_reward_machine import SparseRewardMachine
 import copy
-
+from datetime import datetime
+import wandb
+import os
 
 class OvercookedProductEnv(ParallelEnv):
     metadata = {
         "name": "custom_environment_v0",
     }
 
-    def __init__(self, manager, labeled_mdp_class: MDP_Labeler, reward_machine: SparseRewardMachine, config, max_agents, test=False, is_monolithic=False, addl_mono_rm: SparseRewardMachine=None, render_mode=None, monolithic_weight=1.0):
+    def __init__(self, manager, labeled_mdp_class: MDP_Labeler, reward_machine: SparseRewardMachine, config, max_agents, test=False, is_monolithic=False, addl_mono_rm: SparseRewardMachine=None, render_mode=None, monolithic_weight=1.0, log_dir=None, video=False):
         self.possible_agents = ["agent_" + str(r) for r in range(2)]
         self.env_config = config
 
@@ -37,6 +39,8 @@ class OvercookedProductEnv(ParallelEnv):
         OvercookedProductEnv.manager = manager
         self.local_manager = None
         self.reward_machine = reward_machine
+        self.log_dir = log_dir
+        self.video = video
 
 
         # self.key, self.key_r, self.key_a = jax.random.split(key, 3)
@@ -108,7 +112,7 @@ class OvercookedProductEnv(ParallelEnv):
         
         print("reset step", state.time)
         self.curr_state = state
-        self.states.append([self.curr_state])
+        self.states.append(self.curr_state)
         infos = {agent: {} for agent in self.agents}
 
         observations = {i: self.flatten_and_add_rm(jax_observations[i], self.rm_states[i]) for i in self.agents}
@@ -207,7 +211,7 @@ class OvercookedProductEnv(ParallelEnv):
         
         # print("step", state.time)
         self.curr_state = state
-        self.states[-1].append(state)
+        self.states.append(state)
         # obs = {i: jnp.transpose(jax_obs[i], (1, 0, 2)) for i in jax_obs}
         obs = {i: self.flatten_and_add_rm(jax_obs[i], self.rm_states[i]) for i in self.agents}
         # rewards = {i: float(jax_rewards[i]) for i in jax_rewards}
@@ -319,6 +323,9 @@ class OvercookedProductEnv(ParallelEnv):
             elif not all(terminations.values()):
                 for ar in rewards:
                     rewards[ar] = 0
+        # for visualizing eval trajectories with gifs
+        if self.video and (env_truncation or all(terminations.values())):
+            self.send_animation()
 
 
         # if env_truncation:
@@ -340,6 +347,20 @@ class OvercookedProductEnv(ParallelEnv):
     def render(self):
         self.viz.render(self.mdp.agent_view_size, self.curr_state, highlight=False)
 
+    def send_animation(self):
+        timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+
+        # viz.animate(seq, agent_view_size=5, filename=f"{wandb.run.dir}/{filename}")
+        # log_dict[filename] = wandb.Video(f"{wandb.run.dir}/{filename}", fps=4, format="gif")
+
+        # wandb.log(log_dict)
+        path_dir = f"{self.log_dir}"
+        os.makedirs(path_dir, exist_ok=True)
+        self.viz.animate(self.states, agent_view_size=5, filename=f"{path_dir}/viz.gif")
+        log_dict = {}
+        log_dict[f"viz"] = wandb.Video(f"{path_dir}/viz.gif", fps=4, format="gif")
+
+        wandb.log(log_dict)
 
     def flatten_and_add_rm(self, obs, rm_state):
         # import pdb; pdb.set_trace();

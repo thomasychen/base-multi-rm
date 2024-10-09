@@ -83,6 +83,7 @@ parser.add_argument('--num_candidates', type=int, default=0, help="Use automated
 parser.add_argument('--env', type=str, default="buttons", help="Specify between the buttons grid world or overcooked")
 parser.add_argument('--add_mono_file', type=str, default="None", help="Provide a monolithic file for global statekeeping along with a decomposed strategy")
 parser.add_argument('--render', type=str2bool, default=False, help='Enable rendering during training. Default is off')
+parser.add_argument('--video', type=str2bool, default=False, help='Turn on gifs for eval')
 
 ########### buttons ###########
 # python run.py --assignment_methods ground_truth --num_iterations 1 --wandb t --timesteps 10000 --decomposition_file aux_buttons.txt --experiment_name buttons --is_monolithic f --env buttons --render f
@@ -187,6 +188,10 @@ if __name__ == "__main__":
             render_mode = "human" if args.render else None
             run_config["render_mode"] = render_mode
 
+            log_dir = os.path.join(method_log_dir_base, f"iteration_{i}")
+            os.makedirs(log_dir, exist_ok=True)
+            
+
             train_kwargs = {
                 'manager': manager,
                 'labeled_mdp_class': eval(run_config['labeled_mdp_class']),
@@ -208,13 +213,12 @@ if __name__ == "__main__":
             env = ss.concat_vec_envs_v1(env, 1, num_cpus=1, base_class="stable_baselines3")
             env = VecMonitor(env)
 
-            log_dir = os.path.join(method_log_dir_base, f"iteration_{i}")
-            os.makedirs(log_dir, exist_ok=True)
-
 
             eval_kwargs = train_kwargs.copy()
             eval_kwargs['test'] = True
             eval_kwargs["render_mode"] = render_mode
+            eval_kwargs['log_dir'] = log_dir
+            eval_kwargs['video'] = args.video
 
             if args.env == "buttons":
                 eval_env = ButtonsProductEnv(**eval_kwargs)

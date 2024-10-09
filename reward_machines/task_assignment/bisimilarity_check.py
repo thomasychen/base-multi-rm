@@ -1,6 +1,6 @@
 import itertools
-from sparse_reward_machine import SparseRewardMachine
-import task_assignment.helper_functions as hf
+from reward_machines.sparse_reward_machine import SparseRewardMachine
+import reward_machines.task_assignment.helper_functions as hf
 
 class EquivalenceRelation:
     '''

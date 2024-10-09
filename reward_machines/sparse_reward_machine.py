@@ -124,7 +124,7 @@ class SparseRewardMachine:
     def get_one_hot_size(self, num_agents):
         if self.is_monolithic:
             return len(self.get_states())
-        return (self.num_subtasks // num_agents) + num_agents + self.max_subtask_size
+        return (self.num_subtasks) + num_agents + self.max_subtask_size
 
     def get_one_hot_encoded_state(self, state, num_agents):
         """Returns 3 one-hot encoded arrays for the given state."""
@@ -143,12 +143,11 @@ class SparseRewardMachine:
         subtask_number = self.state_to_subtask[state]
         
         # One-hot encode which decomposition the state belongs to
-        decomposition_idx = subtask_number // num_agents
-        decomposition_onehot = np.zeros(self.num_subtasks // num_agents, dtype=int)
-        decomposition_onehot[decomposition_idx] = 1
+        decomposition_onehot = np.zeros(self.num_subtasks, dtype=int)
+        decomposition_onehot[subtask_number] = 1
 
         # One-hot encode which subtask this is
-        agent_idx = subtask_number % num_agents
+        agent_idx = 0 #subtask_number % num_agents #TODO: this is definitely not right any more
         agent_onehot = np.zeros(num_agents, dtype=int)
         agent_onehot[agent_idx] = 1
 
@@ -349,9 +348,11 @@ def combine_to_single_rm(rm_dict, tag="rm", skip_aux=False):
     subsuming_rm.delta_r[auxiliary_state] = {}
     subsuming_rm.u0 = auxiliary_state
     current_offset = 1
+    sub_rm_initial_states = {}
     for idx, rm_obj in rm_dict.items():
         subsuming_rm._add_state(st + current_offset for st in rm_obj.get_states())
         subsuming_rm.delta_u[auxiliary_state]["to_{}{}".format(tag, idx)] = rm_obj.get_initial_state() + current_offset
+        sub_rm_initial_states[idx] = rm_obj.get_initial_state() + current_offset
         subsuming_rm.delta_r[auxiliary_state][rm_obj.get_initial_state() + current_offset] = 0
         for r_k, r_v in rm_obj.delta_r.items():
             subsuming_rm.delta_r[r_k + current_offset] = {}
@@ -362,7 +363,7 @@ def combine_to_single_rm(rm_dict, tag="rm", skip_aux=False):
             for event, next_st in u_v.items():
                 subsuming_rm.delta_u[u_k + current_offset][event] = next_st + current_offset
         current_offset += len(rm_obj.get_states())
-    return subsuming_rm
+    return subsuming_rm, sub_rm_initial_states
 
 
 def generate_rm_decompositions_using_dfas(monolithic_rm, num_decompositions, num_agents, disregard_list=None, n_queries=25):

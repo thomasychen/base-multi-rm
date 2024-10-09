@@ -155,14 +155,23 @@ if __name__ == "__main__":
                 run_config = yaml.safe_load(file)
 
             print(run_config)
-            manager = Manager(num_agents=run_config['num_agents'], num_decomps = len(run_config["initial_rm_states"]),assignment_method=method, wandb=args.wandb, seed = i)
             train_rm = SparseRewardMachine(f"reward_machines/{args.env}/{args.experiment_name}/{args.decomposition_file}")
             mono_rm = SparseRewardMachine(f"reward_machines/{args.env}/{args.experiment_name}/{args.add_mono_file}") if args.add_mono_file != "None" else None
             if mono_rm is not None:
                 mono_rm.is_monolithic = True
             if args.num_candidates > 0:  # generate automatic decompositions
                 #TODO: look for forbidden events or required events in config
-                train_rm = generate_rm_decompositions(train_rm, run_config['num_agents'], top_k=args.num_candidates)
+                new_initial_rm_states = []
+                train_rm, rm_initial_states = generate_rm_decompositions(mono_rm, run_config['num_agents'], top_k=args.num_candidates)
+                for rm in rm_initial_states:
+                    istates = []
+                    for agentidx in range(run_config['num_agents']):
+                        istates.append(rm_initial_states[rm][agentidx])
+                    new_initial_rm_states.append(istates)
+                run_config["initial_rm_states"] = new_initial_rm_states
+                train_rm.find_max_subgraph_size_and_assign_subtasks()
+                # import pdb; pdb.set_trace()
+            manager = Manager(num_agents=run_config['num_agents'], num_decomps = len(run_config["initial_rm_states"]),assignment_method=method, wandb=args.wandb, seed = i)
             render_mode = "human" if args.render else None
             run_config["render_mode"] = render_mode
 
@@ -181,7 +190,7 @@ if __name__ == "__main__":
                 env = ButtonsProductEnv(**train_kwargs)
             elif args.env == "overcooked":
                 env = OvercookedProductEnv(**train_kwargs)
-    
+
             env = ss.black_death_v3(env)
             env = ss.pettingzoo_env_to_vec_env_v1(env)
             env = ss.concat_vec_envs_v1(env, 1, num_cpus=1, base_class="stable_baselines3")
@@ -251,7 +260,7 @@ if __name__ == "__main__":
                 callback_list = CallbackList([eval_callback])
                 print("Wandb Disabled")
 
-            model.learn(total_timesteps=args.timesteps, callback=callback_list, log_interval=10, progress_bar=False)
+            model.learn(total_timesteps=args.timesteps, callback=callback_list, log_interval=10, progress_bar=True)
             env.close()
             eval_env.close()
             # Finish your run

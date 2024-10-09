@@ -1,6 +1,6 @@
 import itertools 
 
-import task_assignment.helper_functions as hf
+import reward_machines.task_assignment.helper_functions as hf
 
 
 ### Holds Configurations class that holds the task assignment experiment details and decomposition metric

@@ -408,7 +408,7 @@ class Node:
         rm_parallel = bs.put_many_in_parallel(rms) 
         return bs.is_bisimilar(rm_parallel,strategic_rm)
 
-    def traverse_last_minute_change(self, configs, best_sacks = [(0, {})], num_solutions=1):
+    def traverse_last_minute_change(self, configs, best_sacks = [], num_solutions=1, least_good_sack_score = -1):
         self.generate_prints()
 
         self.run_check_last_minute_2(configs)
@@ -428,16 +428,19 @@ class Node:
             else:
                 if self.is_valid: 
                     knap_score = configs.get_score(self.knapsack)
-                    if knap_score > best_sacks[0][0] or len(best_sacks) < num_solutions: #fill up the sack
+                    if knap_score > least_good_sack_score or len(best_sacks) < num_solutions: #fill up the sack
                         if self.check_is_bisimilar(configs):                            
                             best_sacks.append((knap_score, self.knapsack)) # max length of num_solutions
+                            best_sacks.sort(key = lambda x: x[0])
                             if len(best_sacks) > num_solutions:
-                                best_sacks.sort(key = lambda x: x[0])
-                                best_sacks.pop(0)
+                                popped_val = best_sacks.pop(0)
+                                least_good_sack_score = popped_val[0]
+                            else:
+                                least_good_sack_score = best_sacks[0][0]
         
         ### Recursion Step ###
         for child in self.children:
-            best_sacks = child.traverse_last_minute_change(configs, best_sacks = best_sacks, num_solutions=num_solutions)
+            best_sacks = child.traverse_last_minute_change(configs, best_sacks = best_sacks, num_solutions=num_solutions, least_good_sack_score=least_good_sack_score)
         
         return best_sacks
 

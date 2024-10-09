@@ -1,8 +1,8 @@
 # holds node class which builds the tree
 # also runs the depth first tree search via recursion 
 
-import task_assignment.helper_functions as hf
-import task_assignment.bisimilarity_check as bs
+import reward_machines.task_assignment.helper_functions as hf
+import reward_machines.task_assignment.bisimilarity_check as bs
 
 
 

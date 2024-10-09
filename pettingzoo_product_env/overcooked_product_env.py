@@ -73,6 +73,7 @@ class OvercookedProductEnv(ParallelEnv):
         jax_observations = self.labeled_mdp.trim_observation(jax_observations)
         
         # Init variables
+        # need to change this and get 
         rm_array = copy.deepcopy(self.env_config["initial_rm_states"]) if np.array(self.env_config["initial_rm_states"]).ndim == 2 else [copy.deepcopy(self.env_config["initial_rm_states"])]
         
         # def one_hot_encode(value, num_classes):
@@ -95,10 +96,10 @@ class OvercookedProductEnv(ParallelEnv):
 
         mdp_state_array = [jax_observations[agent].flatten() for agent in self.agents]
 
-        rm_assignments, decomp_idx = self.local_manager.get_rm_assignments(mdp_state_array, rm_state_array, test=self.test)
+        decomp_idx = self.local_manager.get_rm_assignments(mdp_state_array, rm_state_array, test=self.test)
 
         # self.mdp_states = {self.agents[i]:mdp_state_array[i] for i in range(len(self.agents))}
-        self.rm_states = {self.agents[i]: rm_array[decomp_idx][rm_assignments[i]] for i in range(len(self.agents))}
+        self.rm_states = {self.agents[i]: rm_array[decomp_idx][i] for i in range(len(self.agents))}
         # print(self.rm_states, self.mdp_states)
         # print(self.rm_states)
         # print("MANAGER LOGS")
@@ -109,7 +110,7 @@ class OvercookedProductEnv(ParallelEnv):
         self.curr_state = state
         self.states.append([self.curr_state])
         infos = {agent: {} for agent in self.agents}
-        # import pdb; pdb.set_trace();
+
         observations = {i: self.flatten_and_add_rm(jax_observations[i], self.rm_states[i]) for i in self.agents}
         # import pdb; pdb.set_trace()
         # observations = {self.agents[i]: np.concatenate((mdp_state_array[i], self.rm_states[self.agents[i]])) for i in range(len(self.agents))}

@@ -1,9 +1,9 @@
 import itertools
-from sparse_reward_machine import SparseRewardMachine, combine_to_single_rm
-import task_assignment.bisimilarity_check as bs
-import task_assignment.helper_functions as hf
-from task_assignment.tree_search import Node 
-from task_assignment.configurations import Configurations
+from reward_machines.sparse_reward_machine import SparseRewardMachine, combine_to_single_rm
+import reward_machines.task_assignment.bisimilarity_check as bs
+import reward_machines.task_assignment.helper_functions as hf
+from reward_machines.task_assignment.tree_search import Node 
+from reward_machines.task_assignment.configurations import Configurations
 
 
 def generate_le_decompositions(set_x, num_subsets, size_weight=1.0, fairness_weight=0.4, top_k=5):
@@ -60,14 +60,18 @@ def generate_rm_decompositions(monolithic_rm: SparseRewardMachine, num_agents: i
     bd = root.traverse_last_minute_change(configs, num_solutions=top_k)
     hf.print_results(configs, bd)  
     rm_decomps = {}
-    import pdb; pdb.set_trace()
+    decomps_init_states = {}
     for sol_idx, solution in enumerate(bd):
         score, k = solution
         event_spaces, event_spaces_dict = hf.get_event_spaces_from_knapsack(configs.all_events, k) # event_spaces_dict = {agent: [events] }
         decomp = {idx: project_rm(set(event_set), monolithic_rm) for idx, event_set in event_spaces_dict.items()}
-        rm_decomps[sol_idx] = combine_to_single_rm(decomp)
-    subsuming_rm = combine_to_single_rm(rm_decomps, tag="decomp")
-    return subsuming_rm
+        rm_decomps[sol_idx], decomps_init_states[sol_idx] = combine_to_single_rm(decomp)
+    subsuming_rm, decomp_offsets = combine_to_single_rm(rm_decomps, tag="decomp")
+    for rmidx in decomps_init_states:
+        offset = decomp_offsets[rmidx]
+        for state in decomps_init_states[rmidx]:
+            decomps_init_states[rmidx][state] += offset
+    return subsuming_rm, decomps_init_states
 
 # The below code adapted from https://github.com/smithsophia1688/automated_task_assignment_with_rm
 class EquivalenceRelation:

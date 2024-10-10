@@ -108,7 +108,7 @@ parser.add_argument('--video', type=str2bool, default=False, help='Turn on gifs 
 # python run.py --assignment_methods ground_truth --num_iterations 1 --wandb f --timesteps 1000000 --decomposition_file aux_interesting_cramped_room.txt --experiment_name interesting_cramped_room --is_monolithic f --env overcooked --render t --add_mono_file mono_interesting_cramped_room.txt
 # python test_overcooked.py --assignment_methods ground_truth --num_iterations 1 --wandb f --timesteps 1000000 --decomposition_file aux_interesting_cramped_room.txt --experiment_name interesting_cramped_room --is_monolithic f --env overcooked --render t --add_mono_file mono_interesting_cramped_room.txt
 
-# python run.py --assignment_methods UCB --num_iterations 1 --wandb t --timesteps 1000000 --decomposition_file mono_cramped_room.txt --experiment_name cramped_room --is_monolithic f --env overcooked --render f --add_mono_file mono_cramped_room.txt --num_candidates 10
+# python run.py --assignment_methods UCB --num_iterations 1 --wandb t --timesteps 1000000 --decomposition_file mono_cramped_room.txt --experiment_name cramped_room --is_monolithic f --env overcooked --render f --add_mono_file mono_cramped_room.txt --num_candidates 10 --video t
 
 
 # Used to test the automatic decomposition.

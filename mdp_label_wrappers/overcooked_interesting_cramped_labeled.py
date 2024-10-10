@@ -55,6 +55,12 @@ WWWXW
         if self.any_elem(obs[21], 1, 0, 2):
             return "p"
         return None
+
+    def has_cooked(self, obs):
+        if obs[21][0][2] == 1:
+            return "c" 
+        return None
+        
         
     def get_mdp_label(self, s_next, reward, *args):
         """
@@ -78,6 +84,9 @@ WWWXW
             # import pdb; pdb.set_trace()
         
             l.append(soup)
+        cooked = self.has_cooked(obs)
+        if cooked:
+            l.append(cooked)
         # # for moving agent out of way after placing onions to not obstruct other agent
         # import pdb; pdb.set_trace()
         # move0 = #agent 0 is at non-obstructing
@@ -88,7 +97,6 @@ WWWXW
         #     l.append("move1")
         # For dish done
         if reward["agent_0"] > 0:
-            import pdb; pdb.set_trace()
             l.append("d")
 
         # self.jax_env.get_obs(s_next)

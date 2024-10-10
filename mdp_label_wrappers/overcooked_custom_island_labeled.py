@@ -12,7 +12,7 @@ class OvercookedCustomIslandLabeled(MDP_Labeler):
 WWWWWWW
 W XWO X
 WA P AW
-W  W  W
+O  W  W
 WWBWWWW
 """
 

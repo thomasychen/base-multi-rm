@@ -88,7 +88,7 @@ WWWXW
         #     l.append("move1")
         # For dish done
         if reward["agent_0"] > 0:
-            import pdb; pdb.set_trace()
+            # import pdb; pdb.set_trace()
             l.append("d")
 
         # self.jax_env.get_obs(s_next)

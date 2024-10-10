@@ -90,7 +90,7 @@ class OvercookedProductEnv(ParallelEnv):
         if self.addl_monolithic_rm is not None:
             self.monolithic_rm_state = self.addl_monolithic_rm.get_initial_state()
 
-        rm_state_array = [[self.reward_machine.get_one_hot_encoded_state(state, len(self.possible_agents)) for state in init_states] for init_states in rm_array]
+        rm_state_array = [[self.reward_machine.get_one_hot_encoded_state(state, len(self.possible_agents), idx) for idx, state in enumerate(init_states)] for init_states in rm_array]
         
         # import pdb; pdb.set_trace()
 
@@ -117,7 +117,7 @@ class OvercookedProductEnv(ParallelEnv):
         self.states.append(self.curr_state)
         infos = {agent: {} for agent in self.agents}
 
-        observations = {i: self.flatten_and_add_rm(jax_observations[i], self.rm_states[i]) for i in self.agents}
+        observations = {i: self.flatten_and_add_rm(jax_observations[i], self.rm_states[i], idx) for idx, i in enumerate(self.agents)}
         # import pdb; pdb.set_trace()
         # observations = {self.agents[i]: np.concatenate((mdp_state_array[i], self.rm_states[self.agents[i]])) for i in range(len(self.agents))}
         
@@ -211,7 +211,7 @@ class OvercookedProductEnv(ParallelEnv):
         self.curr_state = state
         self.states.append(state)
         # obs = {i: jnp.transpose(jax_obs[i], (1, 0, 2)) for i in jax_obs}
-        obs = {i: self.flatten_and_add_rm(jax_obs[i], self.rm_states[i]) for i in self.agents}
+        obs = {i: self.flatten_and_add_rm(jax_obs[i], self.rm_states[i], idx) for idx, i in enumerate(self.agents)}
         # rewards = {i: float(jax_rewards[i]) for i in jax_rewards}
         # for agent, rew in rewards.items():
         #     self.eps_reward[agent] += rew
@@ -360,7 +360,7 @@ class OvercookedProductEnv(ParallelEnv):
 
         wandb.log(log_dict)
 
-    def flatten_and_add_rm(self, obs, rm_state):
+    def flatten_and_add_rm(self, obs, rm_state, agent_idx):
         # import pdb; pdb.set_trace();
 
         # n = len(self.reward_machine.get_states())
@@ -373,9 +373,9 @@ class OvercookedProductEnv(ParallelEnv):
 
         # # Set the rm_state index to 1
         # rm_array[rm_state] = 1
-        rm_ohe = self.reward_machine.get_one_hot_encoded_state(rm_state, len(self.possible_agents))
+        rm_ohe = self.reward_machine.get_one_hot_encoded_state(rm_state, len(self.possible_agents), agent_idx)
         if self.addl_monolithic_rm is not None:
-            mono_ohe = self.addl_monolithic_rm.get_one_hot_encoded_state(self.monolithic_rm_state, len(self.possible_agents))
+            mono_ohe = self.addl_monolithic_rm.get_one_hot_encoded_state(self.monolithic_rm_state, len(self.possible_agents), agent_idx)
             result = np.concatenate((flattened_obs, rm_ohe, mono_ohe))
         else:
             # Concatenate the flattened observation and the rm_array

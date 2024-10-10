@@ -53,7 +53,7 @@ class ButtonsProductEnv(ParallelEnv):
         mdp_state_array = copy.deepcopy(self.env_config["initial_mdp_states"])
         rm_array = copy.deepcopy(self.env_config["initial_rm_states"]) if np.array(self.env_config["initial_rm_states"]).ndim == 2 else [copy.deepcopy(self.env_config["initial_rm_states"])]
 
-        rm_state_array = [[self.reward_machine.get_one_hot_encoded_state(state, len(self.possible_agents)) for state in init_states] for init_states in rm_array]
+        rm_state_array = [[self.reward_machine.get_one_hot_encoded_state(state, len(self.possible_agents), idx) for idx, state in enumerate(init_states)] for init_states in rm_array]
 
 
         if not self.local_manager:
@@ -74,7 +74,7 @@ class ButtonsProductEnv(ParallelEnv):
         # print(self.rm_states, self.mdp_states)
         # print(self.rm_states)
 
-        observations = {i: self.flatten_and_add_rm(self.mdp_states[i], self.rm_states[i]) for i in self.agents}
+        observations = {i: self.flatten_and_add_rm(self.mdp_states[i], self.rm_states[i], idx) for idx, i in enumerate(self.agents)}
 
         # observations = {agent: np.array([self.mdp_states[agent], self.rm_states[agent]]) for agent in self.agents}
         # print(observations)
@@ -236,9 +236,9 @@ class ButtonsProductEnv(ParallelEnv):
                 rewards[agent] += mono_rm_reward
 
 
-        for curr_agent in self.agents:
+        for idx, curr_agent in enumerate(self.agents):
             # observations[curr_agent] =  np.array([self.mdp_states[curr_agent], self.rm_states[curr_agent]])
-            observations[curr_agent] = self.flatten_and_add_rm(self.mdp_states[curr_agent], self.rm_states[curr_agent])
+            observations[curr_agent] = self.flatten_and_add_rm(self.mdp_states[curr_agent], self.rm_states[curr_agent], idx)
             # terminations[curr_agent] = self.reward_machine.is_terminal_state(self.rm_states[curr_agent])
 
         terminations = {i: False for i in self.agents}
@@ -339,7 +339,7 @@ class ButtonsProductEnv(ParallelEnv):
         discrete_action = int(np.round((continuous_action[0] + 1) * 2))  # Scale to range [0, 4]
         return discrete_action
 
-    def flatten_and_add_rm(self, obs, rm_state):
+    def flatten_and_add_rm(self, obs, rm_state, agent_idx):
         # import pdb; pdb.set_trace();
 
         # n = len(self.reward_machine.get_states())
@@ -353,9 +353,9 @@ class ButtonsProductEnv(ParallelEnv):
 
         # # Set the rm_state index to 1
         # rm_array[rm_state] = 1
-        rm_ohe = self.reward_machine.get_one_hot_encoded_state(rm_state, len(self.possible_agents))
+        rm_ohe = self.reward_machine.get_one_hot_encoded_state(rm_state, len(self.possible_agents), agent_idx)
         if self.addl_monolithic_rm is not None:
-            mono_ohe = self.addl_monolithic_rm.get_one_hot_encoded_state(self.monolithic_rm_state, len(self.possible_agents))
+            mono_ohe = self.addl_monolithic_rm.get_one_hot_encoded_state(self.monolithic_rm_state, len(self.possible_agents), agent_idx)
             result = np.concatenate((obs, rm_ohe, mono_ohe))
         else:
             # Concatenate the flattened observation and the rm_array

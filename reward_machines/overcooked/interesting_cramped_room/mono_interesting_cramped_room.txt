@@ -2,6 +2,6 @@
 (0, 1, 'o1',  0) # onion 1 
 (1, 2, 'o2', 0) # onion 2
 (2, 3, 'o3', 0) # onion 3
-(3, 4,  'p',  0) # Plate
-(4, 5, 'd', 1) # Deliver
-(5, 5, 'True', 0) # Done
+(3, 4,  'c',  0) # cooked (synch event)
+(4, 5, 'p', 0) # Deliver
+(5, 6, 'd', 1) # Done

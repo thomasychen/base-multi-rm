@@ -126,7 +126,7 @@ class SparseRewardMachine:
             return len(self.get_states())
         return (self.num_subtasks) + num_agents + self.max_subtask_size
 
-    def get_one_hot_encoded_state(self, state, num_agents):
+    def get_one_hot_encoded_state(self, state, num_agents, agent_idx):
         """Returns 3 one-hot encoded arrays for the given state."""
         """given state number, need to know: which decomp, which subtask,
         first 2 things already done
@@ -147,7 +147,6 @@ class SparseRewardMachine:
         decomposition_onehot[subtask_number] = 1
 
         # One-hot encode which subtask this is
-        agent_idx = 0 #subtask_number % num_agents #TODO: this is definitely not right any more
         agent_onehot = np.zeros(num_agents, dtype=int)
         agent_onehot[agent_idx] = 1
 

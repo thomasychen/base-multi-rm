@@ -54,7 +54,7 @@ class EasyButtonsEnv:
         # self.u = self.reward_machine.get_initial_state()
         # self.last_action = -1 # Initialize last action to garbage value
 
-    def reset(self, rm_assignments, decomp_idx):
+    def reset(self, decomp_idx):
         EasyButtonsEnv.red_pressed = False
         EasyButtonsEnv.yellow_pressed = False
         EasyButtonsEnv.green_pressed = False
@@ -62,7 +62,7 @@ class EasyButtonsEnv:
 
         rm_state_array = copy.deepcopy(self.env_settings["initial_rm_states"]) if np.array(self.env_settings["initial_rm_states"]).ndim == 2 else [copy.deepcopy(self.env_settings["initial_rm_states"])]
 
-        EasyButtonsEnv.u = {i+1:rm_state_array[decomp_idx][rm_assignments[i]] for i in range(len(self.env_settings["initial_states"]))}
+        EasyButtonsEnv.u = {i+1:rm_state_array[decomp_idx][i] for i in range(len(self.env_settings["initial_states"]))}
         # print(self.u)
 
     def _load_map(self):

@@ -15,7 +15,7 @@ class ButtonsProductEnv(ParallelEnv):
         "name": "custom_environment_v0",
     }
 
-    def __init__(self, manager, labeled_mdp_class: MDP_Labeler, reward_machine: SparseRewardMachine, config, max_agents, test=False, is_monolithic=False, render_mode=None):
+    def __init__(self, manager, labeled_mdp_class: MDP_Labeler, reward_machine: SparseRewardMachine, config, max_agents, test=False, is_monolithic=False, addl_mono_rm: SparseRewardMachine=None, render_mode=None, monolithic_weight=1.0, log_dir=None, video=False):
         ButtonsProductEnv.manager = manager
 
         # self.manager = manager
@@ -40,33 +40,49 @@ class ButtonsProductEnv(ParallelEnv):
             zip(self.possible_agents, list(range(len(self.possible_agents))))
         )
 
+        # Modified parameters post workshop paper
+        self.addl_monolithic_rm = addl_mono_rm # Potentially give the monolithic here so everyone know's global states (for potentially dependent dynamics)
+        self.monolithic_weight = monolithic_weight
+        self.log_dir = log_dir
+        self.video = video
+
     def reset(self, seed=None, options=None):
         self.agents = self.possible_agents[:]
         self.time_step = 0
 
         mdp_state_array = copy.deepcopy(self.env_config["initial_mdp_states"])
-        rm_state_array = copy.deepcopy(self.env_config["initial_rm_states"]) if np.array(self.env_config["initial_rm_states"]).ndim == 2 else [copy.deepcopy(self.env_config["initial_rm_states"])]
+        rm_array = copy.deepcopy(self.env_config["initial_rm_states"]) if np.array(self.env_config["initial_rm_states"]).ndim == 2 else [copy.deepcopy(self.env_config["initial_rm_states"])]
+
+        rm_state_array = [[self.reward_machine.get_one_hot_encoded_state(state, len(self.possible_agents)) for state in init_states] for init_states in rm_array]
+
 
         if not self.local_manager:
             self.local_manager = ButtonsProductEnv.manager
 
-        rm_assignments, decomp_idx = self.local_manager.get_rm_assignments(mdp_state_array, rm_state_array, test=self.test)
-        self.labeled_mdp.reset(rm_assignments, decomp_idx)
+        if self.addl_monolithic_rm is not None:
+            self.monolithic_rm_state = self.addl_monolithic_rm.get_initial_state()
+
+        decomp_idx = self.local_manager.get_rm_assignments(mdp_state_array, rm_state_array, test=self.test)
+        self.labeled_mdp.reset(decomp_idx)
         # rm_assignments = self.manager.get_rm_assignments(mdp_state_array, rm_state_array, test=self.test)
 
 
         # print("rm assignment", rm_assignments)
 
         self.mdp_states = {self.agents[i]:mdp_state_array[i] for i in range(len(self.agents))}
-        self.rm_states = {self.agents[i]:rm_state_array[decomp_idx][rm_assignments[i]] for i in range(len(self.agents))}
+        self.rm_states = {self.agents[i]:rm_array[decomp_idx][i] for i in range(len(self.agents))}
         # print(self.rm_states, self.mdp_states)
         # print(self.rm_states)
 
-        observations = {agent: np.array([self.mdp_states[agent], self.rm_states[agent]]) for agent in self.agents}
+        observations = {i: self.flatten_and_add_rm(self.mdp_states[i], self.rm_states[i]) for i in self.agents}
+
+        # observations = {agent: np.array([self.mdp_states[agent], self.rm_states[agent]]) for agent in self.agents}
         # print(observations)
 
         infos = {agent: {} for agent in self.agents}
         self.state = observations
+
+        # import pdb; pdb.set_trace()
 
         return observations, infos
 
@@ -128,9 +144,13 @@ class ButtonsProductEnv(ParallelEnv):
 
 
         # print("ACTIONS", actions)
+        mono_rm_reward = 0
+
         for i in range(len(self.possible_agents)):
             if self.possible_agents[i] not in actions:
                 continue
+            # if len(actions) < 3:
+            #     import pdb; pdb.set_trace()
             curr_agent = self.possible_agents[i]
             s = self.mdp_states[curr_agent]
             a = actions[curr_agent]
@@ -143,14 +163,16 @@ class ButtonsProductEnv(ParallelEnv):
             self.mdp_states[curr_agent] = s_next
 
             r = 0
-
-            
             for e in all_labels + crazies[i]:
             # for e in all_labels:
                 # import pdb; pdb.set_trace()
                 u2 = self.reward_machine.get_next_state(self.rm_states[curr_agent], e)
                 r = r + self.reward_machine.get_reward(self.rm_states[curr_agent], u2)
                 self.rm_states[curr_agent] = u2
+                if self.addl_monolithic_rm is not None:
+                    next_ms = self.addl_monolithic_rm.get_next_state(self.monolithic_rm_state, e) #TODO: check that the order invariance here doesn't matter
+                    mono_rm_reward += self.monolithic_weight*self.addl_monolithic_rm.get_reward(self.monolithic_rm_state, next_ms)
+                    self.monolithic_rm_state = next_ms
 
             # all_permutations = itertools.permutations(all_labels)
 
@@ -201,76 +223,33 @@ class ButtonsProductEnv(ParallelEnv):
 
     
             observations[curr_agent] =  np.array([self.mdp_states[curr_agent], self.rm_states[curr_agent]])
-            terminations[curr_agent] = self.reward_machine.is_terminal_state(self.rm_states[curr_agent])
+            # terminations[curr_agent] = self.reward_machine.is_terminal_state(self.rm_states[curr_agent])
             # if terminations[self.agents[i]] == True and len(actions.keys()) == 2:
             #     import pdb; pdb.set_trace();
             rewards[curr_agent] = r
             # if self.test:
-            #     for ar in self.agents:
-            #         rewards[ar] = r
-            #     print(rewards)
-        # if not self.test and rewards and all([i < 0 for i in rewards.values()]):
-        #     import pdb; pdb.set_trace();
-        # print("TERMINATIONS", terminations)
-        # if len(actions) == self.num_agents:
-        # if not self.test and self.cer:
-        #     all_permutations = list(itertools.permutations(self.reward_machine.U, self.max_agents))
-        #     for perm in all_permutations:
-        #         bools = [(perm[j] == old_rm_states[self.possible_agents[j]] or perm[j] in self.reward_machine.T or perm[j] == self.reward_machine.u0) for j in range(len(self.possible_agents))]
-        #         if any(bools):
-        #             continue
-        #         else:
-        #             # print(actions)
-        #             big_prev_states = []
-        #             big_new_states = []
-        #             big_actions = []
-        #             big_rewards = []
-        #             big_dones = []
-        #             infos = [{} for _ in range(len(self.possible_agents))]
-        #             # print(self.num_agents)
-        #             for k in range(len(self.possible_agents)):
-        #                 ag = self.possible_agents[k]
-        #                 s_old = old_mdp_states[ag]
-        #                 if self.possible_agents[k] not in actions:
-        #                     u_old = old_rm_states[ag]
-        #                     u_new = old_rm_states[ag]
-        #                     s_new = old_mdp_states[ag]
-        #                     new_r = 1
-        #                     a = 4
-        #                     done = True
-        #                 else: 
-        #                     u_old = perm[k]
-        #                     s_new = self.mdp_states[ag]
-        #                     new_l = self.labeled_mdp.get_mdp_label(s_new, k+1, u_old, self.test, self.is_monolithic)
-        #                     new_r = 0
-        #                     a = actions[ag]
-        #                     u_temp = u_old
-        #                     u_new = u_old
-        #                     for e in new_l:
-        #                         # Get the new reward machine state and the reward of this step
-        #                         u_new = self.reward_machine.get_next_state(u_temp, e)
-        #                         new_r = new_r + self.reward_machine.get_reward(u_temp, u_new)
-        #                         # Update the reward machine state
-        #                         u_temp = u_new
 
-        #                     done = self.reward_machine.is_terminal_state(u_new)
+        # import pdb; pdb.set_trace()
 
-        #                 big_prev_states.append(np.array([s_old, u_old]))
-        #                 big_new_states.append(np.array([s_new, u_new]))
-        #                 big_actions.append(np.array([a]))
-        #                 big_rewards.append(new_r)
-        #                 big_dones.append(done)
+        if self.addl_monolithic_rm is not None:
+            for agent in rewards:
+                rewards[agent] += mono_rm_reward
 
-        #             # if sum([(big_rewards[i_a] == 1 and self.possible_agents[i_a] in actions and rewards[self.possible_agents[i_a]] != 1) for i_a in range(len(big_rewards))])> 0:
-        #             if sum([(big_rewards[i_a] == 1 and self.possible_agents[i_a] in actions) for i_a in range(len(big_rewards))])> 0:
-        #             # if sum([(big_rewards[i_a] == 1 and self.possible_agents[i_a] in actions and rewards[self.possible_agents[i_a]] != 1) or (big_rewards[i_a] == 0 and self.possible_agents[i_a] in actions and rewards[self.possible_agents[i_a]] == 1) for i_a in range(len(big_rewards))])> 0:
-        #                 # print("\n\n\nHi\n\n\n")
-        #                 # import pdb; pdb.set_trace()
-        #                 self.local_manager.model.replay_buffer.add(big_prev_states, big_new_states, np.array(big_actions),np.array(big_rewards), np.array(big_dones), infos)
 
         for curr_agent in self.agents:
-            observations[curr_agent] =  np.array([self.mdp_states[curr_agent], self.rm_states[curr_agent]])
-            terminations[curr_agent] = self.reward_machine.is_terminal_state(self.rm_states[curr_agent])
+            # observations[curr_agent] =  np.array([self.mdp_states[curr_agent], self.rm_states[curr_agent]])
+            observations[curr_agent] = self.flatten_and_add_rm(self.mdp_states[curr_agent], self.rm_states[curr_agent])
+            # terminations[curr_agent] = self.reward_machine.is_terminal_state(self.rm_states[curr_agent])
+
+        terminations = {i: False for i in self.agents}
+        if self.addl_monolithic_rm is not None:
+            if self.addl_monolithic_rm.is_terminal_state(self.monolithic_rm_state):
+                terminations = {i: True for i in self.agents}
+        else:
+            if all([self.reward_machine.is_terminal_state(self.rm_states[i]) for i in self.agents]):
+                terminations = {i: True for i in self.agents}
+        
+
             
         self.state = observations
 
@@ -309,7 +288,7 @@ class ButtonsProductEnv(ParallelEnv):
     
             # if not self.agents:
             #     print("FINISHED REWARDS", rewards)
-        # print(self.rm_states)
+        # print("BUTTONS RM STATES", self.rm_states)
 
         if self.test:
             if all(terminations.values()) and any([i > 0 for i in rewards.values()]):
@@ -328,6 +307,10 @@ class ButtonsProductEnv(ParallelEnv):
         # print("\n\n\n", observations, rewards, terminations, truncations)
         # if all_labels:
         #     print(self.rm_states, actions, self.mdp_states, labels)
+
+        # import pdb; pdb.set_trace()
+        # observations = {i: self.flatten_and_add_rm(self.mdp_states[i], self.rm_states[i]) for i in self.agents}
+
         return observations, rewards, terminations, truncations, infos
 
     def render(self):
@@ -335,7 +318,14 @@ class ButtonsProductEnv(ParallelEnv):
 
     def observation_space(self, agent):
         # return self.observation_spaces[agent]
-        return Box(low=0, high=99, shape=(2,))
+        mdp_shape = 1
+        if self.addl_monolithic_rm is None:
+            flattened_shape = [mdp_shape + self.reward_machine.get_one_hot_size(len(self.possible_agents))]
+        else:
+            flattened_shape = [mdp_shape + self.reward_machine.get_one_hot_size(len(self.possible_agents)) + self.addl_monolithic_rm.get_one_hot_size(len(self.possible_agents))]
+        return Box(0, 255, flattened_shape)
+
+        # return Box(low=0, high=99, shape= (2,))
         # return MultiDiscrete([100, 100])
         # return Box(low=np.array([-1]), high=np.array([1]), dtype=np.float32)
     
@@ -348,3 +338,27 @@ class ButtonsProductEnv(ParallelEnv):
     # Scale and round to nearest discrete action
         discrete_action = int(np.round((continuous_action[0] + 1) * 2))  # Scale to range [0, 4]
         return discrete_action
+
+    def flatten_and_add_rm(self, obs, rm_state):
+        # import pdb; pdb.set_trace();
+
+        # n = len(self.reward_machine.get_states())
+        # # Flatten the 3D observation array
+        # flattened_obs = obs.flatten()
+        obs = np.array([obs])
+
+        # # Create an n-length array of zeros
+        # n = len(self.reward_machine.get_states())
+        # rm_array = np.zeros(n)
+
+        # # Set the rm_state index to 1
+        # rm_array[rm_state] = 1
+        rm_ohe = self.reward_machine.get_one_hot_encoded_state(rm_state, len(self.possible_agents))
+        if self.addl_monolithic_rm is not None:
+            mono_ohe = self.addl_monolithic_rm.get_one_hot_encoded_state(self.monolithic_rm_state, len(self.possible_agents))
+            result = np.concatenate((obs, rm_ohe, mono_ohe))
+        else:
+            # Concatenate the flattened observation and the rm_array
+            result = np.concatenate((obs, rm_ohe))
+
+        return result

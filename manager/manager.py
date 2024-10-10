@@ -113,8 +113,6 @@ class Manager:
 
         print("decomp_idx", self.curr_decomp)
 
-        perm_tuple = tuple(self.curr_assignment)
-        self.permutation_counts[self.curr_decomp][perm_tuple] += 1
         self.total_selections += 1
         
         if self.wandb:

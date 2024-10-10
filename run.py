@@ -276,7 +276,7 @@ if __name__ == "__main__":
                 callback_list = CallbackList([eval_callback])
                 print("Wandb Disabled")
 
-            model.learn(total_timesteps=args.timesteps, callback=callback_list, log_interval=10, progress_bar=True)
+            model.learn(total_timesteps=args.timesteps, callback=callback_list, log_interval=10, progress_bar=False)
             env.close()
             eval_env.close()
             # Finish your run

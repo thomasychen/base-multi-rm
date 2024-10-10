@@ -43,6 +43,11 @@ class OvercookedCrampedLabeled(MDP_Labeler):
         if self.any_elem(obs[21], 1, 0, 2):
             return "p"
         return None
+
+    def has_cooked(self, obs):
+        if obs[21][0][2] == 1:
+            return "c" 
+        return None
         
     def get_mdp_label(self, s_next, reward, *args):
         """
@@ -66,6 +71,9 @@ class OvercookedCrampedLabeled(MDP_Labeler):
         if soup:
             # import pdb; pdb.set_trace()
             l.append(soup)
+        cooked = self.has_cooked(obs)
+        if cooked:
+            l.append(cooked)
         # # for moving agent out of way after placing onions to not obstruct other agent
         # import pdb; pdb.set_trace()
         # move0 = #agent 0 is at non-obstructing

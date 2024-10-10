@@ -108,6 +108,9 @@ parser.add_argument('--video', type=str2bool, default=False, help='Turn on gifs 
 # python run.py --assignment_methods ground_truth --num_iterations 1 --wandb f --timesteps 1000000 --decomposition_file aux_interesting_cramped_room.txt --experiment_name interesting_cramped_room --is_monolithic f --env overcooked --render t --add_mono_file mono_interesting_cramped_room.txt
 # python test_overcooked.py --assignment_methods ground_truth --num_iterations 1 --wandb f --timesteps 1000000 --decomposition_file aux_interesting_cramped_room.txt --experiment_name interesting_cramped_room --is_monolithic f --env overcooked --render t --add_mono_file mono_interesting_cramped_room.txt
 
+# python run.py --assignment_methods UCB --num_iterations 1 --wandb t --timesteps 1000000 --decomposition_file mono_cramped_room.txt --experiment_name cramped_room --is_monolithic f --env overcooked --render f --add_mono_file mono_cramped_room.txt --num_candidates 10
+
+
 # Used to test the automatic decomposition.
 # python3 run.py --assignment_methods UCB --wandb False --decomposition_file team_buttons.txt --num_candidates 3 --is_monolithic True
 
@@ -183,7 +186,7 @@ if __name__ == "__main__":
                     new_initial_rm_states.append(istates)
                 run_config["initial_rm_states"] = new_initial_rm_states
                 train_rm.find_max_subgraph_size_and_assign_subtasks()
-                import pdb; pdb.set_trace()
+                # import pdb; pdb.set_trace()
             manager = Manager(num_agents=run_config['num_agents'], num_decomps = len(run_config["initial_rm_states"]),assignment_method=method, wandb=args.wandb, seed = i)
             render_mode = "human" if args.render else None
             run_config["render_mode"] = render_mode

@@ -39,7 +39,7 @@ class Configurations():
         '''
         self.rm = rm 
         self.num_agents = num_agents
-        self.agents = [i for i in range(num_agents)] 
+        self.agents = [i for i in range(num_agents)]
         self.all_events = set(itertools.product(rm.events, self.agents)) #should be all events
         self.include_all = include_all
         #print("rm events", rm.events)

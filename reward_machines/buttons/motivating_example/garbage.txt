@@ -1,0 +1,28 @@
+0 # auxiliary node
+(0, 18, "to_decomp1", 0)
+(1, 2,  'by',  0) #Yellow button is pressed
+(2, 3,  'br',  0) #Red button is pressed
+(3, 4,  'g',  1) #Goal state is reached
+(4, 4,  'True',  0) #state 3 is an absorbing state
+(5, 6,  'by',  0) #Yellow button is pressed
+(6, 7,  'bg',  0) #Green button is pressed
+(7, 9,  'a2br',  0) #Agent 2 moves onto red button
+(9, 7,  'a2lr',  0) #Agent 2 leaves red button prematurely
+(7, 8, 'a3br', 0) #agent 3 hits button first
+(8, 7, 'a3lr', 0) #agent 3 leaves 
+(9, 10, 'a3br', 0) #agent 3hits button second
+(8, 10, 'a2br', 0) #agent 2 hits button second 
+(10, 11, 'br', 1) #for signalling to agent 0
+(11, 11, 'True', 0) # terminal
+(12, 13,  'bg',  0) #Green button is pressed
+(13, 15,  'a2br',  0) #Agent 2 moves onto red button
+(15, 13,  'a2lr',  0) #Agent 2 leaves red button prematurely
+(13, 14, 'a3br', 0) #agent 3 hits button first
+(14, 13, 'a3lr', 0) #agent 3 leaves 
+(15, 16, 'a3br', 0) #agent 3hits button second
+(14, 16, 'a2br', 0) #agent 2 hits button second 
+(16, 17, 'br', 1) #for signalling to agent 0
+(17, 17, 'True', 0) # terminal 
+(18, 1, "to_rm1", 0) # Connect to RM 1
+(18, 5, "to_rm2", 0) # Connect to RM 2
+(18, 12, "to_rm3", 0) # Connect to RM 3

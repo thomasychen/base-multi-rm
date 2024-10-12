@@ -2,6 +2,10 @@ import random
 import numpy as np
 from enum import Enum
 import copy
+import matplotlib.pyplot as plt
+import matplotlib.patches as patches
+import matplotlib.colors as mcolors
+import matplotlib.animation as animation
 
 """
 Enum with the actions that the agent can execute
@@ -13,7 +17,7 @@ class Actions(Enum):
     left  = 3 # move left
     none  = 4 # none 
 
-class EasyButtonsEnv:
+class MotivatingButtonsEnv:
 
     def __init__(self, env_config):
         """
@@ -33,7 +37,9 @@ class EasyButtonsEnv:
         env_settings = copy.deepcopy(env_config)
         env_settings['Nr'] = 7
         env_settings['Nc'] = 12
-        env_settings['initial_states'] = [13, 16, 77]
+        # env_settings['initial_states'] = [13, 16, 77]
+        env_settings['initial_states'] = [0, 1, 2]
+
         env_settings['walls'] = [(5, 1), (5, 2), (5, 3), (5, 4), (5, 5), (5, 6),
                                  (4, 6),
                                  (3, 6),(3, 7),(3, 8),(3, 9),(3, 10),
@@ -46,18 +52,28 @@ class EasyButtonsEnv:
         yellow_tiles_x = range(0,7)
         yellow_tiles_y = range(7,12)
         env_settings['yellow_tiles'] = [(x,y) for x in yellow_tiles_x for y in yellow_tiles_y]
-        env_settings['p'] = 0.95
+        env_settings['p'] = 0.98
         self.env_settings = env_settings
         self.p = env_settings["p"]
-        self.in_hazard = False
+        MotivatingButtonsEnv.in_hazard = None
 
+        MotivatingButtonsEnv.signal = False
+        MotivatingButtonsEnv.a1hq = False
+        MotivatingButtonsEnv.a2hq = False
+        MotivatingButtonsEnv.a3hq = False
 
         self._load_map()
+        self.fig, self.ax = None, None
 
         # self.u = self.reward_machine.get_initial_state()
         # self.last_action = -1 # Initialize last action to garbage value
 
-    def reset(self, rm_assignments, decomp_idx):
+    def reset(self, *args):
+        MotivatingButtonsEnv.in_hazard = None
+        MotivatingButtonsEnv.signal = False
+        MotivatingButtonsEnv.a1hq = False
+        MotivatingButtonsEnv.a2hq = False
+        MotivatingButtonsEnv.a3hq = False
         ...
 
     def _load_map(self):
@@ -190,15 +206,15 @@ class EasyButtonsEnv:
         in_yellow = (row, col) in self.yellow_tiles
 
         # check if agent is in the yellow region
-        if self.in_hazard is None:
+        if MotivatingButtonsEnv.in_hazard is None:
             if in_yellow:
-                self.in_hazard = agent_id
-        elif self.in_hazard == agent_id:
+                MotivatingButtonsEnv.in_hazard = agent_id
+        elif MotivatingButtonsEnv.in_hazard == agent_id:
             if not in_yellow:
-                self.in_hazard = None
+                MotivatingButtonsEnv.in_hazard = None
             
         # If there's already an agent in the yellow region, don't allow the agent into the yellow region
-        if self.in_hazard is not None and self.in_hazard != agent_id:
+        if MotivatingButtonsEnv.in_hazard is not None and MotivatingButtonsEnv.in_hazard != agent_id:
             if in_yellow:
                 s_next = s
 
@@ -222,6 +238,7 @@ class EasyButtonsEnv:
         s : int
             The index of the gridworld state corresponding to location (row, col).
         """
+
         return self.Nc * row + col
 
     def get_state_description(self, s):
@@ -240,7 +257,7 @@ class EasyButtonsEnv:
         col : int
             The column index of state s in the gridworld.
         """
-        row = np.floor_divide(s, self.Nr)
+        row = np.floor_divide(s, self.Nc)
         col = np.mod(s, self.Nc)
 
         return (row, col)
@@ -266,35 +283,94 @@ class EasyButtonsEnv:
     #     """
     #     return self.s_i
 
-    def show(self, s):
+    def show(self, state_dict, show_plot = True):
         """
         Create a visual representation of the current state of the gridworld.
 
         Parameters
         ----------
-        s : int
-            Index of the current state
+        state_dict : dict
+            Dictionary of agent names and their corresponding states.
         """
-        display = np.zeros((self.Nr, self.Nc))
+
+        if self.fig is None or self.ax is None:
+            self.fig, self.ax = plt.subplots(figsize=(5, 5))
+        else:
+            self.ax.clear()
+
+        self.ax.set_xlim(0, self.Nc)
+        self.ax.set_ylim(0, self.Nr)
+        self.ax.set_aspect('equal')
+
+        # Draw the grid
+        for x in range(self.Nc + 1):
+            self.ax.axvline(x, color='black', linewidth=0.5)
+        for y in range(self.Nr + 1):
+            self.ax.axhline(y, color='black', linewidth=0.5)
+
+        # Draw colored tiles
+        tile_colors = {
+            'orange': mcolors.to_rgba('orange', 0.6),
+        }
+        for tile, color in zip([self.yellow_tiles], ['orange']):
+            for loc in tile:
+                rect = patches.Rectangle((loc[1], self.Nr - loc[0] - 1), 1, 1, linewidth=1, edgecolor='black', facecolor=tile_colors[color])
+                self.ax.add_patch(rect)
+
+        # Draw buttons
+        button_colors = {
+            'yb': 'yellow',
+            'gb': 'green',
+            'rb': 'red'
+        }
+        for button in ['yellow_button', 'green_button', 'red_button']:
+            loc = self.env_settings[button]
+            temp = button.split('_')
+            color = button_colors[temp[0][0] + temp[1][0]]
+            rect = patches.Rectangle((loc[1], self.Nr - loc[0] - 1), 1, 1, linewidth=2, edgecolor='black', facecolor=color)
+            self.ax.add_patch(rect)
+
+        # Draw the goal location
+        loc = self.env_settings['hq_location']
+        rect = patches.Rectangle((loc[1], self.Nr - loc[0] - 1), 1, 1, linewidth=2, edgecolor='black', facecolor='blue')
+        self.ax.add_patch(rect)
+
+        # Draw the agents
+        for agent in state_dict:
+            row, col = self.get_state_description(state_dict[agent])
+            rect = patches.Rectangle((col, self.Nr - row - 1), 1, 1, linewidth=1, edgecolor='black', facecolor='grey')
+            self.ax.add_patch(rect)
+
         
-        # Display the locations of the walls
-        for loc in self.yellow_tiles:
-            display[loc] = 2
-
+        # Draw the walls
         for loc in self.env_settings['walls']:
-            display[loc] = -1
+            rect = patches.Rectangle((loc[1], self.Nr - loc[0] - 1), 1, 1, linewidth=1, edgecolor='black', facecolor='black')
+            self.ax.add_patch(rect)
 
-        display[self.env_settings['red_button']] = 7
-        display[self.env_settings['green_button']] = 8
-        display[self.env_settings['yellow_button']] = 9
-        display[self.env_settings['hq_location']] = 6
 
-        # Display the location of the agent in the world
-        # row, col = self.get_state_description(s)
-        # display[row,col] = self.agent_id
+        self.ax.set_xticks([])
+        self.ax.set_yticks([])
+        if show_plot:
+            plt.pause(0.00001)
+        
+    def animate(self, state_dicts, filename):
+        """
+        Create a GIF animation of the gridworld over a sequence of states.
 
-        print(display)
+        Parameters
+        ----------
+        state_dicts : list of dict
+            List of dictionaries of agent names and their corresponding states.
+        gif_filename : str
+            Filename for the output GIF file.
+        """
+        if not self.fig or not self.ax:
+            self.fig, self.ax = plt.subplots(figsize=(5, 5))
+            self.ax.set_xlim(0, self.Nc)
+            self.ax.set_ylim(0, self.Nr)
+            self.ax.set_aspect('equal')
+        def update(frame):
+            self.show(state_dicts[frame], show_plot=False)
 
-if __name__=='__main__':
-    env = EasyButtonsEnv({})
-    env.show(0)
+        ani = animation.FuncAnimation(self.fig, update, frames=len(state_dicts), repeat=False)
+        ani.save(filename, writer='imagemagick', fps=10)

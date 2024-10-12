@@ -17,6 +17,7 @@ from stable_baselines3.common.callbacks import EvalCallback, CallbackList
 from mdp_label_wrappers.buttons_mdp_labeled import HardButtonsLabeled
 from mdp_label_wrappers.easy_buttons_mdp_labeled import EasyButtonsLabeled
 from mdp_label_wrappers.challenge_buttons_mdp_labeled import ChallengeButtonsLabeled
+from mdp_label_wrappers.motivating_example_mdp_labeled import MotivatingExampleLabeled
 from reward_machines.sparse_reward_machine import SparseRewardMachine
 from reward_machines.rm_generator import generate_rm_decompositions
 from stable_baselines3.common.monitor import Monitor
@@ -94,6 +95,12 @@ parser.add_argument('--video', type=str2bool, default=False, help='Turn on gifs 
 
 # python run.py --assignment_methods UCB --num_iterations 1 --wandb t --timesteps 10000 --decomposition_file buttons_decompositions.txt --experiment_name buttons --is_monolithic f --env buttons --render f
 
+# motivating example
+# python run.py --assignment_methods UCB --num_iterations 1 --wandb f --timesteps 3000000 --decomposition_file garbage.txt --experiment_name motivating_example --is_monolithic f --env buttons --render t
+
+# motivating example ATAD
+# python run.py --assignment_methods UCB --num_iterations 1 --wandb f --timesteps 3000000 --decomposition_file mono_motivating_example.txt --env buttons --experiment_name motivating_example --num_candidates 3 --is_monolithic f --add_mono_file mono_motivating_example.txt --render t
+
 ########### buttons ###########
 
 
@@ -118,7 +125,7 @@ parser.add_argument('--video', type=str2bool, default=False, help='Turn on gifs 
 
 
 # Used to test the automatic decomposition.
-# python3 run.py --assignment_methods UCB --wandb False --decomposition_file team_buttons.txt --num_candidates 3 --is_monolithic True
+# python3 run.py --assignment_methods UCB --wandb False --decomposition_file team_buttons.txt --num_candidates 3 --is_monolithic True --add
 
 #### with mono observation ####
 # python run.py --assignment_methods UCB --num_iterations 1 --wandb f --timesteps 1000000 --decomposition_file aux_cramped_room.txt --experiment_name cramped_room --is_monolithic f --env overcooked --render t --add_mono_file mono_cramped_room.txt

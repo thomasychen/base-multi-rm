@@ -13,7 +13,7 @@ class Actions(Enum):
     left  = 3 # move left
     none  = 4 # none 
 
-class EasyButtonsEnv:
+class MotivatingExampleEnv:
 
     def __init__(self, env_config):
         """
@@ -33,7 +33,7 @@ class EasyButtonsEnv:
         env_settings = copy.deepcopy(env_config)
         env_settings['Nr'] = 7
         env_settings['Nc'] = 12
-        env_settings['initial_states'] = [13, 16, 77]
+        env_settings['initial_states'] = [13, 77, 16]
         env_settings['walls'] = [(5, 1), (5, 2), (5, 3), (5, 4), (5, 5), (5, 6),
                                  (4, 6),
                                  (3, 6),(3, 7),(3, 8),(3, 9),(3, 10),
@@ -296,5 +296,5 @@ class EasyButtonsEnv:
         print(display)
 
 if __name__=='__main__':
-    env = EasyButtonsEnv({})
+    env = MotivatingExampleEnv({})
     env.show(0)

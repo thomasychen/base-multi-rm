@@ -9,6 +9,7 @@ import itertools
 import random
 from mdp_label_wrappers.easy_buttons_mdp_labeled import EasyButtonsLabeled
 from mdp_label_wrappers.generic_mdp_labeled import MDP_Labeler
+import os
 
 class ButtonsProductEnv(ParallelEnv):
     metadata = {
@@ -45,10 +46,12 @@ class ButtonsProductEnv(ParallelEnv):
         self.monolithic_weight = monolithic_weight
         self.log_dir = log_dir
         self.video = video
-
+        self.traj_mdp_states = []
+    
     def reset(self, seed=None, options=None):
         self.agents = self.possible_agents[:]
         self.time_step = 0
+        self.traj_mdp_states = []
 
         mdp_state_array = copy.deepcopy(self.env_config["initial_mdp_states"])
         rm_array = copy.deepcopy(self.env_config["initial_rm_states"]) if np.array(self.env_config["initial_rm_states"]).ndim == 2 else [copy.deepcopy(self.env_config["initial_rm_states"])]
@@ -83,6 +86,7 @@ class ButtonsProductEnv(ParallelEnv):
         self.state = observations
 
         # import pdb; pdb.set_trace()
+        self.traj_mdp_states.append(copy.deepcopy(self.mdp_states))
 
         return observations, infos
 
@@ -237,6 +241,7 @@ class ButtonsProductEnv(ParallelEnv):
             # if self.test:
 
         # import pdb; pdb.set_trace()
+        self.traj_mdp_states.append(copy.deepcopy(self.mdp_states))    
 
         if self.addl_monolithic_rm is not None:
             for agent in rewards:
@@ -319,6 +324,9 @@ class ButtonsProductEnv(ParallelEnv):
         # observations = {i: self.flatten_and_add_rm(self.mdp_states[i], self.rm_states[i]) for i in self.agents}
         if self.render_mode == "human":
             self.render()
+        
+        if self.video and (env_truncation or all(terminations.values())):
+            self.send_animation()
 
         return observations, rewards, terminations, truncations, infos
 
@@ -371,3 +379,7 @@ class ButtonsProductEnv(ParallelEnv):
             result = np.concatenate((obs, rm_ohe))
 
         return result
+    def send_animation(self):
+        path_dir = f"{self.log_dir}"
+        os.makedirs(path_dir, exist_ok=True)
+        self.labeled_mdp.animate(self.traj_mdp_states, filename=f"{path_dir}/viz.gif")

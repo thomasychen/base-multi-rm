@@ -5,6 +5,7 @@ import copy
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import matplotlib.colors as mcolors
+import matplotlib.animation as animation
 
 
 """
@@ -322,7 +323,7 @@ class EasyButtonsEnv:
     #     """
     #     return self.s_i
 
-    def show(self, state_dict):
+    def show(self, state_dict, show_plot = True):
         """
         Create a visual representation of the current state of the gridworld.
 
@@ -331,11 +332,6 @@ class EasyButtonsEnv:
         state_dict : dict
             Dictionary of agent names and their corresponding states.
         """
-        name_to_num = {
-            "agent_0": 1, 
-            "agent_1": 2, 
-            "agent_2": 3
-        }
 
         if self.fig is None or self.ax is None:
             self.fig, self.ax = plt.subplots(figsize=(5, 5))
@@ -394,7 +390,8 @@ class EasyButtonsEnv:
 
         self.ax.set_xticks([])
         self.ax.set_yticks([])
-        plt.pause(0.00001)
+        if show_plot:
+            plt.pause(0.00001)
 
         
         # name_to_num = {
@@ -438,3 +435,25 @@ class EasyButtonsEnv:
         #     display[row,col] = name_to_num[agent]
 
         # print(display)
+
+    def animate(self, state_dicts, filename):
+        """
+        Create a GIF animation of the gridworld over a sequence of states.
+
+        Parameters
+        ----------
+        state_dicts : list of dict
+            List of dictionaries of agent names and their corresponding states.
+        gif_filename : str
+            Filename for the output GIF file.
+        """
+        if not self.fig or not self.ax:
+            self.fig, self.ax = plt.subplots(figsize=(5, 5))
+            self.ax.set_xlim(0, self.Nc)
+            self.ax.set_ylim(0, self.Nr)
+            self.ax.set_aspect('equal')
+        def update(frame):
+            self.show(state_dicts[frame], show_plot=False)
+
+        ani = animation.FuncAnimation(self.fig, update, frames=len(state_dicts), repeat=False)
+        ani.save(filename, writer='imagemagick', fps=10)

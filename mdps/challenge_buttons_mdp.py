@@ -2,6 +2,10 @@ import random
 from enum import Enum
 import copy
 import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.patches as patches
+import matplotlib.colors as mcolors
+import matplotlib.animation as animation
 
 class Actions(Enum):
     up    = 0 # move up
@@ -56,6 +60,8 @@ class ChallengeButtonsEnv():
         self.p = env_settings["p"]
         # self.agent_id = agent_id
         self._load_map()
+        self.fig, self.ax = None, None
+
         # self.reward_machine = ManagedSparseRewardMachine(rm_file)
         # self.u = initial_rm_states[self.agent_id-1]
 
@@ -288,28 +294,95 @@ class ChallengeButtonsEnv():
     #     return self.env_settings["initial_states"]
         
 
-    def show(self, s):
+    def show(self, state_dict, show_plot = True):
         """
         Create a visual representation of the current state of the gridworld.
 
         Parameters
         ----------
-        s : int
-            Index of the current state
+        state_dict : dict
+            Dictionary of agent names and their corresponding states.
         """
-        display = np.zeros((self.Nr, self.Nc))
-        
-        # Display the locations of the walls
+
+        if self.fig is None or self.ax is None:
+            self.fig, self.ax = plt.subplots(figsize=(5, 5))
+        else:
+            self.ax.clear()
+
+        self.ax.set_xlim(0, self.Nc)
+        self.ax.set_ylim(0, self.Nr)
+        self.ax.set_aspect('equal')
+
+        # Draw the grid
+        for x in range(self.Nc + 1):
+            self.ax.axvline(x, color='black', linewidth=0.5)
+        for y in range(self.Nr + 1):
+            self.ax.axhline(y, color='black', linewidth=0.5)
+
+        # Draw the walls
         for loc in self.env_settings['walls']:
-            display[loc] = -1
+            rect = patches.Rectangle((loc[1], self.Nr - loc[0] - 1), 1, 1, linewidth=1, edgecolor='black', facecolor='black')
+            self.ax.add_patch(rect)
 
-        display[self.env_settings['red_button']] = 9
-        display[self.env_settings['green_button']] = 9
-        display[self.env_settings['yellow_button']] = 9
-        # display[self.env_settings['goal_location']] = 9
+        # # Draw colored tiles
+        # tile_colors = {
+        #     'yellow': mcolors.to_rgba('yellow', 0.6),
+        #     'green': mcolors.to_rgba('green', 0.6),
+        #     'red': mcolors.to_rgba('red', 0.6),
+        # }
+        # for tile, color in zip([self.yellow_tiles, self.green_tiles, self.red_tiles], ['yellow', 'green', 'red']):
+        #     for loc in tile:
+        #         rect = patches.Rectangle((loc[1], self.Nr - loc[0] - 1), 1, 1, linewidth=1, edgecolor='black', facecolor=tile_colors[color])
+        #         self.ax.add_patch(rect)
 
-        # Display the location of the agent in the world
-        row, col = self.get_state_description(s)
-        # display[row,col] = self.agent_id
+        # Draw buttons
+        button_colors = {
+            'yb': 'yellow',
+            'gb': 'green',
+            'rb': 'red',
+            "bb": 'blue'
+        }
+        for button in ['yellow_button', 'green_button', 'red_button', "blue_button"]:
+            loc = self.env_settings[button]
+            temp = button.split('_')
+            color = button_colors[temp[0][0] + temp[1][0]]
+            rect = patches.Rectangle((loc[1], self.Nr - loc[0] - 1), 1, 1, linewidth=2, edgecolor='black', facecolor=color)
+            self.ax.add_patch(rect)
 
-        print(display)
+        # Draw the goal location
+        # loc = self.env_settings['goal_location']
+        # rect = patches.Rectangle((loc[1], self.Nr - loc[0] - 1), 1, 1, linewidth=2, edgecolor='black', facecolor='blue')
+        # self.ax.add_patch(rect)
+
+        # Draw the agents
+        for agent in state_dict:
+            row, col = self.get_state_description(state_dict[agent])
+            rect = patches.Rectangle((col, self.Nr - row - 1), 1, 1, linewidth=1, edgecolor='black', facecolor='grey')
+            self.ax.add_patch(rect)
+
+        self.ax.set_xticks([])
+        self.ax.set_yticks([])
+        if show_plot:
+            plt.pause(0.00001)
+
+    def animate(self, state_dicts, filename):
+        """
+        Create a GIF animation of the gridworld over a sequence of states.
+
+        Parameters
+        ----------
+        state_dicts : list of dict
+            List of dictionaries of agent names and their corresponding states.
+        gif_filename : str
+            Filename for the output GIF file.
+        """
+        if not self.fig or not self.ax:
+            self.fig, self.ax = plt.subplots(figsize=(5, 5))
+            self.ax.set_xlim(0, self.Nc)
+            self.ax.set_ylim(0, self.Nr)
+            self.ax.set_aspect('equal')
+        def update(frame):
+            self.show(state_dicts[frame], show_plot=False)
+
+        ani = animation.FuncAnimation(self.fig, update, frames=len(state_dicts), repeat=False)
+        ani.save(filename, writer='imagemagick', fps=10)

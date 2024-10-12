@@ -1,7 +1,8 @@
 0 # initial state 
-(0, 1, "to_rm1", 0)  # Connect to RM 1
-(0, 2, "to_rm2", 0)  # Connect to RM 2
-(0, 3, "to_rm3", 0)  # Connect to RM 3
+(0, 25, "to_decomp1", 0)
+(25, 1, "to_rm1", 0)  # Connect to RM 1
+(25, 2, "to_rm2", 0)  # Connect to RM 2
+(25, 3, "to_rm3", 0)  # Connect to RM 3
 (1, 4, 'by', 0)  # Yellow button is pressed
 (4, 5, 'bg', 0)  # Green button is pressed
 (5, 6, 'a2br', 0)  # Agent 2 on red button

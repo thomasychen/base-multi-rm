@@ -113,30 +113,33 @@ class ButtonsProductEnv(ParallelEnv):
             a = actions[curr_agent]
             s_next = self.labeled_mdp.environment_step(s, a, i+1)
             labels = self.labeled_mdp.get_mdp_label(s_next, i+1, self.rm_states[curr_agent], self.test, self.is_monolithic)
-            crazies = [[] for i in range(len(self.possible_agents))]
-            if type(self.labeled_mdp) == EasyButtonsLabeled:
-                for label in labels:
-                    # dont use crazies in our envs
-                    if label == 'by' and self.labeled_mdp.get_state_description(s_next) != self.labeled_mdp.env_settings["yellow_button"]:
-                        crazies[1].append(label)
-                    elif label == 'bg' and self.labeled_mdp.get_state_description(s_next) != self.labeled_mdp.env_settings["green_button"]:
-                        crazies[2].append(label)
-                    elif label == "br" and self.labeled_mdp.get_state_description(s_next) != self.labeled_mdp.env_settings["red_button"]:
-                        crazies[0].append(label)
-                    elif label == 'a3br' and self.labeled_mdp.get_state_description(s_next) != self.labeled_mdp.env_settings["red_button"]:
-                        crazies[1].append(label)
-                    elif label == 'a2br' and self.labeled_mdp.get_state_description(s_next) != self.labeled_mdp.env_settings["red_button"]:
-                        crazies[2].append(label)
-                    elif label in self.reward_machine.delta_u[self.rm_states[curr_agent]]:
-                        all_labels.append(label)
-            else: 
-                for label in labels:
-                    if label in self.reward_machine.delta_u[self.rm_states[curr_agent]]:
-                        all_labels.append(label)
+            all_labels.extend(labels)
+            # crazies = [[] for i in range(len(self.possible_agents))]
+            # if type(self.labeled_mdp) == EasyButtonsLabeled:
+            #     for label in labels:
+            #         # dont use crazies in our envs
+            #         if label == 'by' and self.labeled_mdp.get_state_description(s_next) != self.labeled_mdp.env_settings["yellow_button"]:
+            #             crazies[1].append(label)
+            #         elif label == 'bg' and self.labeled_mdp.get_state_description(s_next) != self.labeled_mdp.env_settings["green_button"]:
+            #             crazies[2].append(label)
+            #         elif label == "br" and self.labeled_mdp.get_state_description(s_next) != self.labeled_mdp.env_settings["red_button"]:
+            #             crazies[0].append(label)
+            #         elif label == 'a3br' and self.labeled_mdp.get_state_description(s_next) != self.labeled_mdp.env_settings["red_button"]:
+            #             crazies[1].append(label)
+            #         elif label == 'a2br' and self.labeled_mdp.get_state_description(s_next) != self.labeled_mdp.env_settings["red_button"]:
+            #             crazies[2].append(label)
+            #         elif label in self.reward_machine.delta_u[self.rm_states[curr_agent]]:
+            #             all_labels.append(label)
+            # else: 
+                # for label in labels:
+                #     if label in self.reward_machine.delta_u[self.rm_states[curr_agent]]:
+                #         all_labels.append(label)
 
         # if 'g' in all_labels:
         #     import pdb; pdb.set_trace()
-            # print(all_labels, "\n\n")
+        # if all_labels:
+        #     print(all_labels, "\n\n")
+        # # print()
                   
         if "bg" in all_labels and self.test:
             print("\n\n\nYAYYYY\n\n\n")
@@ -167,7 +170,7 @@ class ButtonsProductEnv(ParallelEnv):
             self.mdp_states[curr_agent] = s_next
 
             r = 0
-            for e in all_labels + crazies[i]:
+            for e in all_labels:
             # for e in all_labels:
                 # import pdb; pdb.set_trace()
                 u2 = self.reward_machine.get_next_state(self.rm_states[curr_agent], e)
@@ -316,7 +319,6 @@ class ButtonsProductEnv(ParallelEnv):
         # observations = {i: self.flatten_and_add_rm(self.mdp_states[i], self.rm_states[i]) for i in self.agents}
         if self.render_mode == "human":
             self.render()
-        
 
         return observations, rewards, terminations, truncations, infos
 

@@ -48,7 +48,7 @@ class EasyButtonsEnv:
         env_settings['yellow_tiles'] = [(2,4), (2,5), (2,6), (3,4), (3,5), (3,6)]
         env_settings['green_tiles'] = [(2,8), (2,9), (3,8), (3,9)]
         env_settings['red_tiles'] = [(8,5), (8,6), (8,7), (8,8), (9,5), (9,6), (9,7), (9,8)]
-        env_settings['p'] = 0.95
+        env_settings['p'] = 0.98
         self.env_settings = env_settings
         self.p = env_settings["p"]
 
@@ -64,7 +64,7 @@ class EasyButtonsEnv:
         EasyButtonsEnv.a3_red_pressed = False
         EasyButtonsEnv.yellow_pressed = False
         EasyButtonsEnv.green_pressed = False
-        # EasyButtonsEnv.who_at_red = 0
+        EasyButtonsEnv.red_pressed = False
 
         rm_state_array = copy.deepcopy(self.env_settings["initial_rm_states"]) if np.array(self.env_settings["initial_rm_states"]).ndim == 2 else [copy.deepcopy(self.env_settings["initial_rm_states"])]
 
@@ -394,7 +394,7 @@ class EasyButtonsEnv:
 
         self.ax.set_xticks([])
         self.ax.set_yticks([])
-        plt.pause(0.0001)
+        plt.pause(0.00001)
 
         
         # name_to_num = {

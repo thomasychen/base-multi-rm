@@ -1,4 +1,5 @@
 0 # auxiliary node
+(0, 18, "to_decomp1", 0)
 (1, 2,  'by',  0) #Yellow button is pressed
 (2, 3,  'br',  0) #Red button is pressed
 (3, 4,  'g',  1) #Goal state is reached
@@ -22,6 +23,6 @@
 (14, 16, 'a2br', 0) #agent 2 hits button second 
 (16, 17, 'br', 1) #for signalling to agent 0
 (17, 17, 'True', 0) # terminal 
-(0, 1, "to_rm1", 0) # Connect to RM 1
-(0, 5, "to_rm2", 0) # Connect to RM 2
-(0, 12, "to_rm3", 0) # Connect to RM 3
+(18, 1, "to_rm1", 0) # Connect to RM 1
+(18, 5, "to_rm2", 0) # Connect to RM 2
+(18, 12, "to_rm3", 0) # Connect to RM 3

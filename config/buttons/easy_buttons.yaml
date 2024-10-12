@@ -5,6 +5,14 @@ initial_mdp_states: [0, 5, 8]
 initial_rm_states:
   - [1, 5, 12]
   # - [1,2,3] # monolithic trial start states
+forbidden_events:
+  - ['a2br', 'a3br', 'a2lr', 'a3lr']
+  - ['a3br', 'a3lr']
+  - ['a2br', 'a2lr']
+required_events:
+  - []
+  - []
+  - []
 gamma: 0.95
 learning_rate: 0.0005
 vf_coef: 10

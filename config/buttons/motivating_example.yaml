@@ -13,9 +13,9 @@ ent_coef: 0.1
 labeled_mdp_class: "MotivatingExampleLabeled"
 eval_freq: 5000
 forbidden_events:
-  - []
-  - []
-  - []
+  - ['a2hq', '!a2hq', 'a3hq', '!a3hq']
+  - ['a1hq', '!a1hq', 'a3hq', '!a3hq']
+  - ['a1hq', '!a1hq', 'a2hq', '!a2hq']
 required_events:
   - ['sig']
   - ['sig']

@@ -6,6 +6,12 @@ initial_rm_states:
   # - [4, 1]
   # - [15, 21]
   # - [22, 23]
+forbidden_events:
+  - []
+  - []
+required_events:
+  - ['c']
+  - ['c']
 labeled_mdp_class: "OvercookedCustomIslandLabeled"
 max_episode_length: 400
 eval_freq: 40000

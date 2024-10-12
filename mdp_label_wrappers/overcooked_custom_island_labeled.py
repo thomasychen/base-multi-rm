@@ -10,10 +10,10 @@ class OvercookedCustomIslandLabeled(MDP_Labeler):
 
         counter_circuit_grid = """
 WWWWWWW
-W XWO X
+X OWX W
 WA P AW
-O  W  W
-WWBWWWW
+W  W  O
+WWWWBWW
 """
 
 

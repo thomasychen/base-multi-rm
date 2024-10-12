@@ -64,7 +64,25 @@ def generate_rm_decompositions(monolithic_rm: SparseRewardMachine, num_agents: i
     for sol_idx, solution in enumerate(bd):
         score, k = solution
         event_spaces, event_spaces_dict = hf.get_event_spaces_from_knapsack(configs.all_events, k) # event_spaces_dict = {agent: [events] }
-        decomp = {idx: project_rm(set(event_set), monolithic_rm) for idx, event_set in event_spaces_dict.items()}
+        strategy_set = set()
+        for es in event_spaces:
+            strategy_set = strategy_set.union(es)
+        acc_set = monolithic_rm.events.copy() - strategy_set
+        strategic_rm = bs.get_strategy_rm(monolithic_rm, strategy_set)
+        shared_events = set()
+        for e in strategy_set:
+            share_count = 0
+            for es in event_spaces:
+                if e in es:
+                    share_count += 1 
+            if share_count > 1:
+                shared_events.add(e)
+        shared_events_dict  = {} # {agent# : shared events list} agent # start at 0
+        for i, esi in event_spaces_dict.items():
+            my_shared_events = shared_events & set(esi)
+            shared_events_dict[i] = list(my_shared_events)
+        pre_decomp = {idx: project_rm(set(event_set), monolithic_rm) for idx, event_set in event_spaces_dict.items()}
+        decomp = {idx: bs.get_accident_avoidance_rm_less(sub_rm, acc_set, monolithic_rm) for idx, sub_rm in pre_decomp.items()}
         rm_decomps[sol_idx], decomps_init_states[sol_idx] = combine_to_single_rm(decomp)
     subsuming_rm, decomp_offsets = combine_to_single_rm(rm_decomps, tag="decomp")
     for rmidx in decomps_init_states:

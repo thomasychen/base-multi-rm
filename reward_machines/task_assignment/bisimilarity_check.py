@@ -810,7 +810,7 @@ def get_accident_avoidance_rm(individual_rm, accident_set):
     return acc_rm
 
 def get_accident_avoidance_rm_less(individual_rm, accident_set, rm):
-    print("Its about to get crazy buckle up. ")
+    # print("Its about to get crazy buckle up. ")
     dead_state = -1
     dead_reward = -1
     acc_rm_u = individual_rm.U.copy()

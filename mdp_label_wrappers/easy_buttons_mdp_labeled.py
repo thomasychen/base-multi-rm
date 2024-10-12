@@ -31,75 +31,131 @@ class EasyButtonsLabeled(EasyButtonsEnv, MDP_Labeler):
 
         thresh = 0.3 #0.3
 
-        if monolithic:
-            if u == 1 or u == 2 or u == 3:
-            # Now check if agents are on buttons
-                if agent_id == 1 and  (row,col) == self.env_settings['yellow_button']:
-                    l.append('by')
-            if u == 4 or u == 11 or u == 18:
-                if agent_id == 2 and (row, col) == self.env_settings['green_button']:
-                    l.append('bg')
-            if u == 5 or u == 12 or u == 19:
-                if agent_id == 2 and (row, col) == self.env_settings['red_button']:
-                    l.append('a2br')
-                if agent_id == 3 and (row, col) == self.env_settings['red_button']:
-                    l.append('a3br')
-            if u == 6 or u == 13 or u == 20:
-                if agent_id == 2 and not ((row, col) == self.env_settings['red_button']):
-                    l.append('a2lr')
-                if agent_id == 3 and (row, col) == self.env_settings['red_button']:
-                    l.append('a3br')
-            if u == 7 or u == 14 or u == 21:
-                if agent_id == 2 and (row, col) == self.env_settings['red_button']:
-                    l.append('a2br')
-                if agent_id == 3 and not ((row, col) == self.env_settings['red_button']):
-                    l.append('a3lr')
-            if u == 8 or u == 15 or u == 22:
-                    l.append('br')
-            if u == 9:
-                # Check if agent 1 has reached the goal
-                if agent_id == 1 and (row, col) == self.env_settings['goal_location']:
-                    l.append('g')
-        else:
-            if agent_id == 1:
-                if u == 1:
-                    if (row, col) == self.env_settings['yellow_button']:
-                        l.append('by')
-                if u == 2:
-                    if np.random.random() <= thresh and not test:
-                        l.append('br')
-                if u == 3:
-                    if (row, col) == self.env_settings['goal_location']:
-                        l.append('g')
-            elif agent_id == 2:
-                if u == 5:
-                    if np.random.random() <= thresh and not test:
-                        l.append('by')
-                if u == 6 and (row,col) == self.env_settings['green_button']:
-                    l.append('bg')
-                if (u == 7 or u == 8) and (row,col) == self.env_settings['red_button']:
-                    l.append('a2br')
-                if u == 9: 
-                    if not((row,col) == self.env_settings['red_button']):
-                        l.append('a2lr')
-                    elif np.random.random() <= thresh and not test:
-                        l.append('a3br')
-            elif agent_id == 3:
-                if u == 12:
-                    if np.random.random() <= thresh and not test:
-                        l.append('bg')
-                if (u == 13 or u == 15) and (row,col) == self.env_settings['red_button']:
-                    l.append('a3br')
-                if u == 14: 
-                    if not((row,col) == self.env_settings['red_button']):
-                        l.append('a3lr')
-                    elif np.random.random() <= thresh and not test:
-                        l.append('a2br')
+        ## append real labels
+        if (row, col) == self.env_settings["yellow_button"]:
+           EasyButtonsEnv.yellow_pressed = True
+           l.append('by')
+        elif (row, col) == self.env_settings["green_button"]:
+            EasyButtonsEnv.green_pressed = True
+            l.append("bg")
+        elif (row, col) == self.env_settings["red_button"] and agent_id == 2:
+            EasyButtonsEnv.a2_red_pressed = True
+            l.append("a2br")
+        elif (row, col) == self.env_settings["red_button"] and agent_id == 3:
+            EasyButtonsEnv.a3_red_pressed = True
+            l.append("a3br")
+        elif (row, col) == self.env_settings["goal_location"]:
+            l.append("g")
+        elif EasyButtonsEnv.a2_red_pressed and agent_id == 2 and (row, col) != self.env_settings["red_button"]:
+            EasyButtonsEnv.a2_red_pressed = False
+            l.append("a2lr")
+        elif EasyButtonsEnv.a3_red_pressed and agent_id == 3 and (row, col) != self.env_settings["red_button"]:
+            EasyButtonsEnv.a3_red_pressed = False
+            l.append("a3lr")
+        if EasyButtonsEnv.a3_red_pressed and EasyButtonsEnv.a2_red_pressed:
+            l.append("br")
+        
+        ## add cheating hallucination by using agent_id, mixed with logic from calling the rm state to see if we can allow a certain cheat label
+        if not test and not monolithic:
+            if agent_id == 1: 
+                if EasyButtonsEnv.yellow_pressed and np.random.random() <= thresh:
+                    EasyButtonsEnv.a2_red_pressed = True
+                    EasyButtonsEnv.a3_red_pressed = True
 
-            if u == 16 or u == 10:
-                l.append('br')
+                    l.append("br")
+            elif agent_id == 2:
+                if np.random.random() <= thresh:
+                    l.append("by")
+                    EasyButtonsEnv.yellow_pressed = True
+
+                elif EasyButtonsEnv.a2_red_pressed and np.random.random() <= thresh:
+                    EasyButtonsEnv.a2_red_pressed = True
+                    EasyButtonsEnv.a3_red_pressed = True
+
+                    l.append("br")
+            else:
+                if np.random.random() <= thresh:
+                    EasyButtonsEnv.green_pressed = True
+
+                    l.append("bg")
+                elif EasyButtonsEnv.a3_red_pressed and np.random.random() <= thresh:
+                    EasyButtonsEnv.a2_red_pressed = True
+                    EasyButtonsEnv.a3_red_pressed = True
+
+                    l.append("br")
+
+        
+        
+
+        # if monolithic:
+        #     if u == 1 or u == 2 or u == 3:
+        #     # Now check if agents are on buttons
+        #         if agent_id == 1 and  (row,col) == self.env_settings['yellow_button']:
+        #             l.append('by')
+        #     if u == 4 or u == 11 or u == 18:
+        #         if agent_id == 2 and (row, col) == self.env_settings['green_button']:
+        #             l.append('bg')
+        #     if u == 5 or u == 12 or u == 19:
+        #         if agent_id == 2 and (row, col) == self.env_settings['red_button']:
+        #             l.append('a2br')
+        #         if agent_id == 3 and (row, col) == self.env_settings['red_button']:
+        #             l.append('a3br')
+        #     if u == 6 or u == 13 or u == 20:
+        #         if agent_id == 2 and not ((row, col) == self.env_settings['red_button']):
+        #             l.append('a2lr')
+        #         if agent_id == 3 and (row, col) == self.env_settings['red_button']:
+        #             l.append('a3br')
+        #     if u == 7 or u == 14 or u == 21:
+        #         if agent_id == 2 and (row, col) == self.env_settings['red_button']:
+        #             l.append('a2br')
+        #         if agent_id == 3 and not ((row, col) == self.env_settings['red_button']):
+        #             l.append('a3lr')
+        #     if u == 8 or u == 15 or u == 22:
+        #             l.append('br')
+        #     if u == 9:
+        #         # Check if agent 1 has reached the goal
+        #         if agent_id == 1 and (row, col) == self.env_settings['goal_location']:
+        #             l.append('g')
+        # else:
+        #     if agent_id == 1:
+        #         if u == 1:
+        #             if (row, col) == self.env_settings['yellow_button']:
+        #                 l.append('by')
+        #         if u == 2:
+        #             if np.random.random() <= thresh and not test:
+        #                 l.append('br')
+        #         if u == 3:
+        #             if (row, col) == self.env_settings['goal_location']:
+        #                 l.append('g')
+        #     elif agent_id == 2:
+        #         if u == 5:
+        #             if np.random.random() <= thresh and not test:
+        #                 l.append('by')
+        #         if u == 6 and (row,col) == self.env_settings['green_button']:
+        #             l.append('bg')
+        #         if (u == 7 or u == 8) and (row,col) == self.env_settings['red_button']:
+        #             l.append('a2br')
+        #         if u == 9: 
+        #             if not((row,col) == self.env_settings['red_button']):
+        #                 l.append('a2lr')
+        #             elif np.random.random() <= thresh and not test:
+        #                 l.append('a3br')
+        #     elif agent_id == 3:
+        #         if u == 12:
+        #             if np.random.random() <= thresh and not test:
+        #                 l.append('bg')
+        #         if (u == 13 or u == 15) and (row,col) == self.env_settings['red_button']:
+        #             l.append('a3br')
+        #         if u == 14: 
+        #             if not((row,col) == self.env_settings['red_button']):
+        #                 l.append('a3lr')
+        #             elif np.random.random() <= thresh and not test:
+        #                 l.append('a2br')
+
+        #     if u == 16 or u == 10:
+        #         l.append('br')
             
-        return l
+        # return l
 
 
         # thresh = 0.3 #0.3

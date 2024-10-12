@@ -2,6 +2,10 @@ import random
 import numpy as np
 from enum import Enum
 import copy
+import matplotlib.pyplot as plt
+import matplotlib.patches as patches
+import matplotlib.colors as mcolors
+
 
 """
 Enum with the actions that the agent can execute
@@ -50,15 +54,17 @@ class EasyButtonsEnv:
 
 
         self._load_map()
+        self.fig, self.ax = None, None
 
         # self.u = self.reward_machine.get_initial_state()
         # self.last_action = -1 # Initialize last action to garbage value
 
     def reset(self, decomp_idx):
-        EasyButtonsEnv.red_pressed = False
+        EasyButtonsEnv.a2_red_pressed = False
+        EasyButtonsEnv.a3_red_pressed = False
         EasyButtonsEnv.yellow_pressed = False
         EasyButtonsEnv.green_pressed = False
-        EasyButtonsEnv.who_at_red = 0
+        # EasyButtonsEnv.who_at_red = 0
 
         rm_state_array = copy.deepcopy(self.env_settings["initial_rm_states"]) if np.array(self.env_settings["initial_rm_states"]).ndim == 2 else [copy.deepcopy(self.env_settings["initial_rm_states"])]
 
@@ -243,20 +249,14 @@ class EasyButtonsEnv:
 
         # If the appropriate button hasn't yet been pressed, don't allow the agent into the colored region
         if agent_id == 1:
-            if self.u[agent_id] == 1:
-                if (row, col) in self.red_tiles:
-                    s_next = s
-            if self.u[agent_id] == 2:
-                if (row, col) in self.red_tiles:
-                    s_next = s
+            if (row, col) in self.red_tiles and not (EasyButtonsEnv.a2_red_pressed and EasyButtonsEnv.a3_red_pressed):
+                s_next = s
         if agent_id == 2:
-            if self.u[agent_id] == 5:
-                if (row, col) in self.yellow_tiles:
-                    s_next = s
+            if (row, col) in self.yellow_tiles and not EasyButtonsEnv.yellow_pressed:
+                s_next = s
         if agent_id == 3:
-            if self.u[agent_id] == 12:
-                if (row, col) in self.green_tiles:
-                    s_next = s
+            if (row, col) in self.green_tiles and not EasyButtonsEnv.green_pressed:
+                s_next = s
 
         last_action = a_
         return s_next, last_action
@@ -321,3 +321,120 @@ class EasyButtonsEnv:
     #         Index of agent's initial state.
     #     """
     #     return self.s_i
+
+    def show(self, state_dict):
+        """
+        Create a visual representation of the current state of the gridworld.
+
+        Parameters
+        ----------
+        state_dict : dict
+            Dictionary of agent names and their corresponding states.
+        """
+        name_to_num = {
+            "agent_0": 1, 
+            "agent_1": 2, 
+            "agent_2": 3
+        }
+
+        if self.fig is None or self.ax is None:
+            self.fig, self.ax = plt.subplots(figsize=(5, 5))
+        else:
+            self.ax.clear()
+
+        self.ax.set_xlim(0, self.Nc)
+        self.ax.set_ylim(0, self.Nr)
+        self.ax.set_aspect('equal')
+
+        # Draw the grid
+        for x in range(self.Nc + 1):
+            self.ax.axvline(x, color='black', linewidth=0.5)
+        for y in range(self.Nr + 1):
+            self.ax.axhline(y, color='black', linewidth=0.5)
+
+        # Draw the walls
+        for loc in self.env_settings['walls']:
+            rect = patches.Rectangle((loc[1], self.Nr - loc[0] - 1), 1, 1, linewidth=1, edgecolor='black', facecolor='black')
+            self.ax.add_patch(rect)
+
+        # Draw colored tiles
+        tile_colors = {
+            'yellow': mcolors.to_rgba('yellow', 0.6),
+            'green': mcolors.to_rgba('green', 0.6),
+            'red': mcolors.to_rgba('red', 0.6),
+        }
+        for tile, color in zip([self.yellow_tiles, self.green_tiles, self.red_tiles], ['yellow', 'green', 'red']):
+            for loc in tile:
+                rect = patches.Rectangle((loc[1], self.Nr - loc[0] - 1), 1, 1, linewidth=1, edgecolor='black', facecolor=tile_colors[color])
+                self.ax.add_patch(rect)
+
+        # Draw buttons
+        button_colors = {
+            'yb': 'yellow',
+            'gb': 'green',
+            'rb': 'red'
+        }
+        for button in ['yellow_button', 'green_button', 'red_button']:
+            loc = self.env_settings[button]
+            temp = button.split('_')
+            color = button_colors[temp[0][0] + temp[1][0]]
+            rect = patches.Rectangle((loc[1], self.Nr - loc[0] - 1), 1, 1, linewidth=2, edgecolor='black', facecolor=color)
+            self.ax.add_patch(rect)
+
+        # Draw the goal location
+        loc = self.env_settings['goal_location']
+        rect = patches.Rectangle((loc[1], self.Nr - loc[0] - 1), 1, 1, linewidth=2, edgecolor='black', facecolor='blue')
+        self.ax.add_patch(rect)
+
+        # Draw the agents
+        for agent in state_dict:
+            row, col = self.get_state_description(state_dict[agent])
+            rect = patches.Rectangle((col, self.Nr - row - 1), 1, 1, linewidth=1, edgecolor='black', facecolor='grey')
+            self.ax.add_patch(rect)
+
+        self.ax.set_xticks([])
+        self.ax.set_yticks([])
+        plt.pause(0.0001)
+
+        
+        # name_to_num = {
+        #     "agent_0": 1, 
+        #     "agent_1": 2, 
+        #     "agent_2": 3
+        # }
+
+        # # Draw the agents
+        # for agent in state_dict:
+        #     row, col = self.get_state_description(state_dict[agent])
+        #     rect = patches.Rectangle((col, self.Nr - row - 1), 1, 1, linewidth=1, edgecolor='black', facecolor='grey')
+        #     self.ax.add_patch(rect)
+
+        # self.ax.set_xticks([])
+        # self.ax.set_yticks([])
+        # plt.draw()
+        # plt.pause(0.01)
+        # plt.close()
+
+
+        # name_to_num = {
+        #     "agent_0": 1, 
+        #     "agent_1":2, 
+        #     "agent_2":3
+        # }
+        # display = np.zeros((self.Nr, self.Nc))
+        
+        # # Display the locations of the walls
+        # for loc in self.env_settings['walls']:
+        #     display[loc] = -1
+
+        # display[self.env_settings['red_button']] = 9
+        # display[self.env_settings['green_button']] = 9
+        # display[self.env_settings['yellow_button']] = 9
+        # display[self.env_settings['goal_location']] = 9
+
+        # # Display the location of the agent in the world
+        # for agent in state_dict:
+        #     row, col = self.get_state_description(state_dict[agent])
+        #     display[row,col] = name_to_num[agent]
+
+        # print(display)

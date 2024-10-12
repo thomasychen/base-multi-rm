@@ -35,6 +35,7 @@ class Manager:
 
         # UCB exploration parameter
         self.ucb_c = 0.69
+        self.ucb_gamma = 0.99
         self.window = 0
         self.window_cnt = 0
 
@@ -111,7 +112,7 @@ class Manager:
             raise Exception("Invalid assignment method")
 
 
-        print("decomp_idx", self.curr_decomp)
+        # print("decomp_idx", self.curr_decomp)
 
         self.total_selections += 1
         
@@ -186,7 +187,7 @@ class Manager:
     ### FOR UCB ###
     def update_rewards(self, reward):
         # Update the total reward for a decomposition after an assignment is completed
-        self.decomp_total_rewards[self.curr_decomp] += reward
+        self.decomp_total_rewards[self.curr_decomp] = self.decomp_total_rewards[self.curr_decomp] * self.ucb_gamma + reward
         self.decomp_curr_rewards = {i: 0.0 for i in range(self.num_decomps)}
         self.decomp_curr_rewards[self.curr_decomp] = reward
     

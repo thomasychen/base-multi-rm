@@ -90,8 +90,7 @@ parser.add_argument('--video', type=str2bool, default=False, help='Turn on gifs 
 # python run.py --assignment_methods ground_truth --num_iterations 1 --wandb t --timesteps 1000000 --decomposition_file aux_buttons.txt --experiment_name buttons_challenge --is_monolithic f --env buttons --render f 
 
 # easy buttons
-# python run.py --assignment_methods UCB --num_iterations 1 --wandb f --timesteps 3000000 --decomposition_file aux_buttons.txt --experiment_name easy_buttons --is_monolithic f --env buttons --render f
-# --add_mono_file mono_easy_buttons.txt
+# python run.py --assignment_methods UCB --num_iterations 1 --wandb f --timesteps 3000000 --decomposition_file aux_buttons.txt --experiment_name easy_buttons --is_monolithic f --env buttons --render f --add_mono_file mono_easy_buttons.txt
 
 # python run.py --assignment_methods UCB --num_iterations 1 --wandb t --timesteps 10000 --decomposition_file buttons_decompositions.txt --experiment_name buttons --is_monolithic f --env buttons --render f
 

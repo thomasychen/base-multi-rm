@@ -134,6 +134,10 @@ class ButtonsProductEnv(ParallelEnv):
                     if label in self.reward_machine.delta_u[self.rm_states[curr_agent]]:
                         all_labels.append(label)
 
+        # if 'g' in all_labels:
+        #     import pdb; pdb.set_trace()
+            # print(all_labels, "\n\n")
+                  
         if "bg" in all_labels and self.test:
             print("\n\n\nYAYYYY\n\n\n")
             
@@ -310,11 +314,14 @@ class ButtonsProductEnv(ParallelEnv):
 
         # import pdb; pdb.set_trace()
         # observations = {i: self.flatten_and_add_rm(self.mdp_states[i], self.rm_states[i]) for i in self.agents}
+        if self.render_mode == "human":
+            self.render()
+        
 
         return observations, rewards, terminations, truncations, infos
 
     def render(self):
-        return NotImplementedError
+        self.labeled_mdp.show(self.mdp_states)
 
     def observation_space(self, agent):
         # return self.observation_spaces[agent]

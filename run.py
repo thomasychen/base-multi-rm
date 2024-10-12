@@ -178,7 +178,11 @@ if __name__ == "__main__":
                 run_config = yaml.safe_load(file)
 
             print(run_config)
+
+            if args.decomposition_file.split("_")[0] != "mono":
+                raise Exception("ERROR: ONLY PROVIDE MONOLITHIC RMS FOR RUNS")
             train_rm = SparseRewardMachine(f"reward_machines/{args.env}/{args.experiment_name}/{args.decomposition_file}")
+            train_rm.is_monolithic = True
             mono_rm = SparseRewardMachine(f"reward_machines/{args.env}/{args.experiment_name}/{args.add_mono_file}") if args.add_mono_file != "None" else None
             if mono_rm is not None:
                 mono_rm.is_monolithic = True
@@ -191,7 +195,7 @@ if __name__ == "__main__":
                 for idx, req in enumerate(run_config["required_events"]):
                     required[idx] = req
                 new_initial_rm_states = []
-                train_rm, rm_initial_states = generate_rm_decompositions(mono_rm, run_config['num_agents'], top_k=args.num_candidates, enforced_dict=required, forbidden_dict=forbidden)
+                train_rm, rm_initial_states = generate_rm_decompositions(train_rm, run_config['num_agents'], top_k=args.num_candidates, enforced_dict=required, forbidden_dict=forbidden)
                 for rm in rm_initial_states:
                     istates = []
                     for agentidx in range(run_config['num_agents']):

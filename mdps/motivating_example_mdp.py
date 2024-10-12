@@ -38,8 +38,8 @@ class MotivatingButtonsEnv:
         env_settings = copy.deepcopy(env_config)
         env_settings['Nr'] = 7
         env_settings['Nc'] = 12
-        # env_settings['initial_states'] = [13, 16, 77]
-        env_settings['initial_states'] = [0, 1, 2]
+        env_settings['initial_states'] = [13, 16, 77]
+        # env_settings['initial_states'] = [0, 1, 2]
 
         env_settings['walls'] = [(5, 1), (5, 2), (5, 3), (5, 4), (5, 5), (5, 6),
                                  (4, 6),

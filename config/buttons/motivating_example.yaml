@@ -1,8 +1,7 @@
 num_agents: 3
 max_episode_length: 100
-initial_mdp_states: [0, 1, 2]
+initial_mdp_states: [13, 16, 77]
 initial_rm_states:
-  - [1, 5, 12]
 #   # - [1,2,3] # monolithic trial start states
 gamma: 0.95
 learning_rate: 0.0005

@@ -328,6 +328,9 @@ class ButtonsProductEnv(ParallelEnv):
         if self.video and (env_truncation or all(terminations.values())):
             self.send_animation()
 
+
+        for k in rewards:
+            rewards[k] = max(0, rewards[k])
         return observations, rewards, terminations, truncations, infos
 
     def render(self):

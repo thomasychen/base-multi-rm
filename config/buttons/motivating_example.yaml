@@ -1,16 +1,16 @@
 num_agents: 3
-max_episode_length: 100
+max_episode_length: 400
 initial_mdp_states: [13, 16, 77]
 initial_rm_states:
 #   # - [1,2,3] # monolithic trial start states
-gamma: 0.95
+gamma: 0.99
 learning_rate: 0.0005
 vf_coef: 10
 max_grad_norm: 10
 target_kl: 0.05
 ent_coef: 0.1
 labeled_mdp_class: "MotivatingExampleLabeled"
-eval_freq: 5000
+eval_freq: 10000
 forbidden_events:
   - ['a2hq', '!a2hq', 'a3hq', '!a3hq']
   - ['a1hq', '!a1hq', 'a3hq', '!a3hq']

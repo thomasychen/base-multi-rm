@@ -100,6 +100,7 @@ parser.add_argument('--video', type=str2bool, default=False, help='Turn on gifs 
 
 # motivating example ATAD
 # python run.py --assignment_methods UCB --num_iterations 1 --wandb f --timesteps 3000000 --decomposition_file mono_motivating_example.txt --env buttons --experiment_name motivating_example --num_candidates 3 --is_monolithic f --add_mono_file mono_motivating_example.txt --render t
+# python run.py --assignment_methods UCB --num_iterations 1 --wandb f --timesteps 3000000 --decomposition_file mono_motivating_example.txt --env buttons --experiment_name motivating_example --num_candidates 3 --is_monolithic f --add_mono_file mono_motivating_example.txt --render t
 
 ########### buttons ###########
 

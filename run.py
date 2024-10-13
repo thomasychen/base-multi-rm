@@ -150,14 +150,24 @@ if __name__ == "__main__":
     os.makedirs(log_dir_base, exist_ok=True)
     for method in assignment_methods:
 
-        method_log_dir_base = os.path.join(log_dir_base, f"{method}")
+        with open(f'config/{args.env}/{args.experiment_name}.yaml', 'r') as file:
+            run_config = yaml.safe_load(file)
+
+        candidates = args.num_candidates
+        mono_string = "mono_off"
+        if args.add_mono_file != "None":
+            mono_string = "mono_on"
+        
+        experiment_name = args.experiment_name # buttons or overcooked
+        ucb_param = run_config['ucb_c'] if "ucb_c" in run_config else 1.5
+        
+        local_dir_name = f"{experiment_name}_{method}_{ucb_param}_{candidates}_candidates_{mono_string}"
+
+        method_log_dir_base = os.path.join(log_dir_base, f"{local_dir_name}")
         os.makedirs(method_log_dir_base, exist_ok=True)
 
         for i in range(1, args.num_iterations + 1):
             set_random_seed(i)
-
-            with open(f'config/{args.env}/{args.experiment_name}.yaml', 'r') as file:
-                run_config = yaml.safe_load(file)
 
             if args.wandb:
                 experiment = "test_pettingzoo_sb3"
@@ -168,15 +178,6 @@ if __name__ == "__main__":
                 }
 
                 wandb_timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-                # method, num candidates, add_mono, experiment
-                # ucb value default is 1.5
-                candidates = args.num_candidates
-                mono_string = "mono_off"
-                if args.add_mono_file != "None":
-                    mono_string = "mono_on"
-                
-                experiment_name = args.experiment_name # buttons or overcooked
-                ucb_param = run_config['ucb_c'] if "ucb_c" in run_config else 1.5
 
                 run_name = f"{experiment_name}_{method}_{ucb_param}_iteration_{i}_{candidates}_candidates_{mono_string}_{wandb_timestamp}"
 

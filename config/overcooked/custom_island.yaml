@@ -16,3 +16,4 @@ labeled_mdp_class: "OvercookedCustomIslandLabeled"
 max_episode_length: 400
 eval_freq: 40000
 gamma: 0.96
+ucb_c: 0.7

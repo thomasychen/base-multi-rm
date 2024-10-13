@@ -91,7 +91,7 @@ parser.add_argument('--video', type=str2bool, default=False, help='Turn on gifs 
 # python run.py --assignment_methods ground_truth --num_iterations 1 --wandb t --timesteps 1000000 --decomposition_file aux_buttons.txt --experiment_name buttons_challenge --is_monolithic f --env buttons --render f 
 
 # easy buttons
-# python run.py --assignment_methods UCB --num_iterations 1 --wandb f --timesteps 3000000 --decomposition_file aux_buttons.txt --experiment_name easy_buttons --is_monolithic f --env buttons --render f --add_mono_file mono_easy_buttons.txt
+# python run.py --assignment_methods UCB --num_iterations 1 --wandb t --timesteps 3000000 --decomposition_file mono_easy_buttons.txt --experiment_name easy_buttons --is_monolithic f --env buttons --render f --add_mono_file mono_easy_buttons.txt --num_candidates 3
 
 # python run.py --assignment_methods UCB --num_iterations 1 --wandb t --timesteps 10000 --decomposition_file buttons_decompositions.txt --experiment_name buttons --is_monolithic f --env buttons --render f
 
@@ -156,6 +156,9 @@ if __name__ == "__main__":
         for i in range(1, args.num_iterations + 1):
             set_random_seed(i)
 
+            with open(f'config/{args.env}/{args.experiment_name}.yaml', 'r') as file:
+                run_config = yaml.safe_load(file)
+
             if args.wandb:
                 experiment = "test_pettingzoo_sb3"
                 config = {
@@ -165,7 +168,17 @@ if __name__ == "__main__":
                 }
 
                 wandb_timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-                run_name = f"{method}_iteration_{i}_{wandb_timestamp}"
+                # method, num candidates, add_mono, experiment
+                # ucb value default is 1.5
+                candidates = args.num_candidates
+                mono_string = "mono_off"
+                if args.add_mono_file != "None":
+                    mono_string = "mono_on"
+                
+                experiment_name = args.experiment_name # buttons or overcooked
+                ucb_param = run_config['ucb_c'] if "ucb_c" in run_config else 1.5
+
+                run_name = f"{experiment_name}_{method}_{ucb_param}_iteration_{i}_{candidates}_candidates_{mono_string}_{wandb_timestamp}"
 
                 run = wandb.init(
                     project=experiment,
@@ -175,12 +188,12 @@ if __name__ == "__main__":
                     name=run_name
                 )
 
-            with open(f'config/{args.env}/{args.experiment_name}.yaml', 'r') as file:
-                run_config = yaml.safe_load(file)
+
 
             print(run_config)
 
-            if args.decomposition_file.split("_")[0] != "mono":
+            # print("TEST", args.decomposition_file.split("_")[0])
+            if args.decomposition_file.split("_")[0] != "mono" and args.decomposition_file.split("_")[0] != "individual":
                 raise Exception("ERROR: ONLY PROVIDE MONOLITHIC RMS FOR RUNS")
             train_rm = SparseRewardMachine(f"reward_machines/{args.env}/{args.experiment_name}/{args.decomposition_file}")
             train_rm.is_monolithic = True
@@ -205,7 +218,7 @@ if __name__ == "__main__":
                 run_config["initial_rm_states"] = new_initial_rm_states
                 train_rm.find_max_subgraph_size_and_assign_subtasks()
                 # import pdb; pdb.set_trace()
-            manager = Manager(num_agents=run_config['num_agents'], num_decomps = len(run_config["initial_rm_states"]),assignment_method=method, wandb=args.wandb, seed = i)
+            manager = Manager(num_agents=run_config['num_agents'], num_decomps = len(run_config["initial_rm_states"]),assignment_method=method, wandb=args.wandb, seed = i, ucb_c=ucb_param)
             render_mode = "human" if args.render else None
             run_config["render_mode"] = render_mode
 

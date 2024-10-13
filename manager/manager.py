@@ -8,7 +8,7 @@ import wandb
 import math
 
 class Manager:
-    def __init__(self, num_agents, num_decomps=1, assignment_method = "ground_truth", model=None, wandb=False, seed=None):
+    def __init__(self, num_agents, num_decomps=1, assignment_method = "ground_truth", model=None, wandb=False, seed=None, ucb_c=1.5):
         if seed:
             random.seed(seed)
         
@@ -34,7 +34,7 @@ class Manager:
         self.total_selections = 0
 
         # UCB exploration parameter
-        self.ucb_c = 0.69
+        self.ucb_c = ucb_c
         self.ucb_gamma = 0.99
         self.window = 0
         self.window_cnt = 0

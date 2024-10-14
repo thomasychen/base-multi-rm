@@ -54,7 +54,7 @@ def generate_rm_decompositions(monolithic_rm: SparseRewardMachine, num_agents: i
         _type_: _description_
     """
     incompatible_pairs = []
-    weights = [1, .5, 0]
+    weights = [2, .5, 0]
     configs = Configurations(num_agents, monolithic_rm, enforced_set = enforced_dict, forbidden_set = forbidden_dict, weights = weights, incompatible_pairs= incompatible_pairs)
     root = Node(name = 'root', future_events = configs.future_events, all_events= configs.all_events, knapsack = configs.forbidden_set) #forbidden set is the starting knapsack
     bd = root.traverse_last_minute_change(configs, num_solutions=top_k)

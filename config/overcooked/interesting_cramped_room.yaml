@@ -16,3 +16,4 @@ max_episode_length: 500
 eval_freq: 10000
 gamma: 0.98
 ucb_c: 0.7
+ent_coef: 0.01

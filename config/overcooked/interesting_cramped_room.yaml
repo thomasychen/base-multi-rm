@@ -13,6 +13,6 @@ required_events:
   - ['c']
 labeled_mdp_class: "OvercookedInterestingCrampedLabeled"
 max_episode_length: 500
-eval_freq: 40000
+eval_freq: 10000
 gamma: 0.98
 ucb_c: 0.7

@@ -85,6 +85,8 @@ parser.add_argument('--env', type=str, default="buttons", help="Specify between 
 parser.add_argument('--add_mono_file', type=str, default="None", help="Provide a monolithic file for global statekeeping along with a decomposed strategy")
 parser.add_argument('--render', type=str2bool, default=False, help='Enable rendering during training. Default is off')
 parser.add_argument('--video', type=str2bool, default=False, help='Turn on gifs for eval')
+parser.add_argument('--seed', type=int, default=-1, help='Seed the runs')
+
 
 ########### buttons ###########
 # challenge buttons
@@ -167,7 +169,8 @@ if __name__ == "__main__":
         os.makedirs(method_log_dir_base, exist_ok=True)
 
         for i in range(1, args.num_iterations + 1):
-            set_random_seed(i)
+            curr_seed = int(args.seed) if int(args.seed) != -1 else i
+            set_random_seed(curr_seed)    
 
             if args.wandb:
                 experiment = "test_pettingzoo_sb3"
@@ -193,7 +196,7 @@ if __name__ == "__main__":
 
             print(run_config)
 
-            # print("TEST", args.decomposition_file.split("_")[0])
+            print("TEST", args.decomposition_file.split("_")[0])
             if args.decomposition_file.split("_")[0] != "mono" and args.decomposition_file.split("_")[0] != "individual":
                 raise Exception("ERROR: ONLY PROVIDE MONOLITHIC RMS FOR RUNS")
             train_rm = SparseRewardMachine(f"reward_machines/{args.env}/{args.experiment_name}/{args.decomposition_file}")
@@ -219,7 +222,7 @@ if __name__ == "__main__":
                 run_config["initial_rm_states"] = new_initial_rm_states
                 train_rm.find_max_subgraph_size_and_assign_subtasks()
                 # import pdb; pdb.set_trace()
-            manager = Manager(num_agents=run_config['num_agents'], num_decomps = len(run_config["initial_rm_states"]),assignment_method=method, wandb=args.wandb, seed = i, ucb_c=ucb_param)
+            manager = Manager(num_agents=run_config['num_agents'], num_decomps = len(run_config["initial_rm_states"]),assignment_method=method, wandb=args.wandb, seed = curr_seed, ucb_c=ucb_param)
             render_mode = "human" if args.render else None
             run_config["render_mode"] = render_mode
 

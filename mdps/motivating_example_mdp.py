@@ -66,9 +66,6 @@ class MotivatingButtonsEnv:
         self._load_map()
         self.fig, self.ax = None, None
 
-        # self.u = self.reward_machine.get_initial_state()
-        # self.last_action = -1 # Initialize last action to garbage value
-
     def reset(self, *args):
         MotivatingButtonsEnv.in_hazard = None
         MotivatingButtonsEnv.signal = False
@@ -269,20 +266,6 @@ class MotivatingButtonsEnv:
         """
         return self.actions
 
-    # def get_last_action(self):
-    #     """
-    #     Returns agent's last action
-    #     """
-    #     return self.last_action
-
-    # def get_initial_state(self):
-    #     """
-    #     Outputs
-    #     -------
-    #     s_i : int
-    #         Index of agent's initial state.
-    #     """
-    #     return self.s_i
 
     def show(self, state_dict, show_plot = True):
         """

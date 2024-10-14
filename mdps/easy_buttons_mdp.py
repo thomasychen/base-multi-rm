@@ -57,9 +57,6 @@ class EasyButtonsEnv:
         self._load_map()
         self.fig, self.ax = None, None
 
-        # self.u = self.reward_machine.get_initial_state()
-        # self.last_action = -1 # Initialize last action to garbage value
-
     def reset(self, decomp_idx):
         EasyButtonsEnv.a2_red_pressed = False
         EasyButtonsEnv.a3_red_pressed = False
@@ -70,7 +67,6 @@ class EasyButtonsEnv:
         rm_state_array = copy.deepcopy(self.env_settings["initial_rm_states"]) if np.array(self.env_settings["initial_rm_states"]).ndim == 2 else [copy.deepcopy(self.env_settings["initial_rm_states"])]
 
         EasyButtonsEnv.u = {i+1:rm_state_array[decomp_idx][i] for i in range(len(self.env_settings["initial_states"]))}
-        # print(self.u)
 
     def _load_map(self):
         """
@@ -135,53 +131,6 @@ class EasyButtonsEnv:
         s_next, _ = self.get_next_state(s,a, agent_id)
 
         return s_next
-    
-    # def get_mdp_label(self, s, s_next, u):
-    #     """
-    #     Return the label of the next environment state and current RM state.
-    #     """
-    #     row, col = self.get_state_description(s_next)
-
-    #     l = []
-
-    #     thresh = 0.3 #0.3
-
-    #     if self.agent_id == 1:
-    #         if u == 0:
-    #             if (row, col) == self.env_settings['yellow_button']:
-    #                 l.append('by')
-    #         if u == 1:
-    #             if np.random.random() <= thresh:
-    #                 l.append('br')
-    #         if u == 2:
-    #             if (row, col) == self.env_settings['goal_location']:
-    #                 l.append('g')
-    #     elif self.agent_id == 2:
-    #         if u == 0:
-    #             if np.random.random() <= thresh:
-    #                 l.append('by')
-    #         if u == 1 and (row,col) == self.env_settings['green_button']:
-    #             l.append('bg')
-    #         if u == 2 and (row,col) == self.env_settings['red_button']:
-    #             l.append('a2br')
-    #         if u == 3: 
-    #             if not((row,col) == self.env_settings['red_button']):
-    #                 l.append('a2lr')
-    #             elif np.random.random() <= thresh:
-    #                 l.append('br')
-    #     elif self.agent_id == 3:
-    #         if u == 0:
-    #             if np.random.random() <= thresh:
-    #                 l.append('bg')
-    #         if u == 1 and (row,col) == self.env_settings['red_button']:
-    #             l.append('a3br')
-    #         if u == 2: 
-    #             if not((row,col) == self.env_settings['red_button']):
-    #                 l.append('a3lr')
-    #             elif np.random.random() <= thresh:
-    #                 l.append('br')
-
-    #     return l
 
     def get_next_state(self, s, a, agent_id):
         """
@@ -394,48 +343,6 @@ class EasyButtonsEnv:
             plt.pause(0.00001)
 
         
-        # name_to_num = {
-        #     "agent_0": 1, 
-        #     "agent_1": 2, 
-        #     "agent_2": 3
-        # }
-
-        # # Draw the agents
-        # for agent in state_dict:
-        #     row, col = self.get_state_description(state_dict[agent])
-        #     rect = patches.Rectangle((col, self.Nr - row - 1), 1, 1, linewidth=1, edgecolor='black', facecolor='grey')
-        #     self.ax.add_patch(rect)
-
-        # self.ax.set_xticks([])
-        # self.ax.set_yticks([])
-        # plt.draw()
-        # plt.pause(0.01)
-        # plt.close()
-
-
-        # name_to_num = {
-        #     "agent_0": 1, 
-        #     "agent_1":2, 
-        #     "agent_2":3
-        # }
-        # display = np.zeros((self.Nr, self.Nc))
-        
-        # # Display the locations of the walls
-        # for loc in self.env_settings['walls']:
-        #     display[loc] = -1
-
-        # display[self.env_settings['red_button']] = 9
-        # display[self.env_settings['green_button']] = 9
-        # display[self.env_settings['yellow_button']] = 9
-        # display[self.env_settings['goal_location']] = 9
-
-        # # Display the location of the agent in the world
-        # for agent in state_dict:
-        #     row, col = self.get_state_description(state_dict[agent])
-        #     display[row,col] = name_to_num[agent]
-
-        # print(display)
-
     def animate(self, state_dicts, filename):
         """
         Create a GIF animation of the gridworld over a sequence of states.

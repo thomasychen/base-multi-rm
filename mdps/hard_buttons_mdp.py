@@ -41,13 +41,8 @@ class HardButtonsEnv():
         env_settings['p'] = 0.98
         self.env_settings = env_settings
         self.p = env_settings["p"]
-        # self.agent_id = agent_id
         self._load_map()
-        # self.reward_machine = ManagedSparseRewardMachine(rm_file)
-        # self.u = initial_rm_states[self.agent_id-1]
 
-        # self.u = self.reward_machine.get_initial_state()
-        # self.last_action = -1 # Initialize last action to garbage value
 
     def _load_map(self):
         """
@@ -56,11 +51,7 @@ class HardButtonsEnv():
         self.Nr = self.env_settings['Nr']
         self.Nc = self.env_settings['Nc']
 
-        # initial_states = self.env_settings['initial_states']
-
-        # self.s_i = initial_states[self.agent_id]
         self.objects = {}
-        # self.objects[self.env_settings['goal_location']] = "g" # goal location
         self.objects[self.env_settings['yellow_button']] = 'yb'
         self.objects[self.env_settings['green_button']] = 'gb'
         self.objects[self.env_settings['red_button']] = 'rb'
@@ -107,42 +98,8 @@ class HardButtonsEnv():
             Index of next state.
         """
         s_next, last_action = self.get_next_state(s,a)
-        # self.last_action = last_action
-
-        # l = self.get_mdp_label(s, s_next, self.u)
-        # r = 0
-
-        # for e in l:
-        #     # Get the new reward machine state and the reward of this step
-        #     u2 = self.reward_machine.get_next_state(self.u, e)
-        #     r = r + self.reward_machine.get_reward(self.u, u2)
-        #     # Update the reward machine state
-        #     self.u = u2
 
         return s_next
-        # return r, l, s_next
-
-    # def get_mdp_label(self, s, s_next, u):
-    #     """
-    #     Return the label of the next environment state and current RM state.
-    #     """
-    #     row, col = self.get_state_description(s_next)
-
-    #     l = []
-
-    #     thresh = 0.3 #0.3
-
-    #     if u == 1:
-    #         if (row, col) == self.env_settings['yellow_button']:
-    #             l.append('by')
-    #     if u == 3:
-    #         if (row, col) == self.env_settings['green_button']:
-    #             l.append('bg')
-    #     if u == 5:
-    #         if (row, col) == self.env_settings['red_button']:
-    #             l.append('br')
-
-    #     return l
 
     def get_next_state(self, s, a):
         """
@@ -258,22 +215,6 @@ class HardButtonsEnv():
         """
         return self.actions
 
-    # def get_last_action(self):
-    #     """
-    #     Returns agent's last action
-    #     """
-    #     return self.last_action
-
-    # def get_initial_state(self, agent_idx):
-    #     """
-    #     Outputs
-    #     -------
-    #     s_i : int
-    #         Index of agent's initial state.
-    #     """
-    #     return self.env_settings["initial_states"]
-        
-
     def show(self, s):
         """
         Create a visual representation of the current state of the gridworld.
@@ -292,10 +233,8 @@ class HardButtonsEnv():
         display[self.env_settings['red_button']] = 9
         display[self.env_settings['green_button']] = 9
         display[self.env_settings['yellow_button']] = 9
-        # display[self.env_settings['goal_location']] = 9
 
         # Display the location of the agent in the world
         row, col = self.get_state_description(s)
-        # display[row,col] = self.agent_id
 
         print(display)

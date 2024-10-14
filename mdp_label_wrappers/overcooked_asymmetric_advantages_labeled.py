@@ -40,19 +40,13 @@ class OvercookedAsymmetricAdvantagesLabeled(MDP_Labeler):
             return None
         
     def has_soup(self, obs):
-        # 
         if self.any_elem(obs[21], 1, set([(2, 4), (3, 4)])):
             return "p"
         return None
         
     def get_mdp_label(self, s_next, reward, *args):
-        """
-        TODO: IMPLEMENT
-        Return the label of the next environment state and current RM state.
-        """
         l = []
         old_obs = self.jax_env.get_obs(s_next)
-        # import pdb; pdb.set_trace()
         obs = old_obs["agent_0"]
         obs = obs.transpose(2, 0, 1)
 
@@ -64,19 +58,10 @@ class OvercookedAsymmetricAdvantagesLabeled(MDP_Labeler):
         # For soup plated
         soup = self.has_soup(obs)
         if soup:
-            # import pdb; pdb.set_trace()
             l.append(soup)
         # For dish done
         if reward["agent_0"] > 0:
-            # import pdb; pdb.set_trace()
             l.append("d")
-
-        # self.jax_env.get_obs(s_next)
-        # o: 16
-        # p: 21
-        # d: reward > 0
-        # return real_mdp_state, label
-        # TODO Masking state + early terminate environment
         
         old_obs = self.trim_observation(old_obs)
         return old_obs, l

@@ -10,10 +10,11 @@ max_grad_norm: 0.5
 target_kl: 0.1
 ent_coef: 0.1
 labeled_mdp_class: "ChallengeButtonsLabeled"
-eval_freq: 10000
+eval_freq: 5000
 forbidden_events:
   - []
   - []
 required_events:
   - []
   - []
+ucb_c: 0.7

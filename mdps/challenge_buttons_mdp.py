@@ -33,14 +33,6 @@ class ChallengeButtonsEnv():
         env_settings = copy.deepcopy(env_config)
         env_settings['Nr'] = 10
         env_settings['Nc'] = 10
-        # env_settings['initial_states'] = [0, 5, 9]
-        # env_settings['walls'] = [(0, 2), (1, 2), (3, 2),
-        #                             (1,4), (2,4), (3,4), (4,4), (5,4),(6,4), (7,4),
-        #                             (4, 2), (4, 3),
-        #                             (1, 6), (2, 6), (3,6), (4, 6), (4, 7), (5,7), (6,7)]
-        # env_settings['yellow_button'] = (6,2)
-        # env_settings['green_button'] = (5,6)
-        # env_settings['red_button'] = (5,9)
 
         env_settings['walls'] = [
                 (3, 3), (3, 4), (3, 5), (3, 6), (3, 7),
@@ -58,15 +50,8 @@ class ChallengeButtonsEnv():
         env_settings['p'] = 0.98
         self.env_settings = env_settings
         self.p = env_settings["p"]
-        # self.agent_id = agent_id
         self._load_map()
         self.fig, self.ax = None, None
-
-        # self.reward_machine = ManagedSparseRewardMachine(rm_file)
-        # self.u = initial_rm_states[self.agent_id-1]
-
-        # self.u = self.reward_machine.get_initial_state()
-        # self.last_action = -1 # Initialize last action to garbage value
 
     def _load_map(self):
         """
@@ -74,12 +59,7 @@ class ChallengeButtonsEnv():
         """
         self.Nr = self.env_settings['Nr']
         self.Nc = self.env_settings['Nc']
-
-        # initial_states = self.env_settings['initial_states']
-
-        # self.s_i = initial_states[self.agent_id]
         self.objects = {}
-        # self.objects[self.env_settings['goal_location']] = "g" # goal location
         self.objects[self.env_settings['yellow_button']] = 'yb'
         self.objects[self.env_settings['green_button']] = 'gb'
         self.objects[self.env_settings['red_button']] = 'rb'
@@ -127,43 +107,9 @@ class ChallengeButtonsEnv():
             Index of next state.
         """
         s_next, last_action = self.get_next_state(s,a)
-        # self.last_action = last_action
-
-        # l = self.get_mdp_label(s, s_next, self.u)
-        # r = 0
-
-        # for e in l:
-        #     # Get the new reward machine state and the reward of this step
-        #     u2 = self.reward_machine.get_next_state(self.u, e)
-        #     r = r + self.reward_machine.get_reward(self.u, u2)
-        #     # Update the reward machine state
-        #     self.u = u2
 
         return s_next
-        # return r, l, s_next
-
-    # def get_mdp_label(self, s, s_next, u):
-    #     """
-    #     Return the label of the next environment state and current RM state.
-    #     """
-    #     row, col = self.get_state_description(s_next)
-
-    #     l = []
-
-    #     thresh = 0.3 #0.3
-
-    #     if u == 1:
-    #         if (row, col) == self.env_settings['yellow_button']:
-    #             l.append('by')
-    #     if u == 3:
-    #         if (row, col) == self.env_settings['green_button']:
-    #             l.append('bg')
-    #     if u == 5:
-    #         if (row, col) == self.env_settings['red_button']:
-    #             l.append('br')
-
-    #     return l
-
+       
     def get_next_state(self, s, a):
         """
         Get the next state in the environment given action a is taken from state s.
@@ -278,21 +224,7 @@ class ChallengeButtonsEnv():
         """
         return self.actions
 
-    # def get_last_action(self):
-    #     """
-    #     Returns agent's last action
-    #     """
-    #     return self.last_action
 
-    # def get_initial_state(self, agent_idx):
-    #     """
-    #     Outputs
-    #     -------
-    #     s_i : int
-    #         Index of agent's initial state.
-    #     """
-    #     return self.env_settings["initial_states"]
-        
 
     def show(self, state_dict, show_plot = True):
         """
@@ -324,17 +256,6 @@ class ChallengeButtonsEnv():
             rect = patches.Rectangle((loc[1], self.Nr - loc[0] - 1), 1, 1, linewidth=1, edgecolor='black', facecolor='black')
             self.ax.add_patch(rect)
 
-        # # Draw colored tiles
-        # tile_colors = {
-        #     'yellow': mcolors.to_rgba('yellow', 0.6),
-        #     'green': mcolors.to_rgba('green', 0.6),
-        #     'red': mcolors.to_rgba('red', 0.6),
-        # }
-        # for tile, color in zip([self.yellow_tiles, self.green_tiles, self.red_tiles], ['yellow', 'green', 'red']):
-        #     for loc in tile:
-        #         rect = patches.Rectangle((loc[1], self.Nr - loc[0] - 1), 1, 1, linewidth=1, edgecolor='black', facecolor=tile_colors[color])
-        #         self.ax.add_patch(rect)
-
         # Draw buttons
         button_colors = {
             'yb': 'yellow',
@@ -348,11 +269,6 @@ class ChallengeButtonsEnv():
             color = button_colors[temp[0][0] + temp[1][0]]
             rect = patches.Rectangle((loc[1], self.Nr - loc[0] - 1), 1, 1, linewidth=2, edgecolor='black', facecolor=color)
             self.ax.add_patch(rect)
-
-        # Draw the goal location
-        # loc = self.env_settings['goal_location']
-        # rect = patches.Rectangle((loc[1], self.Nr - loc[0] - 1), 1, 1, linewidth=2, edgecolor='black', facecolor='blue')
-        # self.ax.add_patch(rect)
 
         # Draw the agents
         for agent in state_dict:
@@ -373,7 +289,7 @@ class ChallengeButtonsEnv():
         ----------
         state_dicts : list of dict
             List of dictionaries of agent names and their corresponding states.
-        gif_filename : str
+        filename : str
             Filename for the output GIF file.
         """
         if not self.fig or not self.ax:

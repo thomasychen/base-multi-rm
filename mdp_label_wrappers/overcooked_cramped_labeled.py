@@ -60,8 +60,6 @@ class OvercookedCrampedLabeled(MDP_Labeler):
         obs = old_obs["agent_0"]
         obs = obs.transpose(2, 0, 1)
         
-
-
         # For onions
         onions = self.num_onions(obs)
         if onions:  
@@ -69,30 +67,14 @@ class OvercookedCrampedLabeled(MDP_Labeler):
         # For soup plated
         soup = self.has_soup(obs)
         if soup:
-            # import pdb; pdb.set_trace()
             l.append(soup)
         cooked = self.has_cooked(obs)
         if cooked:
             l.append(cooked)
-        # # for moving agent out of way after placing onions to not obstruct other agent
-        # import pdb; pdb.set_trace()
-        # move0 = #agent 0 is at non-obstructing
-        # if move0 and "move" in :
-        #     l.append("move0")
-        # move1 = #agent 1 is at non-obstructing
-        # if move1:
-        #     l.append("move1")
+
         # For dish done
         if reward["agent_0"] > 0:
-            # import pdb; pdb.set_trace()
             l.append("d")
-
-        # self.jax_env.get_obs(s_next)
-        # o: 16
-        # p: 21
-        # d: reward > 0
-        # return real_mdp_state, label
-        # TODO Masking state + early terminate environment
         
         old_obs = self.trim_observation(old_obs)
         return old_obs, l

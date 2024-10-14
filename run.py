@@ -85,13 +85,15 @@ parser.add_argument('--env', type=str, default="buttons", help="Specify between 
 parser.add_argument('--add_mono_file', type=str, default="None", help="Provide a monolithic file for global statekeeping along with a decomposed strategy")
 parser.add_argument('--render', type=str2bool, default=False, help='Enable rendering during training. Default is off')
 parser.add_argument('--video', type=str2bool, default=False, help='Turn on gifs for eval')
+parser.add_argument('--seed', type=int, default=-1, help='Seed the runs')
+
 
 ########### buttons ###########
 # challenge buttons
 # python run.py --assignment_methods ground_truth --num_iterations 1 --wandb t --timesteps 1000000 --decomposition_file aux_buttons.txt --experiment_name buttons_challenge --is_monolithic f --env buttons --render f 
 
 # easy buttons
-# python run.py --assignment_methods UCB --num_iterations 1 --wandb f --timesteps 3000000 --decomposition_file aux_buttons.txt --experiment_name easy_buttons --is_monolithic f --env buttons --render f --add_mono_file mono_easy_buttons.txt
+# python run.py --assignment_methods UCB --num_iterations 1 --wandb t --timesteps 3000000 --decomposition_file mono_easy_buttons.txt --experiment_name easy_buttons --is_monolithic f --env buttons --render f --add_mono_file mono_easy_buttons.txt --num_candidates 3
 
 # python run.py --assignment_methods UCB --num_iterations 1 --wandb t --timesteps 10000 --decomposition_file buttons_decompositions.txt --experiment_name buttons --is_monolithic f --env buttons --render f
 
@@ -99,6 +101,7 @@ parser.add_argument('--video', type=str2bool, default=False, help='Turn on gifs 
 # python run.py --assignment_methods UCB --num_iterations 1 --wandb f --timesteps 3000000 --decomposition_file garbage.txt --experiment_name motivating_example --is_monolithic f --env buttons --render t
 
 # motivating example ATAD
+# python run.py --assignment_methods UCB --num_iterations 1 --wandb f --timesteps 3000000 --decomposition_file mono_motivating_example.txt --env buttons --experiment_name motivating_example --num_candidates 3 --is_monolithic f --add_mono_file mono_motivating_example.txt --render t
 # python run.py --assignment_methods UCB --num_iterations 1 --wandb f --timesteps 3000000 --decomposition_file mono_motivating_example.txt --env buttons --experiment_name motivating_example --num_candidates 3 --is_monolithic f --add_mono_file mono_motivating_example.txt --render t
 
 ########### buttons ###########
@@ -149,11 +152,25 @@ if __name__ == "__main__":
     os.makedirs(log_dir_base, exist_ok=True)
     for method in assignment_methods:
 
-        method_log_dir_base = os.path.join(log_dir_base, f"{method}")
+        with open(f'config/{args.env}/{args.experiment_name}.yaml', 'r') as file:
+            run_config = yaml.safe_load(file)
+
+        candidates = args.num_candidates
+        mono_string = "mono_off"
+        if args.add_mono_file != "None":
+            mono_string = "mono_on"
+        
+        experiment_name = args.experiment_name # buttons or overcooked
+        ucb_param = run_config['ucb_c'] if "ucb_c" in run_config else 1.5
+        
+        local_dir_name = f"{experiment_name}_{method}_{ucb_param}_{candidates}_candidates_{mono_string}"
+
+        method_log_dir_base = os.path.join(log_dir_base, f"{local_dir_name}")
         os.makedirs(method_log_dir_base, exist_ok=True)
 
         for i in range(1, args.num_iterations + 1):
-            set_random_seed(i)
+            curr_seed = int(args.seed) if int(args.seed) != -1 else i
+            set_random_seed(curr_seed)    
 
             if args.wandb:
                 experiment = "test_pettingzoo_sb3"
@@ -164,7 +181,8 @@ if __name__ == "__main__":
                 }
 
                 wandb_timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-                run_name = f"{method}_iteration_{i}_{wandb_timestamp}"
+
+                run_name = f"{experiment_name}_{method}_{ucb_param}_iteration_{i}_{candidates}_candidates_{mono_string}_{wandb_timestamp}"
 
                 run = wandb.init(
                     project=experiment,
@@ -174,11 +192,15 @@ if __name__ == "__main__":
                     name=run_name
                 )
 
-            with open(f'config/{args.env}/{args.experiment_name}.yaml', 'r') as file:
-                run_config = yaml.safe_load(file)
+
 
             print(run_config)
+
+            print("TEST", args.decomposition_file.split("_")[0])
+            if args.decomposition_file.split("_")[0] != "mono" and args.decomposition_file.split("_")[0] != "individual":
+                raise Exception("ERROR: ONLY PROVIDE MONOLITHIC RMS FOR RUNS")
             train_rm = SparseRewardMachine(f"reward_machines/{args.env}/{args.experiment_name}/{args.decomposition_file}")
+            train_rm.is_monolithic = True
             mono_rm = SparseRewardMachine(f"reward_machines/{args.env}/{args.experiment_name}/{args.add_mono_file}") if args.add_mono_file != "None" else None
             if mono_rm is not None:
                 mono_rm.is_monolithic = True
@@ -191,7 +213,7 @@ if __name__ == "__main__":
                 for idx, req in enumerate(run_config["required_events"]):
                     required[idx] = req
                 new_initial_rm_states = []
-                train_rm, rm_initial_states = generate_rm_decompositions(mono_rm, run_config['num_agents'], top_k=args.num_candidates, enforced_dict=required, forbidden_dict=forbidden)
+                train_rm, rm_initial_states = generate_rm_decompositions(train_rm, run_config['num_agents'], top_k=args.num_candidates, enforced_dict=required, forbidden_dict=forbidden)
                 for rm in rm_initial_states:
                     istates = []
                     for agentidx in range(run_config['num_agents']):
@@ -200,7 +222,7 @@ if __name__ == "__main__":
                 run_config["initial_rm_states"] = new_initial_rm_states
                 train_rm.find_max_subgraph_size_and_assign_subtasks()
                 # import pdb; pdb.set_trace()
-            manager = Manager(num_agents=run_config['num_agents'], num_decomps = len(run_config["initial_rm_states"]),assignment_method=method, wandb=args.wandb, seed = i)
+            manager = Manager(num_agents=run_config['num_agents'], num_decomps = len(run_config["initial_rm_states"]),assignment_method=method, wandb=args.wandb, seed = curr_seed, ucb_c=ucb_param)
             render_mode = "human" if args.render else None
             run_config["render_mode"] = render_mode
 

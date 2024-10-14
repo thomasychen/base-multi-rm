@@ -14,10 +14,8 @@ WA AB
 WWWXW
 """
 
-        
         self.layout = layout_grid_to_dict(counter_circuit_grid)
         self.jax_env = make('overcooked', layout=self.layout, max_steps=run_config["max_episode_length"])
-        # print(run_config)
         self.render_mode = run_config["render_mode"]
 
         # Because we removed 3 layers
@@ -63,13 +61,8 @@ WWWXW
         
         
     def get_mdp_label(self, s_next, reward, *args):
-        """
-        TODO: IMPLEMENT
-        Return the label of the next environment state and current RM state.
-        """
         l = []
         old_obs = self.jax_env.get_obs(s_next)
-        # import pdb; pdb.set_trace()
         obs = old_obs["agent_0"]
         obs = obs.transpose(2, 0, 1)
 
@@ -80,32 +73,16 @@ WWWXW
             l.append(onions)
         # For soup plated
         soup = self.has_soup(obs)
-        if soup:
-            # import pdb; pdb.set_trace()
-        
+        if soup:        
             l.append(soup)
         cooked = self.has_cooked(obs)
         if cooked:
             l.append(cooked)
-        # # for moving agent out of way after placing onions to not obstruct other agent
-        # import pdb; pdb.set_trace()
-        # move0 = #agent 0 is at non-obstructing
-        # if move0 and "move" in :
-        #     l.append("move0")
-        # move1 = #agent 1 is at non-obstructing
-        # if move1:
-        #     l.append("move1")
+       
         # For dish done
         if reward["agent_0"] > 0:
             l.append("d")
 
-        # self.jax_env.get_obs(s_next)
-        # o: 16
-        # p: 21
-        # d: reward > 0
-        # return real_mdp_state, label
-        # TODO Masking state + early terminate environment
-        
         old_obs = self.trim_observation(old_obs)
         return old_obs, l
 

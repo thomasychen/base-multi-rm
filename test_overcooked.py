@@ -45,18 +45,9 @@ parser.add_argument('--add_mono_file', type=str, default="None", help="Provide a
 
 args = parser.parse_args()
 
-# OVERCOOKED
-# python test_overcooked.py --env overcooked --experiment_name custom_island --decomposition_file aux_custom_island.txt --is_monolithic f --wandb f --render t
-# python test_overcooked.py --env overcooked --experiment_name cramped_room --decomposition_file individual_cramped_room.txt --is_monolithic f --wandb f --render t
-
-# python test_overcooked.py --env overcooked --experiment_name cramped_room --decomposition_file individual_cramped_room.txt --is_monolithic f --wandb f --render t
-
 def run_trained_model(model_path, steps):
-    # Define environment and configuration
     max_steps = 400
 
-    # layout = overcooked_layouts["cramped_room"]
-    # jax_eval_env = make('overcooked', layout=layout, max_steps=max_steps)
     with open(f'config/{args.env}/{args.experiment_name}.yaml', 'r') as file:
         run_config = yaml.safe_load(file)
     manager = Manager(num_agents=run_config['num_agents'], num_decomps = len(run_config["initial_rm_states"]),assignment_method="ground_truth", wandb=args.wandb, seed = 1)
@@ -77,25 +68,6 @@ def run_trained_model(model_path, steps):
                 'addl_mono_rm': mono_rm,
     }
     env = OvercookedProductEnv(**train_kwargs)
-    # env = ss.black_death_v3(env)
-    # env = ss.pettingzoo_env_to_vec_env_v1(env)
-    # env = ss.concat_vec_envs_v1(env, 1, num_cpus=1, base_class="stable_baselines3")
-    # env = VecMonitor(env)
-
-    # OvercookedCustomIslandLabeled
-    # eval_env = ss.black_death_v3(eval_env)
-    # eval_env = ss.pettingzoo_env_to_vec_env_v1(eval_env)
-    # eval_env = ss.concat_vec_envs_v1(eval_env, 1, num_cpus=1, base_class="stable_baselines3")
-    # eval_env = VecMonitor(eval_env)
-
-    # def raw_env(render_mode=None):
-    #     """
-    #     To support the AEC API, the raw_env() function just uses the from_parallel
-    #     function to convert from a ParallelEnv to an AEC env
-    #     """
-    #     # env = parallel_env(render_mode=render_mode)
-    #     env = parallel_to_aec(env)
-    #     return env
 
     env = parallel_to_aec(env)
 
@@ -130,21 +102,6 @@ def run_trained_model(model_path, steps):
     print(f"Avg reward: {avg_reward}")
     print("Avg reward per agent, per game: ", avg_reward_per_agent)
     print("Full rewards: ", rewards)
-    
-    # model.learn(total_timesteps = steps*max_steps)
-    # vec_env = model.get_env() 
-    # obs = vec_env.reset()
-    # obs = eval_env.reset()
-    # for i in range(max_steps):
-    #     action, _states = model.predict(obs, deterministic=True) 
-    #     # print("CURRENT I", i, action)
-    #     obs, rewards, dones, info = eval_env.step(action) 
-    #     eval_env.render("human")
-    # Evaluate the model for the given number of steps
-    # mean_reward, std_reward = evaluate_policy(model, eval_env)
-    
-
-    # print(f"Mean reward: {mean_reward} +/- {std_reward}")
 
 def test_dfa_generation():
     # load in RM
@@ -153,5 +110,3 @@ def test_dfa_generation():
     decomps = generate_rm_decompositions(brm, 3, 2, n_queries=100)
     return decomps
 
-# test_dfa_generation()
-run_trained_model('/Users/thomaschen/base-multi-rm/logs/20241007-231124/UCB/iteration_1/best/best_model.zip', 500)

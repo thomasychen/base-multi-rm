@@ -38,8 +38,8 @@ class MotivatingButtonsEnv:
         env_settings = copy.deepcopy(env_config)
         env_settings['Nr'] = 7
         env_settings['Nc'] = 12
-        # env_settings['initial_states'] = [13, 16, 77]
-        env_settings['initial_states'] = [0, 1, 2]
+        env_settings['initial_states'] = [13, 16, 77]
+        # env_settings['initial_states'] = [0, 1, 2]
 
         env_settings['walls'] = [(5, 1), (5, 2), (5, 3), (5, 4), (5, 5), (5, 6),
                                  (4, 6),
@@ -65,9 +65,6 @@ class MotivatingButtonsEnv:
 
         self._load_map()
         self.fig, self.ax = None, None
-
-        # self.u = self.reward_machine.get_initial_state()
-        # self.last_action = -1 # Initialize last action to garbage value
 
     def reset(self, *args):
         MotivatingButtonsEnv.in_hazard = None
@@ -269,20 +266,6 @@ class MotivatingButtonsEnv:
         """
         return self.actions
 
-    # def get_last_action(self):
-    #     """
-    #     Returns agent's last action
-    #     """
-    #     return self.last_action
-
-    # def get_initial_state(self):
-    #     """
-    #     Outputs
-    #     -------
-    #     s_i : int
-    #         Index of agent's initial state.
-    #     """
-    #     return self.s_i
 
     def show(self, state_dict, show_plot = True):
         """

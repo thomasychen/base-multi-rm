@@ -162,6 +162,7 @@ if __name__ == "__main__":
         
         experiment_name = args.experiment_name # buttons or overcooked
         ucb_param = run_config['ucb_c'] if "ucb_c" in run_config else 1.5
+        ucb_gamma = run_config['ucb_gamma'] if "ucb_gamma" in run_config else 0.99
         
         local_dir_name = f"{experiment_name}_{method}_{ucb_param}_{candidates}_candidates_{mono_string}"
 
@@ -182,7 +183,7 @@ if __name__ == "__main__":
 
                 wandb_timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
 
-                run_name = f"{experiment_name}_{method}_{ucb_param}_iteration_{i}_{candidates}_candidates_{mono_string}_{wandb_timestamp}"
+                run_name = f"{experiment_name}_{method}_{ucb_param}_gamma{ucb_gamma}_iteration_{i}_{candidates}_candidates_{mono_string}_{wandb_timestamp}"
 
                 run = wandb.init(
                     project=experiment,
@@ -222,7 +223,7 @@ if __name__ == "__main__":
                 run_config["initial_rm_states"] = new_initial_rm_states
                 train_rm.find_max_subgraph_size_and_assign_subtasks()
                 # import pdb; pdb.set_trace()
-            manager = Manager(num_agents=run_config['num_agents'], num_decomps = len(run_config["initial_rm_states"]),assignment_method=method, wandb=args.wandb, seed = curr_seed, ucb_c=ucb_param)
+            manager = Manager(num_agents=run_config['num_agents'], num_decomps = len(run_config["initial_rm_states"]),assignment_method=method, wandb=args.wandb, seed = curr_seed, ucb_c=ucb_param, ucb_gamma=ucb_gamma)
             render_mode = "human" if args.render else None
             run_config["render_mode"] = render_mode
 

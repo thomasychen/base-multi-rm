@@ -7,7 +7,7 @@ import wandb
 import math
 
 class Manager:
-    def __init__(self, num_agents, num_decomps=1, assignment_method = "ground_truth", model=None, wandb=False, seed=None, ucb_c=1.5):
+    def __init__(self, num_agents, num_decomps=1, assignment_method = "ground_truth", model=None, wandb=False, seed=None, ucb_c=1.5, ucb_gamma=0.99):
         if seed:
             random.seed(seed)
         
@@ -32,7 +32,7 @@ class Manager:
 
         # UCB exploration parameter
         self.ucb_c = ucb_c
-        self.ucb_gamma = 0.99
+        self.ucb_gamma = ucb_gamma
         self.window = 0
         self.window_cnt = 0
 
@@ -159,7 +159,7 @@ class Manager:
         if self.decomp_counts[decomp] == 0:
             return float('inf')
         
-        average_reward = self.decomp_total_rewards[decomp]/ self.decomp_counts[decomp]
+        average_reward = self.decomp_total_rewards[decomp]#/ self.decomp_counts[decomp]
         confidence = np.sqrt((2 * np.log(self.total_selections)) / self.decomp_counts[decomp])
         return average_reward + self.ucb_c * confidence
     

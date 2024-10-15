@@ -86,6 +86,7 @@ parser.add_argument('--add_mono_file', type=str, default="None", help="Provide a
 parser.add_argument('--render', type=str2bool, default=False, help='Enable rendering during training. Default is off')
 parser.add_argument('--video', type=str2bool, default=False, help='Turn on gifs for eval')
 parser.add_argument('--seed', type=int, default=-1, help='Seed the runs')
+parser.add_argument('--ucb_c', type=int, default=1.5, help='c value for ucb')
 
 
 ########### buttons ###########
@@ -161,7 +162,9 @@ if __name__ == "__main__":
             mono_string = "mono_on"
         
         experiment_name = args.experiment_name # buttons or overcooked
-        ucb_param = run_config['ucb_c'] if "ucb_c" in run_config else 1.5
+        ucb_param = int(args.ucb_c)
+        print("UCB_C PARAM", ucb_param)
+        # ucb_param = run_config['ucb_c'] if "ucb_c" in run_config else 1.5
         ucb_gamma = run_config['ucb_gamma'] if "ucb_gamma" in run_config else 0.99
         
         local_dir_name = f"{experiment_name}_{method}_{ucb_param}_{candidates}_candidates_{mono_string}"
@@ -183,7 +186,7 @@ if __name__ == "__main__":
 
                 wandb_timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
 
-                run_name = f"{experiment_name}_{method}_{ucb_param}_gamma{ucb_gamma}_iteration_{i}_{candidates}_candidates_{mono_string}_{wandb_timestamp}"
+                run_name = f"{experiment_name}_{method}_{ucb_param}_gamma{ucb_gamma}_iteration_{i}_{candidates}_candidates_{mono_string}_seed_{curr_seed}_{wandb_timestamp}"
 
                 run = wandb.init(
                     project=experiment,
@@ -197,7 +200,7 @@ if __name__ == "__main__":
 
             print(run_config)
 
-            print("TEST", args.decomposition_file.split("_")[0])
+            # print("TEST", args.decomposition_file.split("_")[0])
             if args.decomposition_file.split("_")[0] != "mono" and args.decomposition_file.split("_")[0] != "individual":
                 raise Exception("ERROR: ONLY PROVIDE MONOLITHIC RMS FOR RUNS")
             train_rm = SparseRewardMachine(f"reward_machines/{args.env}/{args.experiment_name}/{args.decomposition_file}")
@@ -227,7 +230,7 @@ if __name__ == "__main__":
             render_mode = "human" if args.render else None
             run_config["render_mode"] = render_mode
 
-            log_dir = os.path.join(method_log_dir_base, f"iteration_{i}")
+            log_dir = os.path.join(method_log_dir_base, f"iteration_{i}_seed_{curr_seed}")
             os.makedirs(log_dir, exist_ok=True)
             
 

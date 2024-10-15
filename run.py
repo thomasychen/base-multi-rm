@@ -86,7 +86,7 @@ parser.add_argument('--add_mono_file', type=str, default="None", help="Provide a
 parser.add_argument('--render', type=str2bool, default=False, help='Enable rendering during training. Default is off')
 parser.add_argument('--video', type=str2bool, default=False, help='Turn on gifs for eval')
 parser.add_argument('--seed', type=int, default=-1, help='Seed the runs')
-parser.add_argument('--ucb_c', type=int, default=1.5, help='c value for ucb')
+parser.add_argument('--ucb_c', type=int, default=-1, help='c value for ucb')
 
 
 ########### buttons ###########
@@ -162,9 +162,11 @@ if __name__ == "__main__":
             mono_string = "mono_on"
         
         experiment_name = args.experiment_name # buttons or overcooked
-        ucb_param = int(args.ucb_c)
+        ucb_param = run_config['ucb_c'] if "ucb_c" in run_config else 1.5
+        ucb_param = int(args.ucb_c) if int(args.ucb_c) != -1 else ucb_param
+
         print("UCB_C PARAM", ucb_param)
-        # ucb_param = run_config['ucb_c'] if "ucb_c" in run_config else 1.5
+
         ucb_gamma = run_config['ucb_gamma'] if "ucb_gamma" in run_config else 0.99
         
         local_dir_name = f"{experiment_name}_{method}_{ucb_param}_{candidates}_candidates_{mono_string}"

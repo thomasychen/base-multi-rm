@@ -7,11 +7,11 @@ class OvercookedCircuitLabeled(MDP_Labeler):
     def __init__(self, run_config):
         
         counter_circuit_grid = """
-WWWPPWWW
-W A    W
-B WWWW X
-W     AW
-WWWOOWWW
+WWWPWWW
+W A   W
+B WWW X
+W    AW
+WWWOOWW
 """
         
         self.layout = layout_grid_to_dict(counter_circuit_grid)
@@ -43,15 +43,20 @@ WWWOOWWW
         elif self.any_elem(obs[16], 2):
             return "o2"
         # pot locations is (0, 3), (0, 4)
-        elif self.any_elem_nonzero(obs[20]) or obs[21][0][3] == 1 or obs[21][0][4] == 1:
+        elif self.any_elem_nonzero(obs[20]) or obs[21][0][3] == 1: # or obs[21][0][4] == 1:
             return "o3"
         else:
             return None
         
     def has_soup(self, obs):
         # pot locations is (0, 3), (0, 4)
-        if self.any_elem(obs[21], 1, set([0, 0]), set([3, 4])):
+        if self.any_elem(obs[21], 1, set([0]), set([3])):
             return "p"
+        return None
+    
+    def has_cooked(self, obs):
+        if obs[21][0][3] == 1:
+            return "c" 
         return None
         
     def get_mdp_label(self, s_next, reward, *args):
@@ -75,7 +80,10 @@ WWWOOWWW
         if soup:
             # import pdb; pdb.set_trace()
             l.append(soup)
-
+        cooked = self.has_cooked(obs)
+        if cooked:
+            l.append(cooked)
+       
         # For dish done
         if reward["agent_0"] > 0:
             # import pdb; pdb.set_trace()

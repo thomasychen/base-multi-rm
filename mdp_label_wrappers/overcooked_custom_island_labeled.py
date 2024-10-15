@@ -7,11 +7,11 @@ class OvercookedCustomIslandLabeled(MDP_Labeler):
     def __init__(self, run_config):
         
         counter_circuit_grid = """
-WWWWWWW
-X OWX W
-WA P AW
-W  W  O
-WWWWBWW
+WWWWWWWWW
+X  OWX  W
+W A P A W
+B   W   O
+WWWWWBWWW
 """
         
         self.layout = layout_grid_to_dict(counter_circuit_grid)
@@ -43,15 +43,20 @@ WWWWBWW
         elif self.any_elem(obs[16], 2):
             return "o2"
         # pot locations is (2, 3)
-        elif self.any_elem_nonzero(obs[20]) or obs[21][2][3] == 1:
+        elif self.any_elem_nonzero(obs[20]) or obs[21][2][4] == 1:
             return "o3"
         else:
             return None
         
     def has_soup(self, obs):
         # ignore pot location at (2, 3)
-        if self.any_elem(obs[21], 1, 2, 3):
+        if self.any_elem(obs[21], 1, 2, 4):
             return "p"
+        return None
+    
+    def has_cooked(self, obs):
+        if obs[21][2][4] == 1:
+            return "c" 
         return None
         
     def get_mdp_label(self, s_next, reward, *args):
@@ -70,6 +75,10 @@ WWWWBWW
         if soup:
             # import pdb; pdb.set_trace()
             l.append(soup)
+        cooked = self.has_cooked(obs)
+        if cooked:
+            l.append(cooked)
+       
 
         # For dish done
         if reward["agent_0"] > 0:

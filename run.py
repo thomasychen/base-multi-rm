@@ -272,7 +272,7 @@ if __name__ == "__main__":
 
             eval_callback = EvalCallback(eval_env, best_model_save_path=f"{log_dir}/best/",
                                     log_path=log_dir, eval_freq=run_config["eval_freq"],
-                                    n_eval_episodes=1, deterministic=True)
+                                    n_eval_episodes=1, deterministic=False)
             policy_kwargs = None
             if "activation_fn" in run_config:
                 if run_config["activation_fn"] == "relu":

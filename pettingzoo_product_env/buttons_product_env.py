@@ -179,7 +179,7 @@ class ButtonsProductEnv(ParallelEnv):
                     if not terminations[agent]:
                         self.agents.append(agent)
                 if not self.agents:
-                    self.manager.update_rewards(1)
+                    self.manager.update_rewards(1*self.env_config["gamma"]**self.time_step)
             else:
                 if not all(terminations.values()):
                     self.agents = self.possible_agents

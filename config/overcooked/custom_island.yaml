@@ -13,8 +13,8 @@ required_events:
   - ['c']
   - ['c']
 labeled_mdp_class: "OvercookedCustomIslandLabeled"
-max_episode_length: 400
+max_episode_length: 200
 eval_freq: 10000
 gamma: 0.96
-ucb_c: 0.7
+ucb_c: 0.5
 ent_coef: 0.01

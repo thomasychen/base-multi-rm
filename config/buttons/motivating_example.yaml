@@ -20,4 +20,4 @@ required_events:
   - ['sig']
   - ['sig']
 ucb_c: 0.5
-ucb_gamma: 0.99
+ucb_gamma: 1

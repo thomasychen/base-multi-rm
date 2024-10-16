@@ -17,4 +17,5 @@ forbidden_events:
 required_events:
   - []
   - []
-ucb_c: 0.7
+ucb_c: 0.5
+ucb_gamma: 1

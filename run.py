@@ -87,7 +87,7 @@ parser.add_argument('--render', type=str2bool, default=False, help='Enable rende
 parser.add_argument('--video', type=str2bool, default=False, help='Turn on gifs for eval')
 parser.add_argument('--seed', type=int, default=-1, help='Seed the runs')
 parser.add_argument('--ucb_c', type=float, default=-1, help='c value for ucb')
-
+parser.add_argument('--ucb_gamma', type=float, default=-1, help='discount value for ucb_gamma')
 
 ########### buttons ###########
 # challenge buttons
@@ -165,11 +165,15 @@ if __name__ == "__main__":
         ucb_param = run_config['ucb_c'] if "ucb_c" in run_config else 1.5
         ucb_param = float(args.ucb_c) if float(args.ucb_c) != -1 else ucb_param
 
-        print("UCB_C PARAM", ucb_param)
 
         ucb_gamma = run_config['ucb_gamma'] if "ucb_gamma" in run_config else 0.99
+        ucb_gamma = float(args.ucb_gamma) if float(args.ucb_gamma) != -1 else ucb_gamma
+
+        print("UCB_C PARAM", ucb_param)
+        print("UCB_GAMA PARAM", ucb_gamma)
+
         
-        local_dir_name = f"{experiment_name}_{method}_{ucb_param}_{candidates}_candidates_{mono_string}"
+        local_dir_name = f"{experiment_name}_{method}_ucb_param{ucb_param}_gamma{ucb_gamma}_{candidates}_candidates_{mono_string}"
 
         method_log_dir_base = os.path.join(log_dir_base, f"{local_dir_name}")
         os.makedirs(method_log_dir_base, exist_ok=True)
@@ -188,7 +192,7 @@ if __name__ == "__main__":
 
                 wandb_timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
 
-                run_name = f"{experiment_name}_{method}_{ucb_param}_gamma{ucb_gamma}_iteration_{i}_{candidates}_candidates_{mono_string}_seed_{curr_seed}_{wandb_timestamp}"
+                run_name = f"{experiment_name}_{method}__ucb_param{ucb_param}_gamma{ucb_gamma}_iteration_{i}_{candidates}_candidates_{mono_string}_seed_{curr_seed}_{wandb_timestamp}"
 
                 run = wandb.init(
                     project=experiment,

@@ -12,12 +12,13 @@ required_events:
   - []
   - []
   - []
-gamma: 0.95
+gamma: 0.945
 learning_rate: 0.0005
 vf_coef: 10
 max_grad_norm: 10
 target_kl: 0.05
-ent_coef: 0.1
+ent_coef: 0.01
 labeled_mdp_class: "EasyButtonsLabeled"
 eval_freq: 5000
-ucb_c: 0.7
+ucb_c: 0.5
+ucb_gamma: 1

@@ -1,3 +1,5 @@
+<img src="LOTaD.png" alt="LOTad Logo" width="100" />
+
 # LOTaD: Learning Optimal Task Decompositions for Multiagent Reinforcement Learning
 
 ## Installation Instructions

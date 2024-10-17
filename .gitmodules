@@ -1,4 +1,1 @@
 
-[submodule "dfa-identify"]
-	path = dfa-identify
-	url = https://github.com/niklaslauffer/dfa-identify.git

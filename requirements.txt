@@ -99,7 +99,7 @@ pygame==2.5.2
 PyOpenGL==3.1.7
 pyparsing==3.1.2
 PyQt5==5.15.10
-PyQt5-Qt5==5.15.13
+PyQt5-Qt5==5.15.15
 PyQt5-sip==12.13.0
 pytest==8.3.2
 pytinyrenderer==0.0.14

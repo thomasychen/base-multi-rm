@@ -1,5 +1,3 @@
-from dfa import DFA, dict2dfa, dfa2dict
-from dfa_identify.active import find_dfa_decomposition
 import numpy as np
 
 class SparseRewardMachine:

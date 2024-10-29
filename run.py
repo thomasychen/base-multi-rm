@@ -224,6 +224,7 @@ if __name__ == "__main__":
                     required[idx] = req
                 new_initial_rm_states = []
                 train_rm, rm_initial_states = generate_rm_decompositions(train_rm, run_config['num_agents'], top_k=args.num_candidates, enforced_dict=required, forbidden_dict=forbidden)
+                import pdb; pdb.set_trace()
                 for rm in rm_initial_states:
                     istates = []
                     for agentidx in range(run_config['num_agents']):

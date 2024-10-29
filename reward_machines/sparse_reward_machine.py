@@ -1,4 +1,5 @@
 import numpy as np
+from graphviz import Digraph
 
 class SparseRewardMachine:
     def __init__(self,file=None):
@@ -40,6 +41,40 @@ class SparseRewardMachine:
         return s
 
     # Public methods -----------------------------------
+
+
+    def visualize_rm(self, view=False, output_format='pdf', filename='reward_machine'):
+        """
+        Visualize the reward machine using Graphviz.
+        
+        :param reward_machine: A SparseRewardMachine object.
+        :param view: If True, will automatically open the rendered file.
+        :param output_format: The format of the output file (e.g., 'pdf', 'png').
+        :param filename: Name of the file where the graph will be saved (without extension).
+        """
+        dot = Digraph(name="Reward Machine", format=output_format)
+        
+        # Add states to the graph
+        for state in self.U:
+            shape = 'doublecircle' if state in self.accepting else 'circle'
+            dot.node(str(state), shape=shape)
+        
+        # Add edges for transitions
+        for u1 in self.delta_u:
+            for event in self.delta_u[u1]:
+                u2 = self.delta_u[u1][event]
+                reward = self.delta_r[u1][u2]
+                label = f"{event} / r={reward}"
+                dot.edge(str(u1), str(u2), label=label)
+        
+        # Highlight initial state
+        dot.node("start", style="invisible")
+        dot.edge("start", str(self.u0), label="Start", style="dashed")
+
+        # Save and view the graph
+        dot.render(filename, view=view)
+        print(f"Reward Machine visualization saved to '{filename}.{output_format}'")
+
 
     def load_rm_from_file(self, file):
         self._load_reward_machine(file)

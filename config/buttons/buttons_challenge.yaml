@@ -3,6 +3,7 @@ max_episode_length: 100
 initial_mdp_states: [90, 9]
 initial_rm_states:
   - [1, 2] # monolithic only (individual) start states
+  # - [10, 11]
 gamma: 0.97
 learning_rate: 0.0005
 vf_coef: 0.5

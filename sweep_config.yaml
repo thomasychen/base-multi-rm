@@ -1,0 +1,55 @@
+program: run.py
+method: grid  # Use grid search to test all combinations
+parameters:
+  add_mono_file:
+    values: ["None", "mono_challenge.txt"]  # Replace with your specific file names
+  handpicked_decomp:
+    values: ["None", "aux_buttons.txt"]  # Replace with your specific file names
+  num_candidates:
+    values: [1, 5, 10]  # Add more values if needed
+  env:
+    values: ["buttons"]
+  decomposition_file:
+    values: ["mono_challenge_buttons.txt"]
+  assignment_methods:
+    values: ["UCB"]
+  num_iterations:
+    values: [1]
+  wandb:
+    values: [True]
+  sweep:
+    values: [True]
+  experiment_name:
+    values: ["buttons_challenge"]
+  is_monolithic:
+    values: [False]
+  render:
+    values: [False]
+  video:
+    values: [False]
+  timesteps:
+    values: [4000000]
+command: >
+  python run.py
+  --wandb={wandb} 
+  --sweep={sweep}
+  --add_mono_file={add_mono_file}
+  --handpicked_decomp={handpicked_decomp}
+  --decomposition_file={decomposition_file}
+  --assignment_methods={assignment_methods}
+  --num_iterations={num_iterations}
+  --experiment_name={experiment_name}
+  --is_monolithic={is_monolithic}
+  --render={render}
+  --video={video}
+  --timesteps={timesteps}
+  --num_candidates={num_candidates}
+
+
+
+# --env buttons
+# python run.py --assignment_methods UCB --num_iterations 1 --wandb f 
+# --decomposition_file mono_challenge_buttons.txt --experiment_name buttons_challenge 
+# --is_monolithic f --env buttons --render f --video f --add_mono_file mono_challenge_buttons.txt 
+# # --num_candidates 10  --timesteps 3000000 --handpicked_decomp aux_buttons.txt
+# Include other necessary arguments with default values or placeholders

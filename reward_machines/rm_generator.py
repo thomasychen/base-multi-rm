@@ -40,7 +40,7 @@ def score_decomposition_fairness(decomposition):
     assert fairness_score <= 1
     return fairness_score
 
-def generate_rm_decompositions(monolithic_rm: SparseRewardMachine, num_agents: int, top_k: int=5, enforced_dict: dict=None, forbidden_dict: dict=None):
+def generate_rm_decompositions(monolithic_rm: SparseRewardMachine, num_agents: int, top_k: int=5, enforced_dict: dict=None, forbidden_dict: dict=None, handpicked_decomp:str=None, config:dict=None):
     """
 
     Args:
@@ -61,7 +61,19 @@ def generate_rm_decompositions(monolithic_rm: SparseRewardMachine, num_agents: i
     hf.print_results(configs, bd)  
     rm_decomps = {}
     decomps_init_states = {}
-    for sol_idx, solution in enumerate(bd):
+    # if there is a handpicked rm file passed in, load it in and then add it as rm_decomps[0]
+    start = 0
+    if handpicked_decomp:
+        handpicked_decomp_rm = SparseRewardMachine(handpicked_decomp)
+        rm_decomps[0] = handpicked_decomp_rm
+        start = 1
+        if not config: 
+            print("missing start states for handpicked")
+        else:
+            decomps_init_states[0] = {i:config["initial_rm_states"][0][i] for i in range(len(config["initial_rm_states"][0]))}
+            print(decomps_init_states)
+
+    for sol_idx, solution in enumerate(bd, start=start):
         score, k = solution
         event_spaces, event_spaces_dict = hf.get_event_spaces_from_knapsack(configs.all_events, k) # event_spaces_dict = {agent: [events] }
         strategy_set = set()
@@ -84,6 +96,7 @@ def generate_rm_decompositions(monolithic_rm: SparseRewardMachine, num_agents: i
         pre_decomp = {idx: project_rm(set(event_set), monolithic_rm) for idx, event_set in event_spaces_dict.items()}
         decomp = {idx: bs.get_accident_avoidance_rm_less(sub_rm, acc_set, monolithic_rm) for idx, sub_rm in pre_decomp.items()}
         rm_decomps[sol_idx], decomps_init_states[sol_idx] = combine_to_single_rm(decomp)
+    
     subsuming_rm, decomp_offsets = combine_to_single_rm(rm_decomps, tag="decomp")
     for rmidx in decomps_init_states:
         offset = decomp_offsets[rmidx]

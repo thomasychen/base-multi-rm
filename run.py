@@ -88,6 +88,10 @@ parser.add_argument('--video', type=str2bool, default=False, help='Turn on gifs 
 parser.add_argument('--seed', type=int, default=-1, help='Seed the runs')
 parser.add_argument('--ucb_c', type=float, default=-1, help='c value for ucb')
 parser.add_argument('--ucb_gamma', type=float, default=-1, help='discount value for ucb_gamma')
+parser.add_argument('--handpicked_decomp',type=str, default="None", help = "Provide an optional handpicked decomposition to be inserted into the generated candidates" )
+
+# Add the sweep flag
+parser.add_argument('--sweep', type=str2bool, default=False, help='Set to True when running a W&B sweep.')
 
 ########### buttons ###########
 # challenge buttons
@@ -140,7 +144,6 @@ parser.add_argument('--ucb_gamma', type=float, default=-1, help='discount value 
 
 args = parser.parse_args()
 
-
 if __name__ == "__main__":
 
     assignment_methods = args.assignment_methods.split()
@@ -182,6 +185,7 @@ if __name__ == "__main__":
             curr_seed = int(args.seed) if int(args.seed) != -1 else i
             set_random_seed(curr_seed)    
 
+            # Initialize W&B if wandb logging is enabled
             if args.wandb:
                 experiment = "test_pettingzoo_sb3"
                 config = {
@@ -193,16 +197,36 @@ if __name__ == "__main__":
                 wandb_timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
 
                 run_name = f"{experiment_name}_{method}__ucb_param{ucb_param}_gamma{ucb_gamma}_iteration_{i}_{candidates}_candidates_{mono_string}_seed_{curr_seed}_{wandb_timestamp}"
+                if args.sweep:
+                    # Only override args with wandb.config when sweep flag is True
+                    run=wandb.init(
+                        project=experiment,
+                        entity="reinforce-learn",
+                        config=config,
+                        sync_tensorboard=True,
+                        name=run_name)
+                    # Update args with values from wandb.config if they exist
+                    args.add_mono_file = wandb.config.get('add_mono_file', args.add_mono_file)
+                    args.handpicked_decomp = wandb.config.get('handpicked_decomp', args.handpicked_decomp)
+                    args.num_candidates = wandb.config.get('num_candidates', args.num_candidates)
+                    # Update any other parameters you want to control via sweep
+                    # args.ucb_c = wandb.config.get('ucb_c', args.ucb_c)
+                    # args.ucb_gamma = wandb.config.get('ucb_gamma', args.ucb_gamma)
+                    # Optionally, log all args to W&B config
+                    wandb.config.update(vars(args))
+                else:
+                    # Regular W&B initialization without overriding args
 
-                run = wandb.init(
-                    project=experiment,
-                    entity="reinforce-learn",
-                    config=config,
-                    sync_tensorboard=True,
-                    name=run_name
-                )
-
-
+                    run = wandb.init(
+                        project=experiment,
+                        entity="reinforce-learn",
+                        config=config,
+                        sync_tensorboard=True,
+                        name=run_name
+                    )
+                    wandb.config.update(vars(args))
+            else:
+                run = None  # Ensure 'run' variable is defined
 
             print(run_config)
 
@@ -215,7 +239,8 @@ if __name__ == "__main__":
             if mono_rm is not None:
                 mono_rm.is_monolithic = True
             if args.num_candidates > 0:  # generate automatic decompositions
-                #TODO: look for forbidden events or required events in config
+                handpicked_decomp = f"reward_machines/{args.env}/{args.experiment_name}/{args.handpicked_decomp}" if args.handpicked_decomp != "None" else None
+                # TODO: look for forbidden events or required events in config
                 forbidden = {}
                 for idx, fb in enumerate(run_config["forbidden_events"]):
                     forbidden[idx] = fb
@@ -223,8 +248,10 @@ if __name__ == "__main__":
                 for idx, req in enumerate(run_config["required_events"]):
                     required[idx] = req
                 new_initial_rm_states = []
-                train_rm, rm_initial_states = generate_rm_decompositions(train_rm, run_config['num_agents'], top_k=args.num_candidates, enforced_dict=required, forbidden_dict=forbidden)
-                import pdb; pdb.set_trace()
+                train_rm, rm_initial_states = generate_rm_decompositions(
+                    train_rm, run_config['num_agents'], top_k=args.num_candidates,
+                    enforced_dict=required, forbidden_dict=forbidden, handpicked_decomp=handpicked_decomp, config=run_config)
+                # import pdb; pdb.set_trace()
                 for rm in rm_initial_states:
                     istates = []
                     for agentidx in range(run_config['num_agents']):
@@ -233,13 +260,13 @@ if __name__ == "__main__":
                 run_config["initial_rm_states"] = new_initial_rm_states
                 train_rm.find_max_subgraph_size_and_assign_subtasks()
                 # import pdb; pdb.set_trace()
-            manager = Manager(num_agents=run_config['num_agents'], num_decomps = len(run_config["initial_rm_states"]),assignment_method=method, wandb=args.wandb, seed = curr_seed, ucb_c=ucb_param, ucb_gamma=ucb_gamma)
+            manager = Manager(num_agents=run_config['num_agents'], num_decomps=len(run_config["initial_rm_states"]),
+                              assignment_method=method, wandb=args.wandb, seed=curr_seed, ucb_c=ucb_param, ucb_gamma=ucb_gamma)
             render_mode = "human" if args.render else None
             run_config["render_mode"] = render_mode
 
             log_dir = os.path.join(method_log_dir_base, f"iteration_{i}_seed_{curr_seed}")
             os.makedirs(log_dir, exist_ok=True)
-            
 
             train_kwargs = {
                 'manager': manager,
@@ -251,7 +278,7 @@ if __name__ == "__main__":
                 'render_mode': render_mode,
                 'addl_mono_rm': mono_rm,
             }
-            
+
             if args.env == "buttons":
                 env = ButtonsProductEnv(**train_kwargs)
             elif args.env == "overcooked":
@@ -261,7 +288,6 @@ if __name__ == "__main__":
             env = ss.pettingzoo_env_to_vec_env_v1(env)
             env = ss.concat_vec_envs_v1(env, 1, num_cpus=1, base_class="stable_baselines3")
             env = VecMonitor(env)
-
 
             eval_kwargs = train_kwargs.copy()
             eval_kwargs['test'] = True
@@ -273,16 +299,15 @@ if __name__ == "__main__":
                 eval_env = ButtonsProductEnv(**eval_kwargs)
             elif args.env == "overcooked":
                 eval_env = OvercookedProductEnv(**eval_kwargs)
-            
+
             eval_env = ss.black_death_v3(eval_env)
             eval_env = ss.pettingzoo_env_to_vec_env_v1(eval_env)
             eval_env = ss.concat_vec_envs_v1(eval_env, 1, num_cpus=1, base_class="stable_baselines3")
             eval_env = VecMonitor(eval_env)
 
-
             eval_callback = EvalCallback(eval_env, best_model_save_path=f"{log_dir}/best/",
-                                    log_path=log_dir, eval_freq=run_config["eval_freq"],
-                                    n_eval_episodes=1, deterministic=False)
+                                         log_path=log_dir, eval_freq=run_config["eval_freq"],
+                                         n_eval_episodes=1, deterministic=False)
             policy_kwargs = None
             if "activation_fn" in run_config:
                 if run_config["activation_fn"] == "relu":
@@ -290,31 +315,29 @@ if __name__ == "__main__":
                 elif run_config["activation_fn"] == "tanh":
                     fn = th.nn.Tanh
                 policy_kwargs = dict(activation_fn=fn)
-            
+
             model = PPO(
                 MlpPolicy,
                 env,
                 verbose=1,
                 batch_size=256,
                 learning_rate=run_config['learning_rate'] if "learning_rate" in run_config else 0.0003,
-                gamma = run_config['gamma'] if "gamma" in run_config else 0.99,
-                n_epochs = run_config["n_epochs"] if "n_epochs" in run_config else 10,
+                gamma=run_config['gamma'] if "gamma" in run_config else 0.99,
+                n_epochs=run_config["n_epochs"] if "n_epochs" in run_config else 10,
                 tensorboard_log=f"runs/{run.id}" if args.wandb else None,
                 max_grad_norm=run_config['max_grad_norm'] if "max_grad_norm" in run_config else 0.5,
                 vf_coef=run_config['vf_coef'] if "vf_coef" in run_config else 0.5,
                 target_kl=run_config['target_kl'] if "target_kl" in run_config else None,
-                ent_coef=run_config['ent_coef'] if "ent_coef" in run_config else 0, 
-                policy_kwargs = policy_kwargs, 
+                ent_coef=run_config['ent_coef'] if "ent_coef" in run_config else 0,
+                policy_kwargs=policy_kwargs,
             )
-        
+
             if "env" == "overcooked":
                 model.learning_rate = lambda frac: 2.5e-4 * frac
-
 
             manager.set_model(model)
             env.reset()
             eval_env.reset()
-
 
             if args.wandb:
                 callback_list = CallbackList([eval_callback, WandbCallback(verbose=2,)])
@@ -329,7 +352,6 @@ if __name__ == "__main__":
             env.close()
             eval_env.close()
             # Finish your run
-            if args.wandb:
+            if args.wandb and not args.sweep:
                 wandb.finish()
-
 

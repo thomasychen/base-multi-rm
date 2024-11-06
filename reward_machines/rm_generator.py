@@ -67,6 +67,7 @@ def generate_rm_decompositions(monolithic_rm: SparseRewardMachine, num_agents: i
         handpicked_decomp_rm = SparseRewardMachine(handpicked_decomp)
         rm_decomps[0] = handpicked_decomp_rm
         start = 1
+        bd  = bd[:-1]
         if not config: 
             print("missing start states for handpicked")
         else:

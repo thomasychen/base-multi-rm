@@ -395,6 +395,11 @@ def combine_to_single_rm(rm_dict, tag="rm", skip_aux=False):
             for event, next_st in u_v.items():
                 subsuming_rm.delta_u[u_k + current_offset][event] = next_st + current_offset
         current_offset += len(rm_obj.get_states())
+
+    for u1 in subsuming_rm.U:
+        if subsuming_rm._is_terminal(u1):
+            subsuming_rm.T.add(u1)
+    subsuming_rm.U = sorted(subsuming_rm.U)
     return subsuming_rm, sub_rm_initial_states
 
 

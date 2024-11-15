@@ -54,7 +54,7 @@ def generate_rm_decompositions(monolithic_rm: SparseRewardMachine, num_agents: i
         _type_: _description_
     """
     incompatible_pairs = []
-    weights = [2, .5, 0]
+    weights = [1, .5, 0]
     configs = Configurations(num_agents, monolithic_rm, enforced_set = enforced_dict, forbidden_set = forbidden_dict, weights = weights, incompatible_pairs= incompatible_pairs)
     root = Node(name = 'root', future_events = configs.future_events, all_events= configs.all_events, knapsack = configs.forbidden_set) #forbidden set is the starting knapsack
     bd = root.traverse_last_minute_change(configs, num_solutions=top_k)
@@ -63,16 +63,6 @@ def generate_rm_decompositions(monolithic_rm: SparseRewardMachine, num_agents: i
     decomps_init_states = {}
     # if there is a handpicked rm file passed in, load it in and then add it as rm_decomps[0]
     start = 0
-    if handpicked_decomp:
-        handpicked_decomp_rm = SparseRewardMachine(handpicked_decomp)
-        rm_decomps[0] = handpicked_decomp_rm
-        start = 1
-        bd  = bd[:-1]
-        if not config: 
-            print("missing start states for handpicked")
-        else:
-            decomps_init_states[0] = {i:config["initial_rm_states"][0][i] for i in range(len(config["initial_rm_states"][0]))}
-            print(decomps_init_states)
 
     for sol_idx, solution in enumerate(bd, start=start):
         score, k = solution
@@ -94,10 +84,11 @@ def generate_rm_decompositions(monolithic_rm: SparseRewardMachine, num_agents: i
         for i, esi in event_spaces_dict.items():
             my_shared_events = shared_events & set(esi)
             shared_events_dict[i] = list(my_shared_events)
-        pre_decomp = {idx: project_rm(set(event_set), monolithic_rm) for idx, event_set in event_spaces_dict.items()}
+        pre_decomp = {idx: bs.project_rm(set(event_set), strategic_rm) for idx, event_set in event_spaces_dict.items()}
         decomp = {idx: bs.get_accident_avoidance_rm_less(sub_rm, acc_set, monolithic_rm) for idx, sub_rm in pre_decomp.items()}
+        import pdb; pdb.set_trace()
         rm_decomps[sol_idx], decomps_init_states[sol_idx] = combine_to_single_rm(decomp)
-    
+    import pdb; pdb.set_trace()
     subsuming_rm, decomp_offsets = combine_to_single_rm(rm_decomps, tag="decomp")
     for rmidx in decomps_init_states:
         offset = decomp_offsets[rmidx]
@@ -275,9 +266,9 @@ def get_relation(event_space, rm):
 
     '''
     relation = EquivalenceRelation()
-
     state_pairs = list(itertools.combinations_with_replacement(rm.U, 2)) # all combinations length 2 of rm.U (order doesn't matter)
     #print("     state pairs", state_pairs)
+    actual_related_pairs = []
     for state_pair in state_pairs: # pair is a tuple
         if relation.are_related(state_pair) == False:
             #print("     ", state_pair , " is related")
@@ -310,69 +301,12 @@ def get_relation(event_space, rm):
             checked_combos.add((v1, u1))
 
         all_related_combos = relation.get_all_related_combos() - checked_combos 
+    if event_space == {'bg', 'bb'}:
+        import pdb; pdb.set_trace()
     
     return relation
 
-def project_rm(event_space, rm):
-    '''
-    returns reward machine projected onto the event space. 
-    Follows procedure outlined in Definition 2 of "RM for Cooperative MARL" (Cyrus' paper)
 
-    Gets an equivalence relation for the original RM  'rm' states  
-    Adds an attribut to new_rm called class_name_dict which saves what class of rm states correspond 
-    to the new state names in new_rm. 
-
-    Inputs:
-        event_space: (set) hold strings that is a subset of rm.events
-        rm: (SparseRewardMachine)
-    Return: new_rm (SparseRewardMachine)
-    '''
-    relation = get_relation(event_space, rm) #put this outside to reuse? Or do I just only project WHEN I NEED TO. 
-    #print("event_space in parallel", event_space)
-    #print("RELATION IS")
-    #rint( relation)
-    new_rm = SparseRewardMachine()
-    class_name_dict = {}
-    new_rm.events = event_space
-    for i , cl in enumerate(relation.classes):
-        # add states to new_rm
-        new_rm.U.append(i)
-        class_name_dict[i] = cl # new state name: class of original RM state names it represents 
-        
-        for u in cl:
-            # check if cl should be terminal or inital 
-            if rm.is_terminal_state(u):
-                new_rm.T.add(i)
-            if rm.get_initial_state() == u:
-                new_rm.u0 = i
-    
-    new_rm.equivalence_class_name_dict = class_name_dict 
-
-    # built U, u0, and T, events
-    # Now need to build the functions delta_u and delta_r
-    
-    for v1, v1_transitions in rm.delta_u.items():
-        for e, v2 in v1_transitions.items():
-            if e in event_space:
-                #need to find what class_name for v1 and v2 belongs to. 
-                 
-                v1_class = relation.find_class(v1)
-                v2_class = relation.find_class(v2)
-
-                #print("V1_CLass is", v1_class)
-                v1_name = new_rm.get_name_from_class(v1_class)
-                v2_name = new_rm.get_name_from_class(v2_class)
-                if v2_name in new_rm.T and v1_name not in new_rm.T:
-                    reward = 1
-                else: 
-                    reward = 0
-                #print("add transition", v1_name, v2_name, e, reward)
-                new_rm.add_transition_and_reward_only(v1_name, v2_name, e, reward)
-    
-    # if rm.dead_transitions != None:
-    #     new_rm.dead_transitions = rm.dead_transitions
-    return new_rm  
-    
 
 # Example usage:
 # ex_rm = SparseRewardMachine("overcooked/asymm_advantages/mono_asymm_adv.txt")

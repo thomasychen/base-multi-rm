@@ -1,5 +1,5 @@
 import numpy as np
-from graphviz import Digraph
+# from graphviz import Digraph
 
 class SparseRewardMachine:
     def __init__(self,file=None):
@@ -14,6 +14,7 @@ class SparseRewardMachine:
         self.max_subtask_size = 0  # to store size of the largest subgraph
         self.state_to_subtask = {}  # to store state -> subtask number
         self.subtask_start_states = {}  # to store the starting state of each subtask
+        self.dead_transitions = None
         self.num_subtasks = 0  # total number of subtasks
         self.equivalence_class_name_dict = {} # dict {name: equivalence class} Used in projections only 
         self.state_to_subtask_idx = {}
@@ -279,6 +280,22 @@ class SparseRewardMachine:
         self.delta_r[u1][u2] = reward
         if reward > 0:
             self.accepting.add(u2)
+            
+    def add_transition_open(self, u1, u2, event, reward):
+        # Adding machine state
+        self._add_state([u1,u2])
+        # Adding state-transition to delta_u
+        if u1 not in self.delta_u:
+            self.delta_u[u1] = {}
+        if event not in self.delta_u[u1]:
+            self.delta_u[u1][event] = u2
+        else:
+            raise Exception('Trying to make rm transition function non-deterministic.')
+            # self.delta_u[u1][u2].append(event)
+        # Adding reward-transition to delta_r
+        if u1 not in self.delta_r:
+            self.delta_r[u1] = {}
+        self.delta_r[u1][u2] = reward
 
     def add_transition_and_reward_only(self, u1, u2, event, reward):
         ''' 

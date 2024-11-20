@@ -4,17 +4,19 @@ parameters:
   add_mono_file:
     values: ["None", "mono_challenge_buttons.txt"]  # Replace with your specific file names
   handpicked_decomp:
-    values: ["None", "aux_buttons.txt"]  # Replace with your specific file names
+    values: ["None"]  # Replace with your specific file names
   num_candidates:
-    values: [1, 2, 4, 6, 8, 10]  # Add more values if needed
+    values: [1,3,5,10,15,20,30,50]  # Add more values if needed
   seed:
     values: [1, 2, 3, 4, 5]
   env:
     values: ["buttons"]
   decomposition_file:
-    values: ["mono_challenge_buttons.txt"]
+    values: ["mono_challenge_buttons.txt", "individual_buttons.txt"]
   assignment_methods:
     values: ["UCB"]
+  ucb_c:
+    values: [0.25,0.5,0.75,1,1.25,1.5,1.75]
   num_iterations:
     values: [1]
   wandb:
@@ -30,7 +32,7 @@ parameters:
   video:
     values: [False]
   timesteps:
-    values: [4000000]
+    values: [3000000]
 command:
   - "python"
   - "run.py"
@@ -47,7 +49,8 @@ command:
   - "--video=${video}"
   - "--timesteps=${timesteps}"
   - "--num_candidates=${num_candidates}"
-  - "--seed={seed}"
+  - "--seed=${seed}"
+  - "--ucb_c=${ucb_c}"
 
 # --env buttons
 # python run.py --assignment_methods UCB --num_iterations 1 --wandb f 

@@ -2,17 +2,17 @@ program: run.py
 method: grid  # Use grid search to test all combinations
 parameters:
   add_mono_file:
-    values: ["None", "mono_interesting_cramped_room.txt"]  # Replace with your specific file names
+    values: ["None", "mono_easy_buttons.txt"]  # Replace with your specific file names
   handpicked_decomp:
     values: ["None"]  # Replace with your specific file names
   num_candidates:
-    values: [1, 10]
+    values: [1,10]  # Add more values if needed
   seed:
     values: [1, 2, 3, 4, 5]
   env:
-    values: ["overcooked"]
+    values: ["buttons"]
   decomposition_file:
-    values: ["mono_interesting_cramped_room.txt", "individual_interesting_cramped_room.txt"]
+    values: ["mono_easy_buttons.txt", "individual_buttons.txt"]
   assignment_methods:
     values: ["UCB"]
   num_iterations:
@@ -22,7 +22,7 @@ parameters:
   sweep:
     values: [True]
   experiment_name:
-    values: ["interesting_cramped_room"]
+    values: ["easy_buttons"]
   is_monolithic:
     values: [False]
   render:
@@ -30,7 +30,7 @@ parameters:
   video:
     values: [False]
   timesteps:
-    values: [1000000]
+    values: [3000000]
 command: >
   python run.py
   --wandb={wandb}

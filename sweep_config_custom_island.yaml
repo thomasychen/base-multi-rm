@@ -2,7 +2,7 @@ program: run.py
 method: grid  # Use grid search to test all combinations
 parameters:
   add_mono_file:
-    values: ["None", "mono_interesting_cramped_room.txt"]  # Replace with your specific file names
+    values: ["None", "mono_custom_island.txt"]  # Replace with your specific file names
   handpicked_decomp:
     values: ["None"]  # Replace with your specific file names
   num_candidates:
@@ -12,7 +12,7 @@ parameters:
   env:
     values: ["overcooked"]
   decomposition_file:
-    values: ["mono_interesting_cramped_room.txt", "individual_interesting_cramped_room.txt"]
+    values: ["mono_custom_island.txt", "individual_custom_island.txt"]
   assignment_methods:
     values: ["UCB"]
   num_iterations:
@@ -22,7 +22,7 @@ parameters:
   sweep:
     values: [True]
   experiment_name:
-    values: ["interesting_cramped_room"]
+    values: ["custom_island"]
   is_monolithic:
     values: [False]
   render:

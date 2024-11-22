@@ -34,23 +34,10 @@ parameters:
   timesteps:
     values: [3000000]
 command:
-  - "python"
-  - "run.py"
-  - "--wandb=${wandb}"
-  - "--sweep=${sweep}"
-  - "--add_mono_file=${add_mono_file}"
-  - "--handpicked_decomp=${handpicked_decomp}"
-  - "--decomposition_file=${decomposition_file}"
-  - "--assignment_methods=${assignment_methods}"
-  - "--num_iterations=${num_iterations}"
-  - "--experiment_name=${experiment_name}"
-  - "--is_monolithic=${is_monolithic}"
-  - "--render=${render}"
-  - "--video=${video}"
-  - "--timesteps=${timesteps}"
-  - "--num_candidates=${num_candidates}"
-  - "--seed=${seed}"
-  - "--ucb_c=${ucb_c}"
+  - ${env}
+  - ${interpreter}
+  - ${program}
+  - ${args}
 
 # --env buttons
 # python run.py --assignment_methods UCB --num_iterations 1 --wandb f 

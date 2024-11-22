@@ -12,7 +12,7 @@ parameters:
   env:
     values: ["buttons"]
   decomposition_file:
-    values: ["mono_motivating_example.txt", "individual_motivating_example.txt"]
+    values: ["mono_motivating_example.txt"]
   assignment_methods:
     values: ["UCB"]
   num_iterations:
@@ -31,22 +31,11 @@ parameters:
     values: [False]
   timesteps:
     values: [4000000]
-command: >
-  python run.py
-  --wandb={wandb}
-  --sweep={sweep}
-  --add_mono_file={add_mono_file}
-  --handpicked_decomp={handpicked_decomp}
-  --decomposition_file={decomposition_file}
-  --assignment_methods={assignment_methods}
-  --num_iterations={num_iterations}
-  --experiment_name={experiment_name}
-  --is_monolithic={is_monolithic}
-  --render={render}
-  --video={video}
-  --timesteps={timesteps}
-  --num_candidates={num_candidates}
-  --seed={seed}
+command:
+  - ${env}
+  - ${interpreter}
+  - ${program}
+  - ${args}
 
 # --env buttons
 # python run.py --assignment_methods UCB --num_iterations 1 --wandb f 

@@ -86,9 +86,9 @@ def generate_rm_decompositions(monolithic_rm: SparseRewardMachine, num_agents: i
             shared_events_dict[i] = list(my_shared_events)
         pre_decomp = {idx: bs.project_rm(set(event_set), strategic_rm) for idx, event_set in event_spaces_dict.items()}
         decomp = {idx: bs.get_accident_avoidance_rm_less(sub_rm, acc_set, monolithic_rm) for idx, sub_rm in pre_decomp.items()}
-        import pdb; pdb.set_trace()
+        # import pdb; pdb.set_trace()
         rm_decomps[sol_idx], decomps_init_states[sol_idx] = combine_to_single_rm(decomp)
-    import pdb; pdb.set_trace()
+    # import pdb; pdb.set_trace()
     subsuming_rm, decomp_offsets = combine_to_single_rm(rm_decomps, tag="decomp")
     for rmidx in decomps_init_states:
         offset = decomp_offsets[rmidx]
@@ -301,8 +301,8 @@ def get_relation(event_space, rm):
             checked_combos.add((v1, u1))
 
         all_related_combos = relation.get_all_related_combos() - checked_combos 
-    if event_space == {'bg', 'bb'}:
-        import pdb; pdb.set_trace()
+    # if event_space == {'bg', 'bb'}:
+        # import pdb; pdb.set_trace()
     
     return relation
 

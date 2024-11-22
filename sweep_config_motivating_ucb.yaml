@@ -2,7 +2,7 @@ program: run.py
 method: grid  # Use grid search to test all combinations
 parameters:
   add_mono_file:
-    values: ["mono_motivating_example.txt"]  # Replace with your specific file names
+    values: ["mono_motivating_example.txt", "None"]  # Replace with your specific file names
   handpicked_decomp:
     values: ["None"]  # Replace with your specific file names
   num_candidates:

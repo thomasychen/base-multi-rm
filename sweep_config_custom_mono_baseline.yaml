@@ -14,7 +14,7 @@ parameters:
   decomposition_file:
     values: ["individual_custom_island.txt"]
   assignment_methods:
-    values: ["UCB"]
+    values: ["ground_truth"]
   num_iterations:
     values: [1]
   wandb:

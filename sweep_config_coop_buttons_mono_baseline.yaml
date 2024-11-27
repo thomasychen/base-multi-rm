@@ -14,7 +14,7 @@ parameters:
   decomposition_file:
     values: ["individual_buttons.txt"]
   assignment_methods:
-    values: [ground_truth"]
+    values: ["ground_truth"]
   num_iterations:
     values: [1]
   wandb:

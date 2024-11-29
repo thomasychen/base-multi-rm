@@ -2,19 +2,19 @@ program: run.py
 method: grid  # Use grid search to test all combinations
 parameters:
   add_mono_file:
-    values: ["None", "mono_easy_buttons.txt"]  # Replace with your specific file names
+    values: ["None"]  # Replace with your specific file names
   handpicked_decomp:
     values: ["None"]  # Replace with your specific file names
   num_candidates:
-    values: [1,10]  # Add more values if needed
+    values: [0]
   seed:
     values: [1, 2, 3, 4, 5]
   env:
-    values: ["buttons"]
+    values: ["overcooked"]
   decomposition_file:
-    values: ["mono_easy_buttons.txt"]
+    values: ["individual_custom_island.txt"]
   assignment_methods:
-    values: ["UCB"]
+    values: ["ground_truth"]
   num_iterations:
     values: [1]
   wandb:
@@ -22,7 +22,7 @@ parameters:
   sweep:
     values: [True]
   experiment_name:
-    values: ["easy_buttons"]
+    values: ["custom_island"]
   is_monolithic:
     values: [False]
   render:
@@ -30,7 +30,7 @@ parameters:
   video:
     values: [False]
   timesteps:
-    values: [3000000]
+    values: [1000000]
 command:
   - ${env}
   - ${interpreter}

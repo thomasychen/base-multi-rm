@@ -83,8 +83,40 @@ def generate_discount_plot(log_dir_base, window_size=10, confidence_level=0.9, g
             # Store the data in the dictionary
             all_discounted_rewards[method][iteration_dir] = discounted_rewards
 
+    ############################# PRINTING CODE ##############################
+    for method in assignment_methods:
+        if method not in all_discounted_rewards:
+            continue
+        print(f"\nMethod: {method}")
+        df_discounted_rewards = pd.DataFrame(all_discounted_rewards[method]).transpose()
+        if df_discounted_rewards.empty:
+            print("No data for this method.")
+            continue
+
+        last_window_rewards = df_discounted_rewards.iloc[:, -5:]
+        if last_window_rewards.empty:
+            print("Insufficient data for the last window.")
+            continue
+
+        avg_discounted_reward = last_window_rewards.mean().mean()  # Mean across iterations and timesteps in the last window
+
+        # Compute confidence interval for the mean across iterations
+        iteration_means = last_window_rewards.mean(axis=1)  # Mean of the last window for each iteration
+        sem = iteration_means.sem()  # Standard error of the mean
+        dof = len(iteration_means) - 1  # Degrees of freedom
+        dof = max(dof, 1)  # Avoid division by zero for t-value
+        t_value = stats.t.ppf((1 + confidence_level) / 2, dof)  # t-value for confidence level
+
+        ci_adjusted_std = sem * t_value  # CI width as adjusted "std" for confidence level
+
+        print(f"  Avg Discounted Reward (Last {window_size} Timesteps): {avg_discounted_reward:.2f} | Std ±{ci_adjusted_std:.2f}")
+
+    ############################# PRINTING CODE ##############################
+
     # Plot results using Matplotlib
-    plt.figure(figsize=(9, 4.5))
+    # plt.figure(figsize=(9, 4.5))
+    plt.figure(figsize=(12, 4.5))
+
     # 8.5, 5 for main
 
     for method in assignment_methods:

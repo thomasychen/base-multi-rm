@@ -56,7 +56,6 @@ class OvercookedCrampedLabeled(MDP_Labeler):
         """
         l = []
         old_obs = self.jax_env.get_obs(s_next)
-        # import pdb; pdb.set_trace()
         obs = old_obs["agent_0"]
         obs = obs.transpose(2, 0, 1)
         

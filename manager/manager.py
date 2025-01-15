@@ -1,10 +1,10 @@
 import numpy as np
-import torch
 import random
-import itertools
-from stable_baselines3.common.utils import obs_as_tensor
 import wandb
-import math
+# from stable_baselines3.common.utils import obs_as_tensor
+# import math
+# import itertools
+# import torch
 
 class Manager:
     def __init__(self, num_agents, num_decomps=1, assignment_method = "ground_truth", model=None, wandb=False, seed=None, ucb_c=1.5, ucb_gamma=0.99):
@@ -22,13 +22,11 @@ class Manager:
         self.wandb = wandb
 
         ### UCB Specific ####
-
         self.decomp_counts = {i: 0 for i in range(self.num_decomps)}
         self.decomp_total_rewards = {i: 0.0 for i in range(self.num_decomps)}
         self.decomp_curr_rewards = {i: 0.0 for i in range(self.num_decomps)}
-
-
         self.total_selections = 0
+        ### UCB Specific ####
 
         # UCB exploration parameter
         self.ucb_c = ucb_c
@@ -42,36 +40,39 @@ class Manager:
     def get_rm_assignments(self, init_mdp_states, init_rm_states, test=False):
         if test and self.assignment_method != "naive":
             return self.curr_decomp
-        elif test and self.assignment_method == "naive":
-            for i in range(len(init_rm_states)):
-                self.curr_decomp_qs[i] = self.calculate_decomp_qs(init_mdp_states, init_rm_states[i], True)
-
-            self.set_best_assignment()
-            return self.curr_decomp
         elif self.assignment_method == "ground_truth":
             self.curr_decomp = 0
         elif self.assignment_method == "random" or self.assignment_method == "naive": 
             self.set_random_assignment()
-        elif self.assignment_method == "add":
-            for i in range(len(init_rm_states)):
-                self.curr_decomp_qs[i] = self.calculate_decomp_qs(init_mdp_states, init_rm_states[i], True)
+            
+        #### DEPRECATED ASSIGNMENT METHODS ####
+        # elif test and self.assignment_method == "naive":
+        #     for i in range(len(init_rm_states)):
+        #         self.curr_decomp_qs[i] = self.calculate_decomp_qs(init_mdp_states, init_rm_states[i], True)
 
-            if random.random() < self.epsilon:
-                self.set_random_assignment()
-            else:
-                self.set_best_assignment()
+        #     self.set_best_assignment()
+        #     return self.curr_decomp
+        # elif self.assignment_method == "add":
+        #     for i in range(len(init_rm_states)):
+        #         self.curr_decomp_qs[i] = self.calculate_decomp_qs(init_mdp_states, init_rm_states[i], True)
+
+        #     if random.random() < self.epsilon:
+        #         self.set_random_assignment()
+        #     else:
+        #         self.set_best_assignment()
     
-            self.epsilon *= self.epsilon_decay
-        elif self.assignment_method == "multiply":
-            for i in range(len(init_rm_states)):
-                # print(i)
-                self.curr_decomp_qs[i] = self.calculate_decomp_qs(init_mdp_states, init_rm_states[i], True)
+        #     self.epsilon *= self.epsilon_decay
 
-            if random.random() < self.epsilon:
-                self.set_random_assignment()
-            else:
-                self.set_best_assignment()
-            self.epsilon *= self.epsilon_decay
+        # elif self.assignment_method == "multiply":
+        #     for i in range(len(init_rm_states)):
+        #         self.curr_decomp_qs[i] = self.calculate_decomp_qs(init_mdp_states, init_rm_states[i], True)
+
+        #     if random.random() < self.epsilon:
+        #         self.set_random_assignment()
+        #     else:
+        #         self.set_best_assignment()
+        #     self.epsilon *= self.epsilon_decay
+        #### DEPRECATED ASSIGNMENT METHODS ####
 
         elif self.assignment_method == "UCB":
 
@@ -105,32 +106,33 @@ class Manager:
 
         return self.curr_decomp
 
+    ##### DEPRECATED & BUGGY USE WITH CAUTION #####
+    # def calculate_decomp_qs(self, init_mdp_states, init_rm_states, multiply=False):
+    #     res = {}
+    #     accumulator = 1 if multiply else 0
 
-    def calculate_decomp_qs(self, init_mdp_states, init_rm_states, multiply=False):
-        res = {}
-        accumulator = 1 if multiply else 0
+    #     for i in range(self.num_agents):
 
-        for i in range(self.num_agents):
+    #         if np.isscalar(init_mdp_states[i]) and np.isscalar(init_rm_states[i]):
+    #             curr_state = np.array([[init_mdp_states[i], init_rm_states[i]]])
+    #         else:
+    #             curr_state = np.append(init_mdp_states[i], init_rm_states[i])
 
-            if np.isscalar(init_mdp_states[i]) and np.isscalar(init_rm_states[i]):
-                curr_state = np.array([[init_mdp_states[i], init_rm_states[i]]])
-            else:
-                curr_state = np.append(init_mdp_states[i], init_rm_states[i])
+    #         curr_state = obs_as_tensor(curr_state, device="cpu")
+    #         with torch.no_grad():
+    #             q = self.model.policy.predict_values(curr_state)
 
-            curr_state = obs_as_tensor(curr_state, device="cpu")
-            with torch.no_grad():
-                q = self.model.policy.predict_values(curr_state)
+    #         if multiply:
+    #             q = 1 / (1 + math.exp(-q))
 
-            if multiply:
-                q = 1 / (1 + math.exp(-q))
-
-            if multiply:
-                accumulator *= q
-            else:
-                accumulator += q
+    #         if multiply:
+    #             accumulator *= q
+    #         else:
+    #             accumulator += q
         
-        res = accumulator
-        return res
+    #     res = accumulator
+    #     return res
+    ##### DEPRECATED & BUGGY USE WITH CAUTION #####
     
     def set_best_assignment(self):
 

@@ -72,13 +72,10 @@ WWWOOWW
         # For onions
         onions = self.num_onions(obs)
         if onions:
-            if "o3" in onions:
-                import pdb; pdb.set_trace()
             l.append(onions)
         # For soup plated
         soup = self.has_soup(obs)
         if soup:
-            # import pdb; pdb.set_trace()
             l.append(soup)
         cooked = self.has_cooked(obs)
         if cooked:
@@ -86,7 +83,6 @@ WWWOOWW
        
         # For dish done
         if reward["agent_0"] > 0:
-            # import pdb; pdb.set_trace()
             l.append("d")
         
         old_obs = self.trim_observation(old_obs)

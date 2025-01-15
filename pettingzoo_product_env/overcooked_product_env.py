@@ -1,7 +1,4 @@
-from pettingzoo import ParallelEnv
-from jaxmarl.environments.overcooked import Overcooked
 import jax
-import jax.numpy as jnp
 import numpy as np
 from jaxmarl.viz.overcooked_visualizer import OvercookedVisualizer
 from gymnasium.spaces import Box, Discrete
@@ -11,34 +8,29 @@ import copy
 from datetime import datetime
 import wandb
 import os
-
-class OvercookedProductEnv(ParallelEnv):
+from .pettingzoo_product_env import MultiAgentEnvironment
+class OvercookedProductEnv(MultiAgentEnvironment):
     metadata = {
-        "name": "custom_environment_v0",
+        "name": "custom_environment_v0", #TODO: change name
     }
 
-    def __init__(self, manager, labeled_mdp_class: MDP_Labeler, reward_machine: SparseRewardMachine, config, max_agents, test=False, is_monolithic=False, addl_mono_rm: SparseRewardMachine=None, render_mode=None, monolithic_weight=1.0, log_dir=None, video=False):
-        self.possible_agents = ["agent_" + str(r) for r in range(2)]
-        self.env_config = config
-
-        # optional: a mapping between agent name and ID
-        self.agent_name_mapping = dict(
-            zip(self.possible_agents, list(range(len(self.possible_agents))))
-        )
-        self.render_mode = render_mode 
-        self.labeled_mdp = labeled_mdp_class(config)
-        self.mdp = self.labeled_mdp.jax_env
-        self.states = []
-        self.viz = OvercookedVisualizer()
-        self.reset_key = None
-        self.test = test
-        self.addl_monolithic_rm = addl_mono_rm # Potentially give the monolithic here so everyone know's global states (for potentially dependent dynamics)
-        self.monolithic_weight = monolithic_weight
+    def __init__(self, manager, labeled_mdp_class: MDP_Labeler, reward_machine: SparseRewardMachine, 
+                 config, max_agents, test=False, is_monolithic=False, addl_mono_rm: SparseRewardMachine=None, 
+                 render_mode=None, monolithic_weight=1.0, log_dir=None, video=False):
+        super().__init__(manager, labeled_mdp_class, reward_machine, 
+                         config, max_agents, test, is_monolithic, addl_mono_rm, 
+                         render_mode, monolithic_weight, log_dir, video)
+        
         OvercookedProductEnv.manager = manager
-        self.local_manager = None
-        self.reward_machine = reward_machine
-        self.log_dir = log_dir
-        self.video = video
+
+        ###### FOR VISUALIZING ######
+        self.viz = OvercookedVisualizer()
+        ###### FOR VISUALIZING ######
+
+        ###### OVERCOOKED SPECIFIC VARIABLES ######
+        self.mdp = self.labeled_mdp.jax_env
+        self.reset_key = None
+        ###### OVERCOOKED SPECIFIC VARIABLES ######
 
     def observation_space(self, agent):
         if self.addl_monolithic_rm is None:
@@ -46,7 +38,7 @@ class OvercookedProductEnv(ParallelEnv):
         else:
             flattened_shape = [self.labeled_mdp.obs_shape + self.reward_machine.get_one_hot_size(len(self.possible_agents)) + self.addl_monolithic_rm.get_one_hot_size(len(self.possible_agents))]
         return Box(0, 255, flattened_shape)
-
+    
     def action_space(self, agent):
         return Discrete(len(self.mdp.action_set))
     
@@ -58,8 +50,7 @@ class OvercookedProductEnv(ParallelEnv):
         self.agents = self.possible_agents[:]
         self.timestep = 0
 
-
-        self.states = []
+        self.traj_mdp_states = []
         if self.reset_key is None:
             self.reset_key = jax.random.PRNGKey(0)
         self.reset_key, key_r, key_a = jax.random.split(self.reset_key, 3)
@@ -81,10 +72,12 @@ class OvercookedProductEnv(ParallelEnv):
         
         print("reset step", state.time)
         self.curr_state = state
-        self.states.append(self.curr_state)
+        self.traj_mdp_states.append(self.curr_state)
         infos = {agent: {} for agent in self.agents}
 
-        observations = {i: self.flatten_and_add_rm(jax_observations[i], self.rm_states[i], idx) for idx, i in enumerate(self.agents)}
+        observations = {}
+        for idx, i in enumerate(self.agents):
+            observations[i] = self.flatten_and_add_rm(jax_observations[i], self.rm_states[i], idx)
       
         return observations, infos
     
@@ -139,7 +132,7 @@ class OvercookedProductEnv(ParallelEnv):
 
         
         self.curr_state = state
-        self.states.append(state)
+        self.traj_mdp_states.append(state)
         obs = {i: self.flatten_and_add_rm(jax_obs[i], self.rm_states[i], idx) for idx, i in enumerate(self.agents)}
 
         self.timestep += 1
@@ -151,7 +144,6 @@ class OvercookedProductEnv(ParallelEnv):
         env_truncation = self.timestep >= self.env_config["max_episode_length"]
 
         truncations = {agent: env_truncation for agent in self.agents}
-
 
         if env_truncation:
             self.agents = []
@@ -196,22 +188,8 @@ class OvercookedProductEnv(ParallelEnv):
 
         path_dir = f"{self.log_dir}"
         os.makedirs(path_dir, exist_ok=True)
-        self.viz.animate(self.states, agent_view_size=5, filename=f"{path_dir}/viz.gif")
+        self.viz.animate(self.traj_mdp_states, agent_view_size=5, filename=f"{path_dir}/viz.gif")
         log_dict = {}
         log_dict[f"viz"] = wandb.Video(f"{path_dir}/viz.gif", fps=4, format="gif")
 
         wandb.log(log_dict)
-
-    def flatten_and_add_rm(self, obs, rm_state, agent_idx):
-
-        flattened_obs = obs.flatten()
-
-        rm_ohe = self.reward_machine.get_one_hot_encoded_state(rm_state, len(self.possible_agents), agent_idx)
-        if self.addl_monolithic_rm is not None:
-            mono_ohe = self.addl_monolithic_rm.get_one_hot_encoded_state(self.monolithic_rm_state, len(self.possible_agents), agent_idx)
-            result = np.concatenate((flattened_obs, rm_ohe, mono_ohe))
-        else:
-            # Concatenate the flattened observation and the rm_array
-            result = np.concatenate((flattened_obs, rm_ohe))
-
-        return result

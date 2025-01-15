@@ -1,53 +1,38 @@
-from pettingzoo import ParallelEnv
 from reward_machines.sparse_reward_machine import SparseRewardMachine
-import yaml
-from gymnasium.spaces import Discrete, Box, MultiDiscrete
+from gymnasium.spaces import Discrete, Box
 import numpy as np
-import functools
 import copy
-import itertools
-import random
-from mdp_label_wrappers.easy_buttons_mdp_labeled import EasyButtonsLabeled
 from mdp_label_wrappers.generic_mdp_labeled import MDP_Labeler
 import os
+from .pettingzoo_product_env import MultiAgentEnvironment
 
-class ButtonsProductEnv(ParallelEnv):
+class ButtonsProductEnv(MultiAgentEnvironment):
     metadata = {
         "name": "custom_environment_v0",
     }
 
-    def __init__(self, manager, labeled_mdp_class: MDP_Labeler, reward_machine: SparseRewardMachine, config, max_agents, test=False, is_monolithic=False, addl_mono_rm: SparseRewardMachine=None, render_mode=None, monolithic_weight=1.0, log_dir=None, video=False):
+    def __init__(self, manager, labeled_mdp_class: MDP_Labeler, reward_machine: SparseRewardMachine, 
+                 config, max_agents, test=False, is_monolithic=False, addl_mono_rm: SparseRewardMachine=None, 
+                 render_mode=None, monolithic_weight=1.0, log_dir=None, video=False):
+        
+        super().__init__(manager, labeled_mdp_class, reward_machine, 
+                         config, max_agents, test, is_monolithic, addl_mono_rm, 
+                         render_mode, monolithic_weight, log_dir, video)
+        
         ButtonsProductEnv.manager = manager
+        self.is_monolithic = is_monolithic # deprecated
 
-        # self.manager = manager
-
-        self.render_mode = render_mode
-
-        self.env_config = config
-
-        self.labeled_mdp = labeled_mdp_class(self.env_config)
-        self.reward_machine = reward_machine
-        self.test = test
-        self.max_agents = max_agents
-        self.local_manager = None
-
-        self.is_monolithic = is_monolithic
-
-
-        self.possible_agents = ["agent_" + str(r) for r in range(self.max_agents)]
-
-        # optional: a mapping between agent name and ID
-        self.agent_name_mapping = dict(
-            zip(self.possible_agents, list(range(len(self.possible_agents))))
-        )
-
-        # Modified parameters post workshop paper
-        self.addl_monolithic_rm = addl_mono_rm # Potentially give the monolithic here so everyone know's global states (for potentially dependent dynamics)
-        self.monolithic_weight = monolithic_weight
-        self.log_dir = log_dir
-        self.video = video
-        self.traj_mdp_states = []
+    def observation_space(self, agent):
+        mdp_shape = 1
+        if self.addl_monolithic_rm is None:
+            flattened_shape = [mdp_shape + self.reward_machine.get_one_hot_size(len(self.possible_agents))]
+        else:
+            flattened_shape = [mdp_shape + self.reward_machine.get_one_hot_size(len(self.possible_agents)) + self.addl_monolithic_rm.get_one_hot_size(len(self.possible_agents))]
+        return Box(0, 255, flattened_shape)
     
+    def action_space(self, agent):
+        return Discrete(5)
+
     def reset(self, seed=None, options=None):
         self.agents = self.possible_agents[:]
         self.time_step = 0
@@ -71,7 +56,7 @@ class ButtonsProductEnv(ParallelEnv):
         self.mdp_states = {self.agents[i]:mdp_state_array[i] for i in range(len(self.agents))}
         self.rm_states = {self.agents[i]:rm_array[decomp_idx][i] for i in range(len(self.agents))}
 
-        observations = {i: self.flatten_and_add_rm(self.mdp_states[i], self.rm_states[i], idx) for idx, i in enumerate(self.agents)}
+        observations = {i: self.flatten_and_add_rm(np.array([self.mdp_states[i]]), self.rm_states[i], idx) for idx, i in enumerate(self.agents)}
 
         infos = {agent: {} for agent in self.agents}
         self.state = observations
@@ -146,7 +131,7 @@ class ButtonsProductEnv(ParallelEnv):
 
 
         for idx, curr_agent in enumerate(self.agents):
-            observations[curr_agent] = self.flatten_and_add_rm(self.mdp_states[curr_agent], self.rm_states[curr_agent], idx)
+            observations[curr_agent] = self.flatten_and_add_rm(np.array([self.mdp_states[curr_agent]]), self.rm_states[curr_agent], idx)
 
         terminations = {i: False for i in self.agents}
         if self.addl_monolithic_rm is not None:
@@ -200,43 +185,12 @@ class ButtonsProductEnv(ParallelEnv):
         if self.video and (env_truncation or all(terminations.values())):
             self.send_animation()
 
-
         for k in rewards:
             rewards[k] = max(0, rewards[k])
         return observations, rewards, terminations, truncations, infos
 
     def render(self):
         self.labeled_mdp.show(self.mdp_states)
-
-    def observation_space(self, agent):
-        mdp_shape = 1
-        if self.addl_monolithic_rm is None:
-            flattened_shape = [mdp_shape + self.reward_machine.get_one_hot_size(len(self.possible_agents))]
-        else:
-            flattened_shape = [mdp_shape + self.reward_machine.get_one_hot_size(len(self.possible_agents)) + self.addl_monolithic_rm.get_one_hot_size(len(self.possible_agents))]
-        return Box(0, 255, flattened_shape)
-
-    
-    def action_space(self, agent):
-        return Discrete(5)
-    
-    def discretize_action(self, continuous_action):
-
-        discrete_action = int(np.round((continuous_action[0] + 1) * 2))  # Scale to range [0, 4]
-        return discrete_action
-
-    def flatten_and_add_rm(self, obs, rm_state, agent_idx):
-        obs = np.array([obs])
-
-        rm_ohe = self.reward_machine.get_one_hot_encoded_state(rm_state, len(self.possible_agents), agent_idx)
-        if self.addl_monolithic_rm is not None:
-            mono_ohe = self.addl_monolithic_rm.get_one_hot_encoded_state(self.monolithic_rm_state, len(self.possible_agents), agent_idx)
-            result = np.concatenate((obs, rm_ohe, mono_ohe))
-        else:
-            # Concatenate the flattened observation and the rm_array
-            result = np.concatenate((obs, rm_ohe))
-
-        return result
     
     def send_animation(self):
         path_dir = f"{self.log_dir}"

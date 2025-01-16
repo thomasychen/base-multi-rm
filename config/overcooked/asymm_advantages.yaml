@@ -1,7 +1,0 @@
-num_agents: 2
-# initial_mdp_states: []
-initial_rm_states: 
-  - [1, 2]
-labeled_mdp_class: "OvercookedAsymmetricAdvantagesLabeled"
-max_episode_length: 400
-eval_freq: 200000

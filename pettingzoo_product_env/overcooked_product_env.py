@@ -77,7 +77,7 @@ class OvercookedProductEnv(MultiAgentEnvironment):
 
         observations = {}
         for idx, i in enumerate(self.agents):
-            observations[i] = self.flatten_and_add_rm(jax_observations[i], self.rm_states[i], idx)
+            observations[i] = self.flatten_and_add_rm(jax_observations[i].flatten(), self.rm_states[i], idx)
       
         return observations, infos
     
@@ -133,7 +133,7 @@ class OvercookedProductEnv(MultiAgentEnvironment):
         
         self.curr_state = state
         self.traj_mdp_states.append(state)
-        obs = {i: self.flatten_and_add_rm(jax_obs[i], self.rm_states[i], idx) for idx, i in enumerate(self.agents)}
+        obs = {i: self.flatten_and_add_rm(jax_obs[i].flatten(), self.rm_states[i], idx) for idx, i in enumerate(self.agents)}
 
         self.timestep += 1
         infos =  {agent: {"timesteps": self.timestep} for agent in self.agents}

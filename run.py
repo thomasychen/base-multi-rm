@@ -1,6 +1,5 @@
 import yaml
 from stable_baselines3.common.noise import OrnsteinUhlenbeckActionNoise
-from mdp_label_wrappers.buttons_mdp_labeled import HardButtonsLabeled
 from stable_baselines3 import DQN, PPO, SAC, DDPG, HER, HerReplayBuffer
 # from stable_baselines3.ddpg import MlpPolicy
 from stable_baselines3.ppo import MlpPolicy
@@ -14,7 +13,6 @@ from stable_baselines3.common.callbacks import BaseCallback
 from stable_baselines3.common.vec_env.vec_monitor import VecMonitor
 from manager.manager import Manager
 from stable_baselines3.common.callbacks import EvalCallback, CallbackList
-from mdp_label_wrappers.buttons_mdp_labeled import HardButtonsLabeled
 from mdp_label_wrappers.easy_buttons_mdp_labeled import EasyButtonsLabeled
 from mdp_label_wrappers.challenge_buttons_mdp_labeled import ChallengeButtonsLabeled
 from mdp_label_wrappers.motivating_example_mdp_labeled import MotivatingExampleLabeled
@@ -35,16 +33,11 @@ import torch as th
 from pettingzoo_product_env.overcooked_product_env import OvercookedProductEnv
 from pettingzoo_product_env.buttons_product_env import ButtonsProductEnv
 from jaxmarl.environments.overcooked import overcooked_layouts
-from mdp_label_wrappers.overcooked_cramped_labeled import OvercookedCrampedLabeled
-from mdp_label_wrappers.overcooked_asymmetric_advantages_labeled import OvercookedAsymmetricAdvantagesLabeled
 from mdp_label_wrappers.overcooked_custom_island_labeled import OvercookedCustomIslandLabeled
-from mdp_label_wrappers.overcooked_circuit_labeled import OvercookedCircuitLabeled
 from mdp_label_wrappers.overcooked_interesting_cramped_labeled import OvercookedInterestingCrampedLabeled
 
 ## WANDB KILL SWITCH
 # ps aux|grep wandb|grep -v grep | awk '{print $2}'|xargs kill -9
-
-# python run.py --assignment_methods ground_truth --num_iterations 1
 
 def str2bool(v):
     if isinstance(v, bool):
@@ -92,55 +85,6 @@ parser.add_argument('--handpicked_decomp',type=str, default="None", help = "Prov
 
 # Add the sweep flag
 parser.add_argument('--sweep', type=str2bool, default=False, help='Set to True when running a W&B sweep.')
-
-########### buttons ###########
-# challenge buttons
-# python run.py --assignment_methods ground_truth --num_iterations 1 --wandb t --timesteps 1000000 --decomposition_file aux_buttons.txt --experiment_name buttons_challenge --is_monolithic f --env buttons --render f 
-
-# easy buttons
-# python run.py --assignment_methods UCB --num_iterations 1 --wandb t --timesteps 3000000 --decomposition_file mono_easy_buttons.txt --experiment_name easy_buttons --is_monolithic f --env buttons --render f --add_mono_file mono_easy_buttons.txt --num_candidates 3
-
-# python run.py --assignment_methods UCB --num_iterations 1 --wandb t --timesteps 10000 --decomposition_file buttons_decompositions.txt --experiment_name buttons --is_monolithic f --env buttons --render f
-
-# motivating example
-# python run.py --assignment_methods UCB --num_iterations 1 --wandb f --timesteps 3000000 --decomposition_file garbage.txt --experiment_name motivating_example --is_monolithic f --env buttons --render t
-
-# motivating example ATAD
-# python run.py --assignment_methods UCB --num_iterations 1 --wandb f --timesteps 3000000 --decomposition_file mono_motivating_example.txt --env buttons --experiment_name motivating_example --num_candidates 3 --is_monolithic f --add_mono_file mono_motivating_example.txt --render t
-# python run.py --assignment_methods UCB --num_iterations 1 --wandb f --timesteps 3000000 --decomposition_file mono_motivating_example.txt --env buttons --experiment_name motivating_example --num_candidates 3 --is_monolithic f --add_mono_file mono_motivating_example.txt --render t
-
-########### buttons ###########
-
-
-########### overcooked ###########
-# python run.py --assignment_methods ground_truth --num_iterations 1 --wandb f --timesteps 1000000 --decomposition_file aux_cramped_room.txt --experiment_name cramped_room --is_monolithic f --env overcooked --render f
-# python run.py --assignment_methods ground_truth --num_iterations 1 --wandb f --timesteps 1000000 --decomposition_file aux_asymm_advantages.txt --experiment_name asymm_advantages --is_monolithic f --env overcooked --render t
-# python run.py --assignment_methods ground_truth --num_iterations 1 --wandb f --timesteps 1000000 --decomposition_file aux_custom_island.txt --experiment_name custom_island --is_monolithic f --env overcooked --render t
-# python run.py --assignment_methods UCB --num_iterations 1 --wandb f --timesteps 1000000 --decomposition_file aux_custom_island.txt --experiment_name custom_island --is_monolithic f --env overcooked --render t
-
-# monolithic custom island
-# python run.py --assignment_methods ground_truth --num_iterations 1 --wandb f --timesteps 1000000 --decomposition_file individual_custom_island.txt --experiment_name custom_island --is_monolithic f --env overcooked --render t
-
-# circuit
-# python run.py --assignment_methods ground_truth --num_iterations 1 --wandb f --timesteps 1000000 --decomposition_file aux_circuit.txt --experiment_name circuit --is_monolithic f --env overcooked --render t
-# python run.py --assignment_methods ground_truth --num_iterations 1 --wandb t --timesteps 4000000 --decomposition_file aux_circuit.txt --experiment_name circuit --is_monolithic f --env overcooked --render f --add_mono_file mono_circuit.txt
-
-# interesting cramped
-# python run.py --assignment_methods ground_truth --num_iterations 1 --wandb t --timesteps 1000000 --decomposition_file aux_interesting_cramped_room.txt --experiment_name interesting_cramped_room --is_monolithic f --env overcooked --render t --add_mono_file mono_interesting_cramped_room.txt
-# python test_overcooked.py --assignment_methods ground_truth --num_iterations 1 --wandb f --timesteps 1000000 --decomposition_file aux_interesting_cramped_room.txt --experiment_name interesting_cramped_room --is_monolithic f --env overcooked --render t --add_mono_file mono_interesting_cramped_room.txt
-
-# python run.py --assignment_methods UCB --num_iterations 1 --wandb t --timesteps 1000000 --decomposition_file mono_cramped_room.txt --experiment_name cramped_room --is_monolithic f --env overcooked --render f --add_mono_file mono_cramped_room.txt --num_candidates 10 --video t
-
-
-# Used to test the automatic decomposition.
-# python3 run.py --assignment_methods UCB --wandb False --decomposition_file team_buttons.txt --num_candidates 3 --is_monolithic True --add
-
-#### with mono observation ####
-# python run.py --assignment_methods UCB --num_iterations 1 --wandb f --timesteps 1000000 --decomposition_file aux_cramped_room.txt --experiment_name cramped_room --is_monolithic f --env overcooked --render t --add_mono_file mono_cramped_room.txt
-# python run.py --assignment_methods UCB --num_iterations 1 --wandb t --timesteps 4000000 --decomposition_file aux_cramped_room.txt --experiment_name cramped_room --is_monolithic f --env overcooked --render f
-# python run.py --assignment_methods UCB --num_iterations 1 --wandb t --timesteps 4000000 --decomposition_file individual_cramped_room.txt --experiment_name cramped_room --is_monolithic f --env overcooked --render f
-########### overcooked ###########
-# python run.py --assignment_methods ground_truth --num_iterations 1 --wandb f --timesteps 4000000 --decomposition_file individual_cramped_room.txt --experiment_name cramped_room --is_monolithic f --env overcooked --render t
 
 args = parser.parse_args()
 
